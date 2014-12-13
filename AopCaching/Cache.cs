@@ -50,15 +50,8 @@ namespace PubComp.Caching.AopCaching
 
             if (cacheToUse == null)
             {
-                // Performance penalty for this should not be high enough to require locking
-                cacheToUse = CacheManager.GetCache(this.cacheName);
-                this.cache = cacheToUse;
-
-                if (cacheToUse == null)
-                {
-                    base.OnInvoke(args);
-                    return;
-                }
+                base.OnInvoke(args);
+                return;
             }
 
             var className = args.Method.DeclaringType.FullName;
