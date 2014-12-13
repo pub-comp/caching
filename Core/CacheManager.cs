@@ -22,6 +22,11 @@ namespace PubComp.Caching.Core
 
         static CacheManager()
         {
+            InitializeFromConfig();
+        }
+
+        public static void InitializeFromConfig()
+        {
             var config = LoadConfig();
             ApplyConfig(config);
         }
@@ -151,6 +156,19 @@ namespace PubComp.Caching.Core
         public static void RemoveCache(string name)
         {
             SetCache(name, null);
+        }
+
+        public static void RemoveAllCaches()
+        {
+            sync.EnterWriteLock();
+            try
+            {
+                caches.Clear();
+            }
+            finally
+            {
+                sync.ExitWriteLock();
+            }
         }
 
         private static MethodBase GetCallingMethod()

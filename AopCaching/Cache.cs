@@ -9,6 +9,9 @@ namespace PubComp.Caching.AopCaching
     public class Cache : MethodInterceptionAspect
     {
         private string cacheName;
+        private ICache cache;
+        private volatile bool wasInitialized;
+        private object sync = new object();
 
         public Cache()
         {
@@ -19,22 +22,43 @@ namespace PubComp.Caching.AopCaching
             this.cacheName = cacheName;
         }
 
+        private void Initialize()
+        {
+            lock (sync)
+            {
+                if (wasInitialized)
+                    return;
+
+                var cacheToUse = CacheManager.GetCache(this.cacheName);
+                this.cache = cacheToUse;
+                wasInitialized = true;
+            }
+        }
+
         public override void CompileTimeInitialize(System.Reflection.MethodBase method, AspectInfo aspectInfo)
         {
             if (this.cacheName == null)
-            {
                 this.cacheName = method.DeclaringType.FullName;
-            }
         }
 
         public override void OnInvoke(MethodInterceptionArgs args)
         {
-            var cache = CacheManager.GetCache(cacheName);
+            if (!wasInitialized)
+                Initialize();
 
-            if (cache == null)
+            var cacheToUse = this.cache;
+
+            if (cacheToUse == null)
             {
-                base.OnInvoke(args);
-                return;
+                // Performance penalty for this should not be high enough to require locking
+                cacheToUse = CacheManager.GetCache(this.cacheName);
+                this.cache = cacheToUse;
+
+                if (cacheToUse == null)
+                {
+                    base.OnInvoke(args);
+                    return;
+                }
             }
 
             var className = args.Method.DeclaringType.FullName;
@@ -44,7 +68,7 @@ namespace PubComp.Caching.AopCaching
 
             var key = new CacheKey(className, methodName, parameterTypes, parameterValues).ToString();
 
-            args.ReturnValue = cache.Get<object>(key, () => { base.OnInvoke(args); return args.ReturnValue; });
+            args.ReturnValue = cacheToUse.Get<object>(key, () => { base.OnInvoke(args); return args.ReturnValue; });
         }
     }
 }

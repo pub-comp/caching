@@ -6,6 +6,12 @@ namespace PubComp.Caching.Core.UnitTests
     [TestClass]
     public class CacheManagerTests
     {
+        [TestInitialize]
+        public void TestInitialize()
+        {
+            CacheManager.RemoveAllCaches();
+        }
+
         [TestMethod]
         public void TestNoCacheFound1()
         {

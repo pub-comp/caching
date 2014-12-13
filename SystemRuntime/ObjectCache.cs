@@ -69,7 +69,7 @@ namespace PubComp.Caching.SystemRuntime
 
         public void ClearAll()
         {
-            innerCache = new System.Runtime.Caching.MemoryCache(null);
+            innerCache = new System.Runtime.Caching.MemoryCache(this.name);
         }
     }
 }

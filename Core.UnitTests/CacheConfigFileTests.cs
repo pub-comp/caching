@@ -12,6 +12,12 @@ namespace PubComp.Caching.Core.UnitTests
     [TestClass]
     public class CacheConfigFileTests
     {
+        [TestInitialize]
+        public void TestInitialize()
+        {
+            CacheManager.RemoveAllCaches();
+        }
+
         [TestMethod]
         public void TestReadAppConfig()
         {
@@ -91,6 +97,8 @@ namespace PubComp.Caching.Core.UnitTests
         [TestMethod]
         public void TestCreateCachesFromAppConfig()
         {
+            CacheManager.InitializeFromConfig();
+
             var cache1 = CacheManager.GetCache("cacheFromConfig1");
             Assert.IsNotNull(cache1);
             Assert.IsInstanceOfType(cache1, typeof(NoCache));
