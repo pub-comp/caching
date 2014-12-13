@@ -127,15 +127,30 @@ namespace PubComp.Caching.Core
         /// <remarks>Cache name can end with wildcard '*'</remarks>
         public static void SetCache(string name, ICache cache)
         {
+            var cacheName = new CacheName(name);
+
             sync.EnterWriteLock();
             try
             {
-                caches.AddOrUpdate(new CacheName(name), cache, (n, c) => cache);
+                if (cache == null)
+                {
+                    ICache oldCache;
+                    caches.TryRemove(cacheName, out oldCache);
+                }
+                else
+                {
+                    caches.AddOrUpdate(cacheName, cache, (n, c) => cache);
+                }
             }
             finally
             {
                 sync.ExitWriteLock();
             }
+        }
+
+        public static void RemoveCache(string name)
+        {
+            SetCache(name, null);
         }
 
         private static MethodBase GetCallingMethod()
