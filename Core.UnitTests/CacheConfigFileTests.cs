@@ -18,7 +18,7 @@ namespace PubComp.Caching.Core.UnitTests
             var config = ConfigurationManager.GetSection("PubComp/CacheConfig") as IList<CacheConfig>;
             
             Assert.IsNotNull(config);
-            Assert.AreEqual(4, config.Count);
+            Assert.AreEqual(7, config.Count);
 
             LinqAssert.Any(config, c =>
                 c.Action == ConfigAction.Add
@@ -42,6 +42,21 @@ namespace PubComp.Caching.Core.UnitTests
                 && ((MockCacheConfig)c).Policy != null
                 && ((MockCacheConfig)c).Policy.SlidingExpiration != null
                 && ((MockCacheConfig)c).Policy.SlidingExpiration.Minutes == 15);
+
+            LinqAssert.Any(config, c =>
+                c.Action == ConfigAction.Add
+                && c.Name == "cacheFromConfig3"
+                && c is NoCacheConfig);
+
+            LinqAssert.Any(config, c =>
+                c.Action == ConfigAction.Remove
+                && c.Name == "cacheFromConfig3"
+                && c is NoCacheConfig);
+
+            LinqAssert.Any(config, c =>
+                c.Action == ConfigAction.Remove
+                && c.Name == "cacheFromConfig4"
+                && c is NoCacheConfig);
         }
 
         [TestMethod]
@@ -86,6 +101,12 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.IsNotNull(((MockCache)cache2).Policy);
             Assert.IsNotNull(((MockCache)cache2).Policy.SlidingExpiration);
             Assert.AreEqual(new TimeSpan(0, 15, 0), ((MockCache)cache2).Policy.SlidingExpiration);
+
+            var cache3 = CacheManager.GetCache("cacheFromConfig3");
+            Assert.IsNull(cache3);
+
+            var cache4 = CacheManager.GetCache("cacheFromConfig4");
+            Assert.IsNull(cache4);
         }
     }
 }

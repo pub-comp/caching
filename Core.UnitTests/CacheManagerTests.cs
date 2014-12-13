@@ -95,5 +95,36 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.IsNotNull(cache);
             Assert.AreEqual(cacheName, cache.Name);
         }
+
+        [TestMethod]
+        public void TestGetCacheByNamespace6()
+        {
+            var cacheName1 = "cache567*";
+            var cacheName2 = "cache56789*";
+            
+            var requestedName1 = "cache567";
+            var requestedName2 = "cache5678";
+            var requestedName3 = "cache56789";
+            var requestedName4 = "cache567890";
+
+            CacheManager.SetCache(cacheName1, new NoCache(cacheName1));
+            CacheManager.SetCache(cacheName2, new NoCache(cacheName2));
+
+            var cache1 = CacheManager.GetCache(requestedName1);
+            Assert.IsNotNull(cache1);
+            Assert.AreEqual(cacheName1, cache1.Name);
+
+            var cache2 = CacheManager.GetCache(requestedName2);
+            Assert.IsNotNull(cache1);
+            Assert.AreEqual(cacheName1, cache2.Name);
+
+            var cache3 = CacheManager.GetCache(requestedName3);
+            Assert.IsNotNull(cache3);
+            Assert.AreEqual(cacheName2, cache3.Name);
+
+            var cache4 = CacheManager.GetCache(requestedName4);
+            Assert.IsNotNull(cache4);
+            Assert.AreEqual(cacheName2, cache4.Name);
+        }
     }
 }
