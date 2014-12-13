@@ -1,0 +1,2 @@
+﻿To use the DbDeployer utility, add the "SqlPackage.Unofficial" NuGet package to your solution.
+This package was not included as a dependency due to its large size.

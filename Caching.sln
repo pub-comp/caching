@@ -1,0 +1,82 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{57585B9A-7003-461A-B812-CA48603C839F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemRuntime", "SystemRuntime\SystemRuntime.csproj", "{F9ED87DD-4AC8-48D7-BAF0-EDB8992EC937}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AopCaching", "AopCaching\AopCaching.csproj", "{E0DD5E37-1A57-4EA3-A45E-EC9F27F6E519}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AopCaching.UnitTests", "AopCaching.UnitTests\AopCaching.UnitTests.csproj", "{B77A6AD4-6F77-4C63-8152-BA025D1341FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.UnitTests", "Core.UnitTests\Core.UnitTests.csproj", "{37A614F4-EEA4-4643-9B33-21A1776366E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemRuntime.UnitTests", "SystemRuntime.UnitTests\SystemRuntime.UnitTests.csproj", "{B13C47F2-BAC2-4682-A6F8-0999B7E5212C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8C86540A-D5BD-4123-B01A-CFE26213261C}"
+	ProjectSection(SolutionItems) = preProject
+		VersionHistory.txt = VersionHistory.txt
+		VersionInfo.cs = VersionInfo.cs
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 7
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs27
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = AopCaching.UnitTests\\AopCaching.UnitTests.csproj
+		SccProjectName1 = AopCaching.UnitTests
+		SccLocalPath1 = AopCaching.UnitTests
+		SccProjectUniqueName2 = AopCaching\\AopCaching.csproj
+		SccProjectName2 = AopCaching
+		SccLocalPath2 = AopCaching
+		SccProjectUniqueName3 = Core.UnitTests\\Core.UnitTests.csproj
+		SccProjectName3 = Core.UnitTests
+		SccLocalPath3 = Core.UnitTests
+		SccProjectUniqueName4 = Core\\Core.csproj
+		SccProjectName4 = Core
+		SccLocalPath4 = Core
+		SccProjectUniqueName5 = SystemRuntime.UnitTests\\SystemRuntime.UnitTests.csproj
+		SccProjectName5 = SystemRuntime.UnitTests
+		SccLocalPath5 = SystemRuntime.UnitTests
+		SccProjectUniqueName6 = SystemRuntime\\SystemRuntime.csproj
+		SccProjectName6 = SystemRuntime
+		SccLocalPath6 = SystemRuntime
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{57585B9A-7003-461A-B812-CA48603C839F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57585B9A-7003-461A-B812-CA48603C839F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57585B9A-7003-461A-B812-CA48603C839F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57585B9A-7003-461A-B812-CA48603C839F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9ED87DD-4AC8-48D7-BAF0-EDB8992EC937}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9ED87DD-4AC8-48D7-BAF0-EDB8992EC937}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9ED87DD-4AC8-48D7-BAF0-EDB8992EC937}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9ED87DD-4AC8-48D7-BAF0-EDB8992EC937}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E0DD5E37-1A57-4EA3-A45E-EC9F27F6E519}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E0DD5E37-1A57-4EA3-A45E-EC9F27F6E519}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E0DD5E37-1A57-4EA3-A45E-EC9F27F6E519}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E0DD5E37-1A57-4EA3-A45E-EC9F27F6E519}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B77A6AD4-6F77-4C63-8152-BA025D1341FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B77A6AD4-6F77-4C63-8152-BA025D1341FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B77A6AD4-6F77-4C63-8152-BA025D1341FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B77A6AD4-6F77-4C63-8152-BA025D1341FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37A614F4-EEA4-4643-9B33-21A1776366E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37A614F4-EEA4-4643-9B33-21A1776366E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37A614F4-EEA4-4643-9B33-21A1776366E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37A614F4-EEA4-4643-9B33-21A1776366E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B13C47F2-BAC2-4682-A6F8-0999B7E5212C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B13C47F2-BAC2-4682-A6F8-0999B7E5212C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B13C47F2-BAC2-4682-A6F8-0999B7E5212C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B13C47F2-BAC2-4682-A6F8-0999B7E5212C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
