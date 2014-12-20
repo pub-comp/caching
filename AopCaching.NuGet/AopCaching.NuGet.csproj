@@ -49,6 +49,9 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="content\AopCaching.Readme.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>$(SolutionDir).NuGetPack\NuGetPack.exe "$(ProjectPath)" "$(TargetPath)" $(ConfigurationName)</PostBuildEvent>
