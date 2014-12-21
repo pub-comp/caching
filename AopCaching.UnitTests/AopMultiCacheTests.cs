@@ -135,5 +135,30 @@ namespace PubComp.Caching.AopCaching.UnitTests
             LinqAssert.Count(results2, 1);
             LinqAssert.Any(results2, r => r.Id == "k1");
         }
+
+        [TestMethod]
+        public void TestMultiCacheWith3ItemsThen0And2()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new MultiService();
+            var results1 = service.GetItems(new[] { "k1", "k2", "k3" });
+
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(3, cache1.Misses);
+            LinqAssert.Count(results1, 3);
+            LinqAssert.Any(results1, r => r.Id == "k1");
+            LinqAssert.Any(results1, r => r.Id == "k2");
+            LinqAssert.Any(results1, r => r.Id == "k3");
+
+            var results2 = service.GetItems(new[] { "k4", "k5" });
+
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(5, cache1.Misses);
+            LinqAssert.Count(results2, 2);
+            LinqAssert.Any(results2, r => r.Id == "k4");
+            LinqAssert.Any(results2, r => r.Id == "k5");
+        }
     }
 }
