@@ -10,14 +10,14 @@ namespace PubComp.Caching.AopCaching
     {
         private string className;
         private string methodName;
-        private Type[] parameterTypes;
+        private string[] parameterTypeNames;
         private object[] parmaterValues;
 
-        public CacheKey(string className, string methodName, Type[] parameterTypes, object[] parmaterValues)
+        public CacheKey(string className, string methodName, string[] parameterTypeNames, object[] parmaterValues)
         {
             this.className = className ?? string.Empty;
             this.methodName = methodName ?? string.Empty;
-            this.parameterTypes = parameterTypes ?? new Type[0];
+            this.parameterTypeNames = parameterTypeNames ?? new string[0];
             this.parmaterValues = parmaterValues ?? new object[0];
         }
 
@@ -37,11 +37,11 @@ namespace PubComp.Caching.AopCaching
             }
         }
 
-        public string[] ParameterTypes
+        public string[] ParameterTypeNames
         {
             get
             {
-                return this.parameterTypes.Select(t => t.FullName).ToArray();
+                return this.parameterTypeNames;
             }
         }
 
@@ -69,14 +69,14 @@ namespace PubComp.Caching.AopCaching
             if (other.className != this.className)
                 return false;
 
-            if (other.parameterTypes.Length != this.parameterTypes.Length)
+            if (other.parameterTypeNames.Length != this.parameterTypeNames.Length)
                 return false;
 
             if (other.parmaterValues.Length != this.parmaterValues.Length)
                 return false;
 
-            for (int cnt = 0; cnt < this.parameterTypes.Length; cnt++)
-                if (other.parameterTypes[cnt] != this.parameterTypes[cnt])
+            for (int cnt = 0; cnt < this.parameterTypeNames.Length; cnt++)
+                if (other.parameterTypeNames[cnt] != this.parameterTypeNames[cnt])
                     return false;
 
             for (int cnt = 0; cnt < this.parmaterValues.Length; cnt++)
@@ -90,13 +90,13 @@ namespace PubComp.Caching.AopCaching
         {
             var result = this.className.GetHashCode()
                 ^ this.methodName.GetHashCode()
-                ^ this.parameterTypes.Length
+                ^ this.parameterTypeNames.Length
                 ^ (Int32.MaxValue - this.parmaterValues.Length);
 
-            for (int cnt = 0; cnt < this.parameterTypes.Length; cnt++)
+            for (int cnt = 0; cnt < this.parameterTypeNames.Length; cnt++)
             {
-                Type current = this.parameterTypes[cnt];
-                result ^= (current != null ? this.parameterTypes[cnt].GetHashCode() : 0);
+                string current = this.parameterTypeNames[cnt];
+                result ^= (current != null ? this.parameterTypeNames[cnt].GetHashCode() : 0);
             }
 
             for (int cnt = 0; cnt < this.parmaterValues.Length; cnt++)

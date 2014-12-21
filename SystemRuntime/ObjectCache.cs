@@ -24,7 +24,17 @@ namespace PubComp.Caching.SystemRuntime
 
         protected System.Runtime.Caching.CacheItemPolicy Policy { get { return this.policy; } }
 
-        protected virtual bool TryGet<TValue>(String key, out TValue value)
+        public bool TryGet<TValue>(string key, out TValue value)
+        {
+            return TryGetInner<TValue>(key, out value);
+        }
+
+        public void Set<TValue>(string key, TValue value)
+        {
+            Add<TValue>(key, value);
+        }
+
+        protected virtual bool TryGetInner<TValue>(String key, out TValue value)
         {
             Object val = innerCache.Get(key, null);
 
@@ -40,19 +50,19 @@ namespace PubComp.Caching.SystemRuntime
 
         protected virtual void Add<TValue>(String key, TValue value)
         {
-            innerCache.Add(key, value, policy, null);
+            innerCache.Set(key, value, policy, null);
         }
 
         public TValue Get<TValue>(String key, Func<TValue> getter)
         {
             TValue value;
-            
-            if (TryGet(key, out value))
+
+            if (TryGetInner(key, out value))
                 return value;
 
             lock (sync)
             {
-                if (TryGet(key, out value))
+                if (TryGetInner(key, out value))
                     return value;
 
                 value = getter();

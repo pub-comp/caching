@@ -24,6 +24,16 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
             get { return this.policy; }
         }
 
+        public bool TryGet<TValue>(string key, out TValue value)
+        {
+            value = default(TValue);
+            return false;
+        }
+
+        public void Set<TValue>(string key, TValue value)
+        {
+        }
+
         public TValue Get<TValue>(string key, Func<TValue> getter)
         {
             return getter();

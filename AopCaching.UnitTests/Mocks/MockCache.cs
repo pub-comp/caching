@@ -19,6 +19,16 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
         public string Name { get { return this.innerCache.Name; } }
 
+        public bool TryGet<TValue>(string key, out TValue value)
+        {
+            return this.innerCache.TryGet<TValue>(key, out value);
+        }
+
+        public void Set<TValue>(string key, TValue value)
+        {
+            this.innerCache.Set<TValue>(key, value);
+        }
+
         public TValue Get<TValue>(string key, Func<TValue> getter)
         {
             return this.innerCache.Get<TValue>(key, getter);
@@ -49,7 +59,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             {
             }
 
-            protected override bool TryGet<TValue>(string key, out TValue value)
+            protected override bool TryGetInner<TValue>(string key, out TValue value)
             {
                 Object val = InnerCache.Get(key, null);
 

@@ -55,7 +55,9 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
-    <Compile Include="Cache.cs" />
+    <Compile Include="CacheListAttribute.cs" />
+    <Compile Include="CacheAttribute.cs" />
+    <Compile Include="IDataKeyConverter.cs" />
     <Compile Include="CacheKey.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

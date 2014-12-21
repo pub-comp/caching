@@ -28,7 +28,7 @@ namespace PubComp.Caching.SystemRuntime
         {
         }
 
-        protected override bool TryGet<TValue>(string key, out TValue value)
+        protected override bool TryGetInner<TValue>(string key, out TValue value)
         {
             object val = InnerCache.Get(key, null);
 

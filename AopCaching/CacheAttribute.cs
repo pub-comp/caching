@@ -6,18 +6,21 @@ using PubComp.Caching.Core;
 namespace PubComp.Caching.AopCaching
 {
     [Serializable]
-    public class Cache : MethodInterceptionAspect
+    public class CacheAttribute : MethodInterceptionAspect
     {
         private string cacheName;
         private ICache cache;
         private volatile bool wasInitialized;
         private object sync = new object();
+        private string className;
+        private string methodName;
+        private string[] parameterTypeNames;
 
-        public Cache()
+        public CacheAttribute()
         {
         }
 
-        public Cache(string cacheName)
+        public CacheAttribute(string cacheName)
         {
             this.cacheName = cacheName;
         }
@@ -39,6 +42,10 @@ namespace PubComp.Caching.AopCaching
         {
             if (this.cacheName == null)
                 this.cacheName = method.DeclaringType.FullName;
+
+            this.className = method.DeclaringType.FullName;
+            this.methodName = method.Name;
+            this.parameterTypeNames = method.GetParameters().Select(p => p.ParameterType.FullName).ToArray();
         }
 
         public override void OnInvoke(MethodInterceptionArgs args)
@@ -54,12 +61,9 @@ namespace PubComp.Caching.AopCaching
                 return;
             }
 
-            var className = args.Method.DeclaringType.FullName;
-            var methodName = args.Method.Name;
-            var parameterTypes = args.Method.GetParameters().Select(p => p.ParameterType).ToArray();
             var parameterValues = args.Arguments.ToArray();
 
-            var key = new CacheKey(className, methodName, parameterTypes, parameterValues).ToString();
+            var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues).ToString();
 
             args.ReturnValue = cacheToUse.Get<object>(key, () => { base.OnInvoke(args); return args.ReturnValue; });
         }
