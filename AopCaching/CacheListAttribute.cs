@@ -90,10 +90,10 @@ namespace PubComp.Caching.AopCaching
             if (!TryGetKeyDataTypes(this.dataKeyConverterType, out keyType, out dataType))
             {
                 PostSharp.Extensibility.Message.Write(
+                    PostSharp.MessageLocation.Of(method),
                     PostSharp.Extensibility.SeverityType.Error,
                     "Custom01",
-                    "The type provided does not implement IDataKeyConverter<TKey, TData>.",
-                    method);
+                    "The type provided does not implement IDataKeyConverter<TKey, TData>.");
                 
                 return false;
             }
@@ -101,10 +101,10 @@ namespace PubComp.Caching.AopCaching
             if (this.dataKeyConverterType.IsAbstract || this.dataKeyConverterType.GetConstructor(new Type[0]) == null)
             {
                 PostSharp.Extensibility.Message.Write(
+                    PostSharp.MessageLocation.Of(method),
                     PostSharp.Extensibility.SeverityType.Error,
                     "Custom01",
-                    string.Format("{0} is abstract or does not have a public parameter-less constructor", this.dataKeyConverterType.FullName),
-                    method);
+                    string.Format("{0} is abstract or does not have a public parameter-less constructor", this.dataKeyConverterType.FullName));
 
                 return false;
             }
@@ -115,10 +115,10 @@ namespace PubComp.Caching.AopCaching
             if (method.GetParameters().Length <= this.keyParameterNumber)
             {
                 PostSharp.Extensibility.Message.Write(
+                    PostSharp.MessageLocation.Of(method),
                     PostSharp.Extensibility.SeverityType.Error,
                     "Custom01",
-                    string.Format("The method {0} does not have a parameter {1}.", method.Name, this.keyParameterNumber),
-                    method);
+                    string.Format("The method {0} does not have a parameter {1}.", method.Name, this.keyParameterNumber));
                 
                 return false;
             }
@@ -127,10 +127,10 @@ namespace PubComp.Caching.AopCaching
             if (keysParameterType != keyIListType)
             {
                 PostSharp.Extensibility.Message.Write(
+                    PostSharp.MessageLocation.Of(method),
                     PostSharp.Extensibility.SeverityType.Error,
                     "Custom01",
-                    string.Format("The parameter {1} of method {0} != IList<TKey>.", method.Name, this.keyParameterNumber),
-                    method);
+                    string.Format("The parameter {1} of method {0} != IList<TKey>.", method.Name, this.keyParameterNumber));
                 
                 return false;
             }
@@ -139,10 +139,10 @@ namespace PubComp.Caching.AopCaching
             if (methodInfo == null || methodInfo.ReturnType == null)
             {
                 PostSharp.Extensibility.Message.Write(
+                    PostSharp.MessageLocation.Of(method),
                     PostSharp.Extensibility.SeverityType.Error,
                     "Custom01",
-                    string.Format("The method {0} has no return type.", method.Name),
-                    method);
+                    string.Format("The method {0} has no return type.", method.Name));
                 
                 return false;
             }
@@ -151,10 +151,10 @@ namespace PubComp.Caching.AopCaching
             if (returnType != dataIListType)
             {
                 PostSharp.Extensibility.Message.Write(
+                    PostSharp.MessageLocation.Of(method),
                     PostSharp.Extensibility.SeverityType.Error,
                     "Custom01",
-                    string.Format("The return type of method {0} != IList<TData>.", method.Name),
-                    method);
+                    string.Format("The return type of method {0} != IList<TData>.", method.Name));
                 
                 return false;
             }
