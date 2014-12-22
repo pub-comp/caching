@@ -17,6 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemRuntime.UnitTests", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8C86540A-D5BD-4123-B01A-CFE26213261C}"
 	ProjectSection(SolutionItems) = preProject
+		.tfignore = .tfignore
 		VersionHistory.txt = VersionHistory.txt
 		VersionInfo.cs = VersionInfo.cs
 	EndProjectSection
