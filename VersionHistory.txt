@@ -1,2 +1,5 @@
 1.0.0:
 	* Initial
+1.0.1:
+	* Improved CacheAttribute initialization
+	* Fixed CacheManager registration of cache with any name ("*" with no-prefix) not working

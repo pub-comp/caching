@@ -106,7 +106,7 @@ namespace PubComp.Caching.Core
             var cachesSorted = cachesArray.OrderByDescending(c => c.Key.GetMatchLevel(name));
             var cache = cachesSorted.FirstOrDefault();
 
-            return (cache.Key.GetMatchLevel(name) > 0) ? cache.Value : null;
+            return (cache.Key.Prefix != null && cache.Key.GetMatchLevel(name) >= cache.Key.Prefix.Length) ? cache.Value : null;
         }
 
         private class CacheComparer : IEqualityComparer<ICache>

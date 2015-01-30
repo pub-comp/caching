@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using PostSharp.Aspects;
 using PubComp.Caching.Core;
 
@@ -10,8 +11,8 @@ namespace PubComp.Caching.AopCaching
     {
         private string cacheName;
         private ICache cache;
-        private volatile bool wasInitialized;
-        private object sync = new object();
+        private long initialized = 0L;
+        private object syncObj = new Object();
         private string className;
         private string methodName;
         private string[] parameterTypeNames;
@@ -23,19 +24,6 @@ namespace PubComp.Caching.AopCaching
         public CacheAttribute(string cacheName)
         {
             this.cacheName = cacheName;
-        }
-
-        private void Initialize()
-        {
-            lock (sync)
-            {
-                if (wasInitialized)
-                    return;
-
-                var cacheToUse = CacheManager.GetCache(this.cacheName);
-                this.cache = cacheToUse;
-                wasInitialized = true;
-            }
         }
 
         public override void CompileTimeInitialize(System.Reflection.MethodBase method, AspectInfo aspectInfo)
@@ -50,8 +38,11 @@ namespace PubComp.Caching.AopCaching
 
         public override void OnInvoke(MethodInterceptionArgs args)
         {
-            if (!wasInitialized)
-                Initialize();
+            if (Interlocked.Read(ref initialized) == 0L)
+            {
+                this.cache = CacheManager.GetCache(this.cacheName);
+                Interlocked.Exchange(ref initialized, 1L);
+            }
 
             var cacheToUse = this.cache;
 
