@@ -3,3 +3,5 @@
 1.0.1:
 	* Improved CacheAttribute initialization
 	* Fixed CacheManager registration of cache with any name ("*" with no-prefix) not working
+1.0.2:
+	* Removed unused field from aspect classes.

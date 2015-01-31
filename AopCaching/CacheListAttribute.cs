@@ -15,7 +15,6 @@ namespace PubComp.Caching.AopCaching
         private string cacheName;
         private ICache cache;
         private long initialized = 0L;
-        private object syncObj = new Object();
         private string className;
         private string methodName;
         private string[] parameterTypeNames;
