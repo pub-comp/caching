@@ -160,5 +160,37 @@ namespace PubComp.Caching.AopCaching.UnitTests
             LinqAssert.Any(results2, r => r.Id == "k4");
             LinqAssert.Any(results2, r => r.Id == "k5");
         }
+
+        [TestMethod]
+        public void TestDoNotIncludeInCacheKey()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new MultiService();
+            IList<MockData> results;
+
+            results = service.GetItems(new[] { "a", "b", "c" }, new MockObject(1111));
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(3, cache1.Misses);
+            Assert.AreEqual(3, results.Count);
+            Assert.AreEqual("a", results[0].Id);
+            Assert.AreEqual("a1111", results[0].Value);
+            Assert.AreEqual("b", results[1].Id);
+            Assert.AreEqual("b1111", results[1].Value);
+            Assert.AreEqual("c", results[2].Id);
+            Assert.AreEqual("c1111", results[2].Value);
+
+            results = service.GetItems(new[] { "a", "b", "d" }, new MockObject(2222));
+            Assert.AreEqual(2, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+            Assert.AreEqual(3, results.Count);
+            Assert.AreEqual("a", results[0].Id);
+            Assert.AreEqual("a1111", results[0].Value);
+            Assert.AreEqual("b", results[1].Id);
+            Assert.AreEqual("b1111", results[1].Value);
+            Assert.AreEqual("d", results[2].Id);
+            Assert.AreEqual("d2222", results[2].Value);
+        }
     }
 }

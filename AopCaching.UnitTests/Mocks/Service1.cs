@@ -36,5 +36,11 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
 
             return new[] { st, st, st };
         }
+
+        [Cache]
+        public string MethodToCache1(int id, [DoNotIncludeInCacheKey]object obj)
+        {
+            return id.ToString() + (obj != null ? obj.GetHashCode() : 0).ToString();
+        }
     }
 }

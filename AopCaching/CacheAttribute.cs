@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using PostSharp.Aspects;
 using PubComp.Caching.Core;
+using System.Collections.Generic;
 
 namespace PubComp.Caching.AopCaching
 {
@@ -15,6 +16,7 @@ namespace PubComp.Caching.AopCaching
         private string className;
         private string methodName;
         private string[] parameterTypeNames;
+        private int[] indexesNotToCache;
 
         public CacheAttribute()
         {
@@ -32,7 +34,22 @@ namespace PubComp.Caching.AopCaching
 
             this.className = method.DeclaringType.FullName;
             this.methodName = method.Name;
-            this.parameterTypeNames = method.GetParameters().Select(p => p.ParameterType.FullName).ToArray();
+            var parameters = method.GetParameters();
+            this.parameterTypeNames = parameters.Select(p => p.ParameterType.FullName).ToArray();
+
+            var indexes = new List<int>();
+
+            for (int cnt = 0; cnt < parameters.Length; cnt++)
+            {
+                var doNotIncludeInCacheKey =
+                    parameters[cnt].CustomAttributes
+                        .Any(a => a.GetType() == typeof(DoNotIncludeInCacheKeyAttribute));
+
+                if (doNotIncludeInCacheKey)
+                    indexes.Add(cnt);
+            }
+
+            this.indexesNotToCache = indexes.ToArray();
         }
 
         public override void OnInvoke(MethodInterceptionArgs args)
@@ -51,7 +68,7 @@ namespace PubComp.Caching.AopCaching
                 return;
             }
 
-            var parameterValues = args.Arguments.ToArray();
+            var parameterValues = args.Arguments.Where((arg, index) => !this.indexesNotToCache.Contains(index)).ToArray();
 
             var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues).ToString();
 

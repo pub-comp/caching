@@ -98,5 +98,30 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual(4, cache2.Misses);
             LinqAssert.AreSame(new[] { "1", "2" }, result);
         }
+
+        [TestMethod]
+        public void TestDoNotIncludeInCacheKey()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new Service1();
+            string result;
+
+            result = service.MethodToCache1(11, new MockObject(1111));
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+            Assert.AreEqual("111111", result);
+
+            result = service.MethodToCache1(11, new MockObject(2222));
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+            Assert.AreEqual("111111", result);
+
+            result = service.MethodToCache1(22, new MockObject(2222));
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+            Assert.AreEqual("222222", result);
+        }
     }
 }

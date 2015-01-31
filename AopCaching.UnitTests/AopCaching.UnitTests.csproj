@@ -69,6 +69,7 @@
     </Compile>
     <Compile Include="AopMultiCacheTests.cs" />
     <Compile Include="Mocks\MockCache.cs" />
+    <Compile Include="Mocks\MockObject.cs" />
     <Compile Include="Mocks\MultiService.cs" />
     <Compile Include="Mocks\Service2.cs" />
     <Compile Include="Mocks\Service1.cs" />

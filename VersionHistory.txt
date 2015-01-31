@@ -5,3 +5,8 @@
 	* Fixed CacheManager registration of cache with any name ("*" with no-prefix) not working
 1.0.2:
 	* Removed unused field from aspect classes.
+1.1.0:
+	* Added DoNotIncludeInCacheKeyAttribute for marking specific parameters so that their values will not be a part of the key,
+	  Example of usages:
+	    a. Do not use a dbContext as part of a cache key.
+		b. Cache using object ID, not object value.
