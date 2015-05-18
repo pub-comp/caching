@@ -3,11 +3,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{37A614F4-EEA4-4643-9B33-21A1776366E8}</ProjectGuid>
+    <ProjectGuid>{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PubComp.Caching.Core.UnitTests</RootNamespace>
-    <AssemblyName>PubComp.Caching.Core.UnitTests</AssemblyName>
+    <RootNamespace>PubComp.Caching.MongoDbCaching.UnitTests</RootNamespace>
+    <AssemblyName>PubComp.Caching.MongoDbCaching.UnitTests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -39,16 +39,28 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.6.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="MongoDB.Bson">
+      <HintPath>..\packages\MongoDB.Bson.2.0.0\lib\net45\MongoDB.Bson.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver">
+      <HintPath>..\packages\MongoDB.Driver.2.0.0\lib\net45\MongoDB.Driver.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver.Core">
+      <HintPath>..\packages\MongoDB.Driver.Core.2.0.0\lib\net45\MongoDB.Driver.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver.Legacy">
+      <HintPath>..\packages\mongocsharpdriver.2.0.0\lib\net45\MongoDB.Driver.Legacy.dll</HintPath>
+    </Reference>
+    <Reference Include="PubComp.NoSql.Core">
+      <HintPath>..\packages\PubComp.NoSql.Core.3.1.0\lib\net45\PubComp.NoSql.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="PubComp.NoSql.MongoDbDriver">
+      <HintPath>..\packages\PubComp.NoSql.MongoDbDriver.3.2.0\lib\net45\PubComp.NoSql.MongoDbDriver.dll</HintPath>
     </Reference>
     <Reference Include="PubComp.Testing.TestingUtils">
       <HintPath>..\packages\PubComp.Testing.TestingUtils.1.0.0\lib\net45\PubComp.Testing.TestingUtils.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Runtime.Caching" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -66,27 +78,25 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
-    <Compile Include="CacheConfigFileTests.cs" />
-    <Compile Include="CacheConfigTests.cs" />
-    <Compile Include="CacheManagerTests.cs" />
-    <Compile Include="CacheTestTools.cs" />
-    <Compile Include="Mocks\MockCache.cs" />
-    <Compile Include="Mocks\MockCacheConfig.cs" />
-    <Compile Include="NoCacheTests.cs" />
+    <Compile Include="MongoDbCacheTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Core.UnitTests\Core.UnitTests.csproj">
+      <Project>{37a614f4-eea4-4643-9b33-21a1776366e8}</Project>
+      <Name>Core.UnitTests</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Core\Core.csproj">
       <Project>{57585b9a-7003-461a-b812-ca48603c839f}</Project>
       <Name>Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MongoDbCaching\MongoDbCaching.csproj">
+      <Project>{7443dbd0-65db-4bbe-a1e7-d8bc0c55f2f5}</Project>
+      <Name>MongoDbCaching</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="TestingUtils.Readme.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

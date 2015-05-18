@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{F9ED87DD-4AC8-48D7-BAF0-EDB8992EC937}</ProjectGuid>
+    <ProjectGuid>{7443DBD0-65DB-4BBE-A1E7-D8BC0C55F2F5}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PubComp.Caching.SystemRuntime</RootNamespace>
-    <AssemblyName>PubComp.Caching.SystemRuntime</AssemblyName>
+    <RootNamespace>PubComp.Caching.MongoDbCaching</RootNamespace>
+    <AssemblyName>PubComp.Caching.MongoDbCaching</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>SAK</SccProjectName>
@@ -34,13 +34,28 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+    <Reference Include="MongoDB.Bson">
+      <HintPath>..\packages\MongoDB.Bson.2.0.0\lib\net45\MongoDB.Bson.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver">
+      <HintPath>..\packages\MongoDB.Driver.2.0.0\lib\net45\MongoDB.Driver.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver.Core">
+      <HintPath>..\packages\MongoDB.Driver.Core.2.0.0\lib\net45\MongoDB.Driver.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver.Legacy">
+      <HintPath>..\packages\mongocsharpdriver.2.0.0\lib\net45\MongoDB.Driver.Legacy.dll</HintPath>
+    </Reference>
+    <Reference Include="PubComp.NoSql.Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.6.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\PubComp.NoSql.Core.3.1.0\lib\net45\PubComp.NoSql.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="PubComp.NoSql.MongoDbDriver, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\PubComp.NoSql.MongoDbDriver.3.2.0\lib\net45\PubComp.NoSql.MongoDbDriver.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Runtime.Caching" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -51,12 +66,12 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
-    <Compile Include="InMemoryPolicy.cs" />
-    <Compile Include="InMemorySerializedCacheConfig.cs" />
-    <Compile Include="InMemoryCacheConfig.cs" />
-    <Compile Include="ObjectCache.cs" />
-    <Compile Include="InMemorySerializedCache.cs" />
-    <Compile Include="InMemoryCache.cs" />
+    <Compile Include="CacheItem.cs" />
+    <Compile Include="ICacheContext.cs" />
+    <Compile Include="CacheContext.cs" />
+    <Compile Include="MongoDbCacheConfig.cs" />
+    <Compile Include="MongoDbCache.cs" />
+    <Compile Include="MongoDbCachePolicy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

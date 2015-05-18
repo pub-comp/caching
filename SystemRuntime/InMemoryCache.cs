@@ -5,14 +5,14 @@ namespace PubComp.Caching.SystemRuntime
 {
     public class InMemoryCache : ObjectCache
     {
-        public InMemoryCache(String name, System.Runtime.Caching.CacheItemPolicy policy)
+        public InMemoryCache(String name, InMemoryPolicy policy)
             : base(name, new System.Runtime.Caching.MemoryCache(name), policy)
         {
         }
 
         public InMemoryCache(String name, TimeSpan slidingExpiration)
             : this(name,
-                new System.Runtime.Caching.CacheItemPolicy
+                new InMemoryPolicy
                 {
                     SlidingExpiration = slidingExpiration
                 })
@@ -21,7 +21,7 @@ namespace PubComp.Caching.SystemRuntime
 
         public InMemoryCache(String name, DateTimeOffset absoluteExpiration)
             : this(name,
-                new System.Runtime.Caching.CacheItemPolicy
+                new InMemoryPolicy
                 {
                     AbsoluteExpiration = absoluteExpiration
                 })

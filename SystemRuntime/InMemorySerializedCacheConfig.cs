@@ -5,7 +5,7 @@ namespace PubComp.Caching.SystemRuntime
 {
     public class InMemorySerializedCacheConfig : CacheConfig
     {
-        public CacheItemPolicy Policy { get; set; }
+        public InMemoryPolicy Policy { get; set; }
 
         public override ICache CreateCache()
         {

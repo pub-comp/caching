@@ -10,3 +10,8 @@
 	  Example of usages:
 	    a. Do not use a dbContext as part of a cache key.
 		b. Cache using object ID, not object value.
+1.2.0-beta:
+	* Change policy for InMemoryCache to InMemoryPolicy enabling AbsoluteExpiration, ExpirationFromAdd, SlidingExpiration
+	* Added MongoDb based distributed cache with the above policy options
+	* Release version will use the same policy property names for the InMemoryCache and the MongoDbCache
+	and move expiration indexing code into the MongoDb adaptor infrastructure

@@ -1,60 +1,77 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PubComp.Caching.SystemRuntime;
 using PubComp.Testing.TestingUtils;
 using PubComp.Caching.Core.UnitTests;
 
-namespace PubComp.Caching.SystemRuntime.UnitTests
+namespace PubComp.Caching.MongoDbCaching.UnitTests
 {
     [TestClass]
-    public class InMemoryCacheTests
+    public class MongoDbCacheTests
     {
         [TestMethod]
         public void TestInMemoryCacheStruct()
         {
-            var cache = new InMemoryCache("cache1", new TimeSpan(0, 2, 0));
+            var cache = new MongoDbCache(
+                "cache1",
+                new MongoDbCachePolicy
+                {
+                    DatabaseName = "TestCacheDb",
+                });
 
-            int hits = 0;
+            int misses = 0;
 
-            Func<int> getter = () => { hits++; return hits; };
+            Func<int> getter = () => { misses++; return misses; };
 
             int result;
 
             result = cache.Get("key", getter);
-            Assert.AreEqual(1, hits);
+            Assert.AreEqual(1, misses);
             Assert.AreEqual(1, result);
 
             result = cache.Get("key", getter);
-            Assert.AreEqual(1, hits);
+            Assert.AreEqual(1, misses);
             Assert.AreEqual(1, result);
         }
 
         [TestMethod]
         public void TestInMemoryCacheObject()
         {
-            var cache = new InMemoryCache("cache1", new TimeSpan(0, 2, 0));
+            var cache = new MongoDbCache(
+                "cache1",
+                new MongoDbCachePolicy
+                {
+                    DatabaseName = "TestCacheDb",
+                });
 
-            int hits = 0;
+            int misses = 0;
 
-            Func<string> getter = () => { hits++; return hits.ToString(); };
+            Func<string> getter = () => { misses++; return misses.ToString(); };
 
             string result;
 
             result = cache.Get("key", getter);
-            Assert.AreEqual(1, hits);
+            Assert.AreEqual(1, misses);
             Assert.AreEqual("1", result);
 
             result = cache.Get("key", getter);
-            Assert.AreEqual(1, hits);
+            Assert.AreEqual(1, misses);
             Assert.AreEqual("1", result);
         }
 
         [TestMethod]
         public void TestInMemoryCacheObjectMutated()
         {
-            var cache = new InMemoryCache("cache1", new TimeSpan(0, 2, 0));
+            var cache = new MongoDbCache(
+                "cache1",
+                new MongoDbCachePolicy
+                {
+                    DatabaseName = "TestCacheDb",
+                });
+
+            cache.ClearAll();
 
             List<string> value = new List<string> { "1" };
 
@@ -68,7 +85,7 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             value.Add("2");
 
             result = cache.Get("key", getter);
-            LinqAssert.AreSame(new object[] { "1", "2" }, result);
+            LinqAssert.AreSame(new object[] { "1" }, result);
         }
 
         [TestMethod]
@@ -80,11 +97,13 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             var stopwatch = new Stopwatch();
             Func<string> getter = () => { misses++; return misses.ToString(); };
 
-            var cache = new InMemoryCache(
+            var cache = new MongoDbCache(
                 "insert-expire-cache",
-                new InMemoryPolicy
+                new MongoDbCachePolicy
                 {
-                    ExpirationFromAdd = TimeSpan.FromSeconds(ttl),
+                    DatabaseName = "TestCacheDb",
+                    UseSlidingExpiration = false,
+                    ExpireWithin = TimeSpan.FromSeconds(ttl),
                 });
             cache.ClearAll();
 
@@ -116,11 +135,13 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             var stopwatch = new Stopwatch();
             Func<string> getter = () => { misses++; return misses.ToString(); };
 
-            var cache = new InMemoryCache(
+            var cache = new MongoDbCache(
                 "sliding-expire-cache",
-                new InMemoryPolicy
+                new MongoDbCachePolicy
                 {
-                    SlidingExpiration = TimeSpan.FromSeconds(ttl),
+                    DatabaseName = "TestCacheDb",
+                    UseSlidingExpiration = true,
+                    ExpireWithin = TimeSpan.FromSeconds(ttl),
                 });
             cache.ClearAll();
 
@@ -156,11 +177,12 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             var expireAt = DateTime.Now.AddSeconds(ttl);
             stopwatch.Start();
 
-            var cache = new InMemoryCache(
+            var cache = new MongoDbCache(
                 "constant-expire",
-                new InMemoryPolicy
+                new MongoDbCachePolicy
                 {
-                    AbsoluteExpiration = expireAt,
+                    DatabaseName = "TestCacheDb",
+                    ExpireAt = expireAt,
                 });
             cache.ClearAll();
 

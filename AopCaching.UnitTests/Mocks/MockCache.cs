@@ -52,7 +52,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             public MockCacheInner(string name)
                 : base(name, new System.Runtime.Caching.MemoryCache(name),
-                    new System.Runtime.Caching.CacheItemPolicy
+                    new InMemoryPolicy
                     {
                         SlidingExpiration = new TimeSpan(0, 2, 0)
                     })

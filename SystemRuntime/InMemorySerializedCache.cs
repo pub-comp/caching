@@ -5,14 +5,14 @@ namespace PubComp.Caching.SystemRuntime
 {
     public class InMemorySerializedCache : ObjectCache
     {
-        public InMemorySerializedCache(String name, System.Runtime.Caching.CacheItemPolicy policy)
+        public InMemorySerializedCache(String name, InMemoryPolicy policy)
             : base(name, new System.Runtime.Caching.MemoryCache(name), policy)
         {
         }
 
         public InMemorySerializedCache(String name, TimeSpan slidingExpiration)
             : this(name,
-                new System.Runtime.Caching.CacheItemPolicy
+                new InMemoryPolicy
                 {
                     SlidingExpiration = slidingExpiration
                 })
@@ -21,7 +21,7 @@ namespace PubComp.Caching.SystemRuntime
 
         public InMemorySerializedCache(String name, DateTimeOffset absoluteExpiration)
             : this(name,
-                new System.Runtime.Caching.CacheItemPolicy
+                new InMemoryPolicy
                 {
                     AbsoluteExpiration = absoluteExpiration
                 })
@@ -53,7 +53,7 @@ namespace PubComp.Caching.SystemRuntime
                     Culture = System.Globalization.CultureInfo.InvariantCulture,
                 });
 
-            InnerCache.Add(key, val, Policy, null);
+            InnerCache.Add(key, val, ToRuntimePolicy(Policy), null);
         }
     }
 }

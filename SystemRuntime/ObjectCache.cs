@@ -8,10 +8,10 @@ namespace PubComp.Caching.SystemRuntime
         private readonly String name;
         private System.Runtime.Caching.ObjectCache innerCache;
         private readonly Object sync = new Object();
-        private readonly System.Runtime.Caching.CacheItemPolicy policy;
+        private readonly InMemoryPolicy policy;
 
         protected ObjectCache(
-            String name, System.Runtime.Caching.ObjectCache innerCache, System.Runtime.Caching.CacheItemPolicy policy)
+            String name, System.Runtime.Caching.ObjectCache innerCache, InMemoryPolicy policy)
         {
             this.name = name;
             this.policy = policy;
@@ -22,7 +22,7 @@ namespace PubComp.Caching.SystemRuntime
 
         protected System.Runtime.Caching.ObjectCache InnerCache { get { return this.innerCache; } }
 
-        protected System.Runtime.Caching.CacheItemPolicy Policy { get { return this.policy; } }
+        protected InMemoryPolicy Policy { get { return this.policy; } }
 
         public bool TryGet<TValue>(string key, out TValue value)
         {
@@ -50,7 +50,24 @@ namespace PubComp.Caching.SystemRuntime
 
         protected virtual void Add<TValue>(String key, TValue value)
         {
-            innerCache.Set(key, value, policy, null);
+            innerCache.Set(key, value, ToRuntimePolicy(policy), null);
+        }
+
+        protected System.Runtime.Caching.CacheItemPolicy ToRuntimePolicy(InMemoryPolicy policy)
+        {
+            var absoluteExpiration =
+                (policy.ExpirationFromAdd != System.Runtime.Caching.ObjectCache.NoSlidingExpiration)
+                ? DateTimeOffset.Now.Add(policy.ExpirationFromAdd)
+                : System.Runtime.Caching.ObjectCache.InfiniteAbsoluteExpiration;
+
+            if (absoluteExpiration > policy.AbsoluteExpiration)
+                absoluteExpiration = policy.AbsoluteExpiration;
+
+            return new System.Runtime.Caching.CacheItemPolicy
+            {
+                AbsoluteExpiration = absoluteExpiration,
+                SlidingExpiration = policy.SlidingExpiration,
+            };
         }
 
         public TValue Get<TValue>(String key, Func<TValue> getter)

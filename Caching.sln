@@ -39,9 +39,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AopCaching.NuGet", "AopCach
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemRuntime.NuGet", "SystemRuntime.NuGet\SystemRuntime.NuGet.csproj", "{C90A075A-F097-4C54-A239-67D8F9718CE0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbCaching", "MongoDbCaching\MongoDbCaching.csproj", "{7443DBD0-65DB-4BBE-A1E7-D8BC0C55F2F5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbCaching.UnitTests", "MongoDbCaching.UnitTests\MongoDbCaching.UnitTests.csproj", "{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}"
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 10
+		SccNumberOfProjects = 12
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs27
 		SccLocalPath0 = .
@@ -72,6 +76,12 @@ Global
 		SccProjectUniqueName9 = SystemRuntime.NuGet\\SystemRuntime.NuGet.csproj
 		SccProjectName9 = SystemRuntime.NuGet
 		SccLocalPath9 = SystemRuntime.NuGet
+		SccProjectUniqueName10 = MongoDbCaching\\MongoDbCaching.csproj
+		SccProjectName10 = MongoDbCaching
+		SccLocalPath10 = MongoDbCaching
+		SccProjectUniqueName11 = MongoDbCaching.UnitTests\\MongoDbCaching.UnitTests.csproj
+		SccProjectName11 = MongoDbCaching.UnitTests
+		SccLocalPath11 = MongoDbCaching.UnitTests
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -114,6 +124,14 @@ Global
 		{C90A075A-F097-4C54-A239-67D8F9718CE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C90A075A-F097-4C54-A239-67D8F9718CE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C90A075A-F097-4C54-A239-67D8F9718CE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7443DBD0-65DB-4BBE-A1E7-D8BC0C55F2F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7443DBD0-65DB-4BBE-A1E7-D8BC0C55F2F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7443DBD0-65DB-4BBE-A1E7-D8BC0C55F2F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7443DBD0-65DB-4BBE-A1E7-D8BC0C55F2F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
