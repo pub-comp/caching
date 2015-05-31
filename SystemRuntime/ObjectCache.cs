@@ -53,20 +53,37 @@ namespace PubComp.Caching.SystemRuntime
             innerCache.Set(key, value, ToRuntimePolicy(policy), null);
         }
 
+        // ReSharper disable once ParameterHidesMember
         protected System.Runtime.Caching.CacheItemPolicy ToRuntimePolicy(InMemoryPolicy policy)
         {
-            var absoluteExpiration =
-                (policy.ExpirationFromAdd != System.Runtime.Caching.ObjectCache.NoSlidingExpiration)
-                ? DateTimeOffset.Now.Add(policy.ExpirationFromAdd)
-                : System.Runtime.Caching.ObjectCache.InfiniteAbsoluteExpiration;
+            TimeSpan slidingExpiration;
+            DateTimeOffset absoluteExpiration;
 
-            if (absoluteExpiration > policy.AbsoluteExpiration)
-                absoluteExpiration = policy.AbsoluteExpiration;
+            if (policy.SlidingExpiration != null && policy.SlidingExpiration.Value < TimeSpan.MaxValue)
+            {
+                absoluteExpiration = System.Runtime.Caching.ObjectCache.InfiniteAbsoluteExpiration;
+                slidingExpiration = policy.SlidingExpiration.Value;                
+            }
+            else if (policy.ExpirationFromAdd != null && policy.ExpirationFromAdd.Value < TimeSpan.MaxValue)
+            {
+                absoluteExpiration = DateTimeOffset.Now.Add(policy.ExpirationFromAdd.Value);
+                slidingExpiration = System.Runtime.Caching.ObjectCache.NoSlidingExpiration;
+            }
+            else if (policy.AbsoluteExpiration != null && policy.AbsoluteExpiration.Value < DateTimeOffset.MaxValue)
+            {
+                absoluteExpiration = policy.AbsoluteExpiration.Value;
+                slidingExpiration = System.Runtime.Caching.ObjectCache.NoSlidingExpiration;
+            }
+            else
+            {
+                absoluteExpiration = System.Runtime.Caching.ObjectCache.InfiniteAbsoluteExpiration;
+                slidingExpiration = System.Runtime.Caching.ObjectCache.NoSlidingExpiration;
+            }
 
             return new System.Runtime.Caching.CacheItemPolicy
             {
                 AbsoluteExpiration = absoluteExpiration,
-                SlidingExpiration = policy.SlidingExpiration,
+                SlidingExpiration = slidingExpiration,
             };
         }
 

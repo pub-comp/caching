@@ -60,7 +60,6 @@
     <Compile Include="CacheAttribute.cs" />
     <Compile Include="DoNotIncludeInCacheKeyAttribute.cs" />
     <Compile Include="IDataKeyConverter.cs" />
-    <Compile Include="CacheKey.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

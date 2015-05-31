@@ -6,7 +6,7 @@ using System.Reflection;
 [assembly: AssemblyFileVersion("1.2.0.0")]
 
 #if DEBUG
-[assembly: AssemblyInformationalVersion("1.2.0-alpha")]
+[assembly: AssemblyInformationalVersion("1.2.0")]
 #else
-    [assembly: AssemblyInformationalVersion("1.2.0-beta")]
+    [assembly: AssemblyInformationalVersion("1.2.0")]
 #endif

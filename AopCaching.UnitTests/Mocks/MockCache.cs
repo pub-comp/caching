@@ -54,7 +54,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
                 : base(name, new System.Runtime.Caching.MemoryCache(name),
                     new InMemoryPolicy
                     {
-                        SlidingExpiration = new TimeSpan(0, 2, 0)
+                        SlidingExpiration = new TimeSpan(0, 2, 0),
                     })
             {
             }

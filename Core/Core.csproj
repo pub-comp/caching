@@ -51,7 +51,9 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="CacheKey.cs" />
     <Compile Include="ConfigAction.cs" />
+    <Compile Include="LambdaKeyGenerator.cs" />
     <Compile Include="NoCacheConfig.cs" />
     <Compile Include="CacheConfig.cs" />
     <Compile Include="CacheConfigurationHandler.cs" />

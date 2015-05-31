@@ -1,7 +1,6 @@
 ﻿using System;
 using PubComp.Caching.Core;
 using PubComp.NoSql.MongoDbDriver;
-using PubComp.NoSql.Core;
 
 namespace PubComp.Caching.MongoDbCaching
 {
@@ -26,9 +25,32 @@ namespace PubComp.Caching.MongoDbCaching
             
             this.cacheCollectionName = cacheCollectionName;
 
-            this.useSlidingExpiration = policy.UseSlidingExpiration;
-            this.expireWithin = policy.ExpireWithin;
-            this.expireAt = policy.ExpireAt;
+            if (policy.SlidingExpiration.HasValue && policy.SlidingExpiration.Value < TimeSpan.MaxValue)
+            {
+                this.expireWithin = policy.SlidingExpiration.Value;
+                this.useSlidingExpiration = true;
+                this.expireAt = null;
+            }
+            else if (policy.ExpirationFromAdd.HasValue && policy.ExpirationFromAdd.Value < TimeSpan.MaxValue)
+            {
+                this.expireWithin = policy.ExpirationFromAdd.Value;
+                this.useSlidingExpiration = false;
+                this.expireAt = null;
+            }
+            else if (policy.AbsoluteExpiration.HasValue && policy.AbsoluteExpiration.Value < DateTimeOffset.MaxValue)
+            {
+                this.expireWithin = null;
+                this.useSlidingExpiration = false;
+                this.expireAt = policy.AbsoluteExpiration.Value.LocalDateTime;
+            }
+            else
+            {
+                this.expireWithin = null;
+                this.useSlidingExpiration = false;
+                this.expireAt = null;
+            }
+
+            this.useSlidingExpiration = (policy.SlidingExpiration < TimeSpan.MaxValue);
         }
 
         public string Name { get { return this.cacheCollectionName; } }
@@ -103,12 +125,12 @@ namespace PubComp.Caching.MongoDbCaching
 
         public bool TryGet<TValue>(string key, out TValue value)
         {
-            return TryGetInner<TValue>(key, out value);
+            return TryGetInner(key, out value);
         }
 
         public void Set<TValue>(string key, TValue value)
         {
-            Add<TValue>(key, value);
+            Add(key, value);
         }
 
         protected virtual bool TryGetInner<TValue>(String key, out TValue value)
@@ -138,7 +160,7 @@ namespace PubComp.Caching.MongoDbCaching
             }
         }
 
-        public TValue Get<TValue>(string key, System.Func<TValue> getter)
+        public TValue Get<TValue>(string key, Func<TValue> getter)
         {
             TValue value;
             if (TryGetInner(key, out value))

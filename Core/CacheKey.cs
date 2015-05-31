@@ -1,17 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq.Expressions;
+using System.Reflection;
 
-namespace PubComp.Caching.AopCaching
+namespace PubComp.Caching.Core
 {
     public struct CacheKey
     {
-        private string className;
-        private string methodName;
-        private string[] parameterTypeNames;
-        private object[] parmaterValues;
+        private readonly string className;
+        private readonly string methodName;
+        private readonly string[] parameterTypeNames;
+        private readonly object[] parmaterValues;
 
         public CacheKey(string className, string methodName, string[] parameterTypeNames, object[] parmaterValues)
         {
@@ -116,6 +115,45 @@ namespace PubComp.Caching.AopCaching
                 new Newtonsoft.Json.JsonSerializerSettings { TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto });
 
             return result;
+        }
+
+        public static string GetKey(MethodBase method, params object[] parameterValues)
+        {
+            if (method == null)
+                throw new ArgumentNullException("method");
+
+            var classType = method.DeclaringType;
+            var className = (classType != null) ? classType.FullName : string.Empty;
+
+            var parameters = method.GetParameters();
+            var parameterTypeNames = parameters.Select(p => p.ParameterType.FullName).ToArray();
+
+            var key = new CacheKey(className, method.Name, parameterTypeNames, parameterValues);
+            return key.ToString();
+        }
+
+        public static string GetKey(Expression<Action> expression)
+        {
+            MethodInfo methodInfo;
+            object[] arguments;
+            LambdaHelper.GetMethodInfoAndArguments(expression, out methodInfo, out arguments);
+            return GetKey(methodInfo, parameterValues: arguments);
+        }
+
+        public static string GetKey<T>(Expression<Action<T>> expression)
+        {
+            MethodInfo methodInfo;
+            object[] arguments;
+            LambdaHelper.GetMethodInfoAndArguments(expression, out methodInfo, out arguments);
+            return GetKey(methodInfo, parameterValues: arguments);
+        }
+
+        public static string GetKey<T, TResult>(Expression<Func<T, TResult>> expression)
+        {
+            MethodInfo methodInfo;
+            object[] arguments;
+            LambdaHelper.GetMethodInfoAndArguments(expression, out methodInfo, out arguments);
+            return GetKey(methodInfo, parameterValues: arguments);
         }
     }
 }

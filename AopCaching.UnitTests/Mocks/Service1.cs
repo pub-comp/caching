@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace PubComp.Caching.AopCaching.UnitTests.Mocks
 {
     public class Service1
@@ -38,9 +34,20 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
         }
 
         [Cache]
+        public IEnumerable<string> MethodToCache2<TObject>(TObject obj)
+        {
+            Func<object, string> f = o => (o ?? "null").ToString();
+            var st = f(obj);
+
+            return new[] { st, st, st };
+        }
+
+        [Cache]
         public string MethodToCache1(int id, [DoNotIncludeInCacheKey]object obj)
         {
             return id.ToString() + (obj != null ? obj.GetHashCode() : 0).ToString();
         }
+
+        public readonly double ConstValue = 4.0;
     }
 }

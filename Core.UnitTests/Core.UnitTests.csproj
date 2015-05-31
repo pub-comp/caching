@@ -70,6 +70,7 @@
     <Compile Include="CacheConfigTests.cs" />
     <Compile Include="CacheManagerTests.cs" />
     <Compile Include="CacheTestTools.cs" />
+    <Compile Include="Mocks\MockCachePolicy.cs" />
     <Compile Include="Mocks\MockCache.cs" />
     <Compile Include="Mocks\MockCacheConfig.cs" />
     <Compile Include="NoCacheTests.cs" />

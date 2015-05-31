@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core;
-using PubComp.Caching.SystemRuntime;
 using PubComp.Caching.AopCaching.UnitTests.Mocks;
 using PubComp.Testing.TestingUtils;
 
@@ -122,6 +121,88 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual(1, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual("222222", result);
+        }
+
+        [TestMethod]
+        public void TestCacheWithGenericKey()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new Service1();
+            var result1 = service.MethodToCache2("5");
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+
+            var result2 = service.MethodToCache2(5);
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+
+            var result3 = service.MethodToCache2(5.0);
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(6, cache1.Misses);
+
+            var result4 = service.MethodToCache2(5);
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(6, cache1.Misses);
+        }
+
+        [TestMethod]
+        public void TestKeyGeneration()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var methodInfo = typeof(Service1).GetMethod("MethodToCache1", new[] { typeof(double) });
+
+            var service = new Service1();
+            
+            service.MethodToCache1(5.0);
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+
+            service.MethodToCache1(5.0);
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+
+            var key = CacheKey.GetKey(methodInfo, 5.0);
+            cache1.Clear(key);
+
+            service.MethodToCache1(5.0);
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+
+            service.MethodToCache1(5.0);
+            Assert.AreEqual(2, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+        }
+
+        [TestMethod]
+        public void TestKeyGenerationLambda()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new Service1();
+
+            service.MethodToCache1(5.0);
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+
+            service.MethodToCache1(5.0);
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+
+            var key = CacheKey.GetKey((Service1 s) => s.MethodToCache1(5.0));
+            cache1.Clear(key);
+
+            service.MethodToCache1(5.0);
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+
+            service.MethodToCache1(5.0);
+            Assert.AreEqual(2, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
         }
     }
 }

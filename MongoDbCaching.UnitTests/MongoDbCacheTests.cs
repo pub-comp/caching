@@ -102,8 +102,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
                 new MongoDbCachePolicy
                 {
                     DatabaseName = "TestCacheDb",
-                    UseSlidingExpiration = false,
-                    ExpireWithin = TimeSpan.FromSeconds(ttl),
+                    ExpirationFromAdd = TimeSpan.FromSeconds(ttl),
                 });
             cache.ClearAll();
 
@@ -140,8 +139,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
                 new MongoDbCachePolicy
                 {
                     DatabaseName = "TestCacheDb",
-                    UseSlidingExpiration = true,
-                    ExpireWithin = TimeSpan.FromSeconds(ttl),
+                    SlidingExpiration = TimeSpan.FromSeconds(ttl),
                 });
             cache.ClearAll();
 
@@ -182,7 +180,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
                 new MongoDbCachePolicy
                 {
                     DatabaseName = "TestCacheDb",
-                    ExpireAt = expireAt,
+                    AbsoluteExpiration = expireAt,
                 });
             cache.ClearAll();
 

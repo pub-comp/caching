@@ -46,8 +46,10 @@ namespace PubComp.Caching.Core.UnitTests
                 && c.Name == "cacheFromConfig2"
                 && c is MockCacheConfig
                 && ((MockCacheConfig)c).Policy != null
-                && ((MockCacheConfig)c).Policy.SlidingExpiration != null
-                && ((MockCacheConfig)c).Policy.SlidingExpiration.Minutes == 15);
+                && ((MockCacheConfig)c).Policy.SlidingExpiration.HasValue
+                && ((MockCacheConfig)c).Policy.SlidingExpiration.Value.Minutes == 15
+                && ((MockCacheConfig)c).Policy.AbsoluteExpiration.HasValue == false
+                && ((MockCacheConfig)c).Policy.ExpirationFromAdd.HasValue == false);
 
             LinqAssert.Any(config, c =>
                 c.Action == ConfigAction.Add
@@ -81,7 +83,7 @@ namespace PubComp.Caching.Core.UnitTests
             {
                 Action = ConfigAction.Add,
                 Name = "cacheName2",
-                Policy = new System.Runtime.Caching.CacheItemPolicy
+                Policy = new MockCachePolicy
                 {
                     SlidingExpiration = new TimeSpan(0, 20, 0),
                 }

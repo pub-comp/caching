@@ -1,18 +1,12 @@
 ﻿using System;
 
-namespace PubComp.Caching.MongoDbCaching
+namespace PubComp.Caching.Core.UnitTests.Mocks
 {
-    public class MongoDbCachePolicy
+    public class MockCachePolicy
     {
-        /// <summary>
-        /// Required parameter - connection string to MongoDB
-        /// </summary>
-        public string ConnectionString { get; set; }
-
-        /// <summary>
-        /// Optional parameter - database name in MongoDB, defaults to CacheDb
-        /// </summary>
-        public string DatabaseName { get; set; }
+        public MockCachePolicy()
+        {
+        }
 
         /// <summary>
         /// Gets or sets a value that indicates whether a cache entry should be evicted at a specified time.
@@ -36,11 +30,5 @@ namespace PubComp.Caching.MongoDbCaching
         /// <remarks>Default value is a time-duration value that is set to zero,
         /// which indicates that a cache entry has no sliding expiration time</remarks>
         public TimeSpan? SlidingExpiration { get; set; }
-
-        public MongoDbCachePolicy()
-        {
-            ConnectionString = new PubComp.NoSql.MongoDbDriver.MongoDbConnectionInfo().ConnectionString;
-            DatabaseName = "CacheDb";
-        }
     }
 }
