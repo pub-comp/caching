@@ -15,3 +15,6 @@
 	* Added MongoDb based distributed cache with the above policy options
 	* Moved CacheKey generator from AopCaching to Core
 	* Added option to get auto-generated cache key (using CacheKey.GetKey()) to enable single item clear when using AopCaching
+
+1.2.1:
+	* Fixed NuGet package of MongoDbCaching - package was empty

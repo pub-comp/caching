@@ -43,6 +43,12 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MongoDbCaching\MongoDbCaching.csproj">
+      <Project>{7443dbd0-65db-4bbe-a1e7-d8bc0c55f2f5}</Project>
+      <Name>MongoDbCaching</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>"$(SolutionDir).NuGetPack\NuGetPack.exe" "$(ProjectPath)" "$(TargetPath)" $(ConfigurationName)</PostBuildEvent>
