@@ -73,7 +73,8 @@ namespace PubComp.Caching.MongoDbCaching
             }
         }
 
-        private TValue GetOrAdd<TValue>(CacheContext context, string key, TValue newValue)
+        private TValue GetOrAdd<TValue>(
+            CacheContext context, string key, TValue newValue, bool doForceOverride = false)
         {
             var set = GetEntitySet(context);
             var newItem = CreateCacheItem(key, newValue);
@@ -86,10 +87,17 @@ namespace PubComp.Caching.MongoDbCaching
             catch (MongoDB.Driver.MongoDuplicateKeyException)
             {
                 var prevValue = GetCacheItem(set, key);
+                if (!doForceOverride && prevValue != null && prevValue.Value is TValue)
+                    return (TValue)prevValue.Value;
+                set.AddOrUpdate(newItem);
+                return newValue;
+            }
+            catch (NoSql.Core.DalFailure)
+            {
+                var prevValue = GetCacheItem(set, key);
                 if (prevValue != null && prevValue.Value is TValue)
                     return (TValue)prevValue.Value;
-                set.Delete(key);
-                set.Add(newItem);
+                set.AddOrUpdate(newItem);
                 return newValue;
             }
         }
@@ -138,17 +146,17 @@ namespace PubComp.Caching.MongoDbCaching
             using (var context = GetContext())
             {
                 var set = GetEntitySet(context);
-                var obj = GetCacheItem(set, key);
-                if (obj != null && obj.Value is TValue)
+                var item = GetCacheItem(set, key);
+
+                if (item != null)
                 {
-                    value = (TValue)obj.Value;
+                    // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
+                    value = item.Value is TValue ? (TValue)item.Value : default(TValue);
                     return true;
                 }
-                else
-                {
-                    value = default(TValue);
-                    return false;
-                }
+
+                value = default(TValue);
+                return false;
             }
         }
 
@@ -156,7 +164,7 @@ namespace PubComp.Caching.MongoDbCaching
         {
             using (var context = GetContext())
             {
-                GetOrAdd(context, key, value);
+                GetOrAdd(context, key, value, true);
             }
         }
 
