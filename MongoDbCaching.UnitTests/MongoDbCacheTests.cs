@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Testing.TestingUtils;
 using PubComp.Caching.Core.UnitTests;
@@ -12,7 +11,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
     public class MongoDbCacheTests
     {
         [TestMethod]
-        public void TestInMemoryCacheStruct()
+        public void TestMongoDbCacheStruct()
         {
             var cache = new MongoDbCache(
                 "cache1",
@@ -20,6 +19,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
                 {
                     DatabaseName = "TestCacheDb",
                 });
+            cache.ClearAll();
 
             int misses = 0;
 
@@ -37,7 +37,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestInMemoryCacheObject()
+        public void TestMongoDbCacheObject()
         {
             var cache = new MongoDbCache(
                 "cache1",
@@ -45,6 +45,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
                 {
                     DatabaseName = "TestCacheDb",
                 });
+            cache.ClearAll();
 
             int misses = 0;
 
@@ -62,7 +63,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestInMemoryCacheObjectMutated()
+        public void TestMongoDbCacheNull()
         {
             var cache = new MongoDbCache(
                 "cache1",
@@ -70,7 +71,32 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
                 {
                     DatabaseName = "TestCacheDb",
                 });
+            cache.ClearAll();
 
+            int misses = 0;
+
+            Func<string> getter = () => { misses++; return null; };
+
+            string result;
+
+            result = cache.Get("key", getter);
+            Assert.AreEqual(1, misses);
+            Assert.AreEqual(null, result);
+
+            result = cache.Get("key", getter);
+            Assert.AreEqual(1, misses);
+            Assert.AreEqual(null, result);
+        }
+
+        [TestMethod]
+        public void TestMongoDbCacheObjectMutated()
+        {
+            var cache = new MongoDbCache(
+                "cache1",
+                new MongoDbCachePolicy
+                {
+                    DatabaseName = "TestCacheDb",
+                });
             cache.ClearAll();
 
             List<string> value = new List<string> { "1" };
@@ -89,7 +115,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestInMemoryCacheTimeToLive_FromInsert()
+        public void TestMongoDbCacheTimeToLive_FromInsert()
         {
             var ttl = 3;
             int misses = 0;
@@ -126,7 +152,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestInMemoryCacheTimeToLive_Sliding()
+        public void TestMongoDbCacheTimeToLive_Sliding()
         {
             var ttl = 3;
             int misses = 0;
@@ -164,7 +190,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestInMemoryCacheTimeToLive_Constant()
+        public void TestMongoDbCacheTimeToLive_Constant()
         {
             var ttl = 3;
             int misses = 0;
@@ -201,6 +227,59 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
             result = cache.Get("key", getter);
             Assert.AreNotEqual(1, misses);
             Assert.AreNotEqual("1", result);
+        }
+
+        [TestMethod]
+        public void TestMongoDbCacheGetTwice()
+        {
+            var cache = new MongoDbCache(
+                "cache1",
+                new MongoDbCachePolicy
+                {
+                    DatabaseName = "TestCacheDb",
+                });
+            cache.ClearAll();
+
+            int misses = 0;
+
+            Func<string> getter = () => { misses++; return misses.ToString(); };
+
+            string result;
+
+            result = cache.Get("key", getter);
+            Assert.AreEqual("1", result);
+
+            result = cache.Get("key", getter);
+            Assert.AreEqual("1", result);
+        }
+
+        [TestMethod]
+        public void TestMongoDbCacheSetTwice()
+        {
+            var cache = new MongoDbCache(
+                "cache1",
+                new MongoDbCachePolicy
+                {
+                    DatabaseName = "TestCacheDb",
+                });
+            cache.ClearAll();
+
+            int misses = 0;
+
+            Func<string> getter = () => { misses++; return misses.ToString(); };
+
+            string result;
+            bool wasFound;
+
+            cache.Set("key", getter());
+            wasFound = cache.TryGet("key", out result);
+            Assert.AreEqual(true, wasFound);
+            Assert.AreEqual("1", result);
+
+            cache.Set("key", getter());
+            wasFound = cache.TryGet("key", out result);
+            Assert.AreEqual(true, wasFound);
+            Assert.AreEqual("2", result);
         }
     }
 }

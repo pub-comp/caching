@@ -26,21 +26,22 @@ namespace PubComp.Caching.SystemRuntime
 
         public bool TryGet<TValue>(string key, out TValue value)
         {
-            return TryGetInner<TValue>(key, out value);
+            return TryGetInner(key, out value);
         }
 
         public void Set<TValue>(string key, TValue value)
         {
-            Add<TValue>(key, value);
+            Add(key, value);
         }
 
         protected virtual bool TryGetInner<TValue>(String key, out TValue value)
         {
-            Object val = innerCache.Get(key, null);
+            var item = innerCache.Get(key, null) as CacheItem;
 
-            if (val != null)
+            if (item != null)
             {
-                value = val is TValue ? (TValue)val : default(TValue);
+                // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
+                value = item.Value is TValue ? (TValue)item.Value : default(TValue);
                 return true;
             }
 
@@ -50,7 +51,7 @@ namespace PubComp.Caching.SystemRuntime
 
         protected virtual void Add<TValue>(String key, TValue value)
         {
-            innerCache.Set(key, value, ToRuntimePolicy(policy), null);
+            innerCache.Set(key, new CacheItem(value), ToRuntimePolicy(policy), null);
         }
 
         // ReSharper disable once ParameterHidesMember

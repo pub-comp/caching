@@ -18,3 +18,9 @@
 
 1.2.1:
 	* Fixed NuGet package of MongoDbCaching - package was empty
+
+1.2.2:
+	* MongoDbCache - fixed race condition on initial get or add caused by using Add() instead of AddOrUpdate()
+	* MongoDbCache - added support for null values
+	* SystemRuntime.ObjectCache (InMemoryCache's base) - added support for null values
+	* Test initialization fix for AopCaching's tests

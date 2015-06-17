@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core;
-using PubComp.Caching.SystemRuntime;
 using PubComp.Caching.AopCaching.UnitTests.Mocks;
 using PubComp.Testing.TestingUtils;
 
@@ -16,9 +15,10 @@ namespace PubComp.Caching.AopCaching.UnitTests
         [ClassInitialize]
         public static void ClassInitialize(TestContext testContext)
         {
-            CacheManager.RemoveAllCaches();
-
-            cache1 = new MockCache("PubComp.Caching.AopCaching.UnitTests.Mocks.*");
+            const string cache1Name = "PubComp.Caching.AopCaching.UnitTests.Mocks.*";
+            cache1 = CacheManager.GetCache(cache1Name) as MockCache;
+            if (cache1 == null || cache1.Name != cache1Name)
+                cache1 = new MockCache(cache1Name);
             CacheManager.SetCache(cache1.Name, cache1);
         }
 

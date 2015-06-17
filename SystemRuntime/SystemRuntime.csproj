@@ -51,6 +51,7 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="CacheItem.cs" />
     <Compile Include="InMemoryPolicy.cs" />
     <Compile Include="InMemorySerializedCacheConfig.cs" />
     <Compile Include="InMemoryCacheConfig.cs" />

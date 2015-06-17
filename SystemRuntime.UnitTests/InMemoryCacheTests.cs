@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PubComp.Caching.SystemRuntime;
 using PubComp.Testing.TestingUtils;
 using PubComp.Caching.Core.UnitTests;
 
@@ -49,6 +48,26 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             result = cache.Get("key", getter);
             Assert.AreEqual(1, hits);
             Assert.AreEqual("1", result);
+        }
+
+        [TestMethod]
+        public void TestMongoDbCacheNull()
+        {
+            var cache = new InMemoryCache("cache1", new TimeSpan(0, 2, 0));
+
+            int misses = 0;
+
+            Func<string> getter = () => { misses++; return null; };
+
+            string result;
+
+            result = cache.Get("key", getter);
+            Assert.AreEqual(1, misses);
+            Assert.AreEqual(null, result);
+
+            result = cache.Get("key", getter);
+            Assert.AreEqual(1, misses);
+            Assert.AreEqual(null, result);
         }
 
         [TestMethod]
@@ -181,6 +200,49 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             result = cache.Get("key", getter);
             Assert.AreNotEqual(1, misses);
             Assert.AreNotEqual("1", result);
+        }
+
+        [TestMethod]
+        public void TestInMemoryCacheGetTwice()
+        {
+            var cache = new InMemoryCache("cache1", new InMemoryPolicy());
+            cache.ClearAll();
+
+            int misses = 0;
+
+            Func<string> getter = () => { misses++; return misses.ToString(); };
+
+            string result;
+
+            result = cache.Get("key", getter);
+            Assert.AreEqual("1", result);
+
+            result = cache.Get("key", getter);
+            Assert.AreEqual("1", result);
+        }
+
+        [TestMethod]
+        public void TestInMemoryCacheSetTwice()
+        {
+            var cache = new InMemoryCache("cache1", new InMemoryPolicy());
+            cache.ClearAll();
+
+            int misses = 0;
+
+            Func<string> getter = () => { misses++; return misses.ToString(); };
+
+            string result;
+            bool wasFound;
+
+            cache.Set("key", getter());
+            wasFound = cache.TryGet("key", out result);
+            Assert.AreEqual(true, wasFound);
+            Assert.AreEqual("1", result);
+
+            cache.Set("key", getter());
+            wasFound = cache.TryGet("key", out result);
+            Assert.AreEqual(true, wasFound);
+            Assert.AreEqual("2", result);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+
 namespace PubComp.Caching.AopCaching.UnitTests.Mocks
 {
     public class Service1

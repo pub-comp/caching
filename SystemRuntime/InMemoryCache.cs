@@ -1,5 +1,4 @@
 ﻿using System;
-using PubComp.Caching.Core;
 
 namespace PubComp.Caching.SystemRuntime
 {

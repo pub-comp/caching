@@ -2,11 +2,11 @@
 using PubComp.Caching.Core;
 using PubComp.Caching.SystemRuntime;
 
-namespace PubComp.Caching.AopCaching.UnitTests
+namespace PubComp.Caching.AopCaching.UnitTests.Mocks
 {
     public class MockCache : ICache
     {
-        private MockCacheInner innerCache;
+        private readonly MockCacheInner innerCache;
 
         public MockCache(string name)
         {
@@ -21,17 +21,17 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
         public bool TryGet<TValue>(string key, out TValue value)
         {
-            return this.innerCache.TryGet<TValue>(key, out value);
+            return this.innerCache.TryGet(key, out value);
         }
 
         public void Set<TValue>(string key, TValue value)
         {
-            this.innerCache.Set<TValue>(key, value);
+            this.innerCache.Set(key, value);
         }
 
         public TValue Get<TValue>(string key, Func<TValue> getter)
         {
-            return this.innerCache.Get<TValue>(key, getter);
+            return this.innerCache.Get(key, getter);
         }
 
         public void Clear(string key)
@@ -61,12 +61,13 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             protected override bool TryGetInner<TValue>(string key, out TValue value)
             {
-                Object val = InnerCache.Get(key, null);
+                var item = InnerCache.Get(key, null) as CacheItem;
 
-                if (val != null)
+                if (item != null)
                 {
                     hits++;
-                    value = val is TValue ? (TValue)val : default(TValue);
+                    // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
+                    value = item.Value is TValue ? (TValue)item.Value : default(TValue);
                     return true;
                 }
 
