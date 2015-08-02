@@ -7,8 +7,8 @@
     <ProjectGuid>{AEA78BE1-BBBE-40A0-A777-A8F5F8C18718}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RedisCaching.NuGet</RootNamespace>
-    <AssemblyName>RedisCaching.NuGet</AssemblyName>
+    <RootNamespace>PubComp.Caching.RedisCaching.NuGet</RootNamespace>
+    <AssemblyName>PubComp.Caching.RedisCaching.NuGet</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>SAK</SccProjectName>
