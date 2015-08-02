@@ -54,6 +54,9 @@
     <Compile Include="CacheKey.cs" />
     <Compile Include="ConfigAction.cs" />
     <Compile Include="LambdaKeyGenerator.cs" />
+    <Compile Include="LayeredCache.cs" />
+    <Compile Include="LayeredCacheConfig.cs" />
+    <Compile Include="LayeredCachePolicy.cs" />
     <Compile Include="NoCacheConfig.cs" />
     <Compile Include="CacheConfig.cs" />
     <Compile Include="CacheConfigurationHandler.cs" />

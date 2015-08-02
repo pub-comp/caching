@@ -33,3 +33,6 @@
 	* RedisCache - added
 	* MongoDbCache - NuGet dependencies update
 	* MongoDbCache - small change for sliding expiration - removed unnecessary updates
+
+1.4.0:
+	* Core - added LayeredCache

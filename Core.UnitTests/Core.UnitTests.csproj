@@ -70,6 +70,8 @@
     <Compile Include="CacheConfigTests.cs" />
     <Compile Include="CacheManagerTests.cs" />
     <Compile Include="CacheTestTools.cs" />
+    <Compile Include="LayeredCacheTests.cs" />
+    <Compile Include="Mocks\MockCache2.cs" />
     <Compile Include="Mocks\MockCachePolicy.cs" />
     <Compile Include="Mocks\MockCache.cs" />
     <Compile Include="Mocks\MockCacheConfig.cs" />
@@ -80,6 +82,10 @@
     <ProjectReference Include="..\Core\Core.csproj">
       <Project>{57585b9a-7003-461a-b812-ca48603c839f}</Project>
       <Name>Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SystemRuntime\SystemRuntime.csproj">
+      <Project>{f9ed87dd-4ac8-48d7-baf0-edb8992ec937}</Project>
+      <Name>SystemRuntime</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
