@@ -1,15 +1,19 @@
 1.0.0:
 	* Initial
+
 1.0.1:
 	* Improved CacheAttribute initialization
 	* Fixed CacheManager registration of cache with any name ("*" with no-prefix) not working
+
 1.0.2:
 	* Removed unused field from aspect classes.
+
 1.1.0:
 	* Added DoNotIncludeInCacheKeyAttribute for marking specific parameters so that their values will not be a part of the key,
 	  Example of usages:
 	    a. Do not use a dbContext as part of a cache key.
 		b. Cache using object ID, not object value.
+
 1.2.0:
 	* Change policy for InMemoryCache to InMemoryPolicy enabling AbsoluteExpiration, ExpirationFromAdd, SlidingExpiration
 	* Added MongoDb based distributed cache with the above policy options
@@ -24,3 +28,8 @@
 	* MongoDbCache - added support for null values
 	* SystemRuntime.ObjectCache (InMemoryCache's base) - added support for null values
 	* Test initialization fix for AopCaching's tests
+
+1.3.0:
+	* RedisCache - added
+	* MongoDbCache - NuGet dependencies update
+	* MongoDbCache - small change for sliding expiration - removed unnecessary updates

@@ -45,9 +45,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbCaching.UnitTests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbCaching.NuGet", "MongoDbCaching.NuGet\MongoDbCaching.NuGet.csproj", "{0E13EAB4-0860-4BF9-AA88-08E7C4D18DDD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching", "RedisCaching\RedisCaching.csproj", "{8C3D1859-DA12-4E27-B833-6F37726A3F45}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching.UnitTests", "RedisCaching.UnitTests\RedisCaching.UnitTests.csproj", "{7B954670-6296-4A8F-8B09-004BE53BEABF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching.NuGet", "RedisCaching.NuGet\RedisCaching.NuGet.csproj", "{AEA78BE1-BBBE-40A0-A777-A8F5F8C18718}"
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 13
+		SccNumberOfProjects = 16
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = https://tfs.codeplex.com/tfs/tfs27
 		SccLocalPath0 = .
@@ -87,6 +93,15 @@ Global
 		SccProjectUniqueName12 = MongoDbCaching.NuGet\\MongoDbCaching.NuGet.csproj
 		SccProjectName12 = MongoDbCaching.NuGet
 		SccLocalPath12 = MongoDbCaching.NuGet
+		SccProjectUniqueName13 = RedisCaching.UnitTests\\RedisCaching.UnitTests.csproj
+		SccProjectName13 = RedisCaching.UnitTests
+		SccLocalPath13 = RedisCaching.UnitTests
+		SccProjectUniqueName14 = RedisCaching\\RedisCaching.csproj
+		SccProjectName14 = RedisCaching
+		SccLocalPath14 = RedisCaching
+		SccProjectUniqueName15 = RedisCaching.NuGet\\RedisCaching.NuGet.csproj
+		SccProjectName15 = RedisCaching.NuGet
+		SccLocalPath15 = RedisCaching.NuGet
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -141,6 +156,18 @@ Global
 		{0E13EAB4-0860-4BF9-AA88-08E7C4D18DDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0E13EAB4-0860-4BF9-AA88-08E7C4D18DDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0E13EAB4-0860-4BF9-AA88-08E7C4D18DDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C3D1859-DA12-4E27-B833-6F37726A3F45}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C3D1859-DA12-4E27-B833-6F37726A3F45}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C3D1859-DA12-4E27-B833-6F37726A3F45}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C3D1859-DA12-4E27-B833-6F37726A3F45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B954670-6296-4A8F-8B09-004BE53BEABF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B954670-6296-4A8F-8B09-004BE53BEABF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B954670-6296-4A8F-8B09-004BE53BEABF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B954670-6296-4A8F-8B09-004BE53BEABF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AEA78BE1-BBBE-40A0-A777-A8F5F8C18718}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AEA78BE1-BBBE-40A0-A777-A8F5F8C18718}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AEA78BE1-BBBE-40A0-A777-A8F5F8C18718}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AEA78BE1-BBBE-40A0-A777-A8F5F8C18718}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

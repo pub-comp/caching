@@ -2,31 +2,29 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PubComp.Testing.TestingUtils;
 using PubComp.Caching.Core.UnitTests;
+using PubComp.Testing.TestingUtils;
 
-namespace PubComp.Caching.MongoDbCaching.UnitTests
+namespace PubComp.Caching.RedisCaching.UnitTests
 {
     [TestClass]
-    public class MongoDbCacheTests
+    public class RedisCacheTests
     {
         [TestMethod]
-        public void TestMongoDbCacheTwoCaches()
+        public void TestRedisCacheTwoCaches()
         {
-            var cache1 = new MongoDbCache(
+            var cache1 = new RedisCache(
                 "cache1",
-                new MongoDbCachePolicy
+                new RedisCachePolicy
                 {
-                    DatabaseName = "TestCacheDb",
                 });
             cache1.ClearAll();
 
 
-            var cache2 = new MongoDbCache(
+            var cache2 = new RedisCache(
                 "cache2",
-                new MongoDbCachePolicy
+                new RedisCachePolicy
                 {
-                    DatabaseName = "TestCacheDb",
                 });
             cache2.ClearAll();
 
@@ -74,13 +72,12 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestMongoDbCacheStruct()
+        public void TestRedisCacheStruct()
         {
-            var cache = new MongoDbCache(
+            var cache = new RedisCache(
                 "cache1",
-                new MongoDbCachePolicy
+                new RedisCachePolicy
                 {
-                    DatabaseName = "TestCacheDb",
                 });
             cache.ClearAll();
 
@@ -100,13 +97,12 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestMongoDbCacheObject()
+        public void TestRedisCacheObject()
         {
-            var cache = new MongoDbCache(
+            var cache = new RedisCache(
                 "cache1",
-                new MongoDbCachePolicy
+                new RedisCachePolicy
                 {
-                    DatabaseName = "TestCacheDb",
                 });
             cache.ClearAll();
 
@@ -126,13 +122,12 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestMongoDbCacheNull()
+        public void TestRedisCacheNull()
         {
-            var cache = new MongoDbCache(
+            var cache = new RedisCache(
                 "cache1",
-                new MongoDbCachePolicy
+                new RedisCachePolicy
                 {
-                    DatabaseName = "TestCacheDb",
                 });
             cache.ClearAll();
 
@@ -152,13 +147,12 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestMongoDbCacheObjectMutated()
+        public void TestRedisCacheObjectMutated()
         {
-            var cache = new MongoDbCache(
+            var cache = new RedisCache(
                 "cache1",
-                new MongoDbCachePolicy
+                new RedisCachePolicy
                 {
-                    DatabaseName = "TestCacheDb",
                 });
             cache.ClearAll();
 
@@ -178,19 +172,18 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestMongoDbCacheTimeToLive_FromInsert()
+        public void TestRedisCacheTimeToLive_FromInsert()
         {
-            var ttl = 3;
+            var ttl = 10;
             int misses = 0;
             string result;
             var stopwatch = new Stopwatch();
             Func<string> getter = () => { misses++; return misses.ToString(); };
 
-            var cache = new MongoDbCache(
+            var cache = new RedisCache(
                 "insert-expire-cache",
-                new MongoDbCachePolicy
+                new RedisCachePolicy
                 {
-                    DatabaseName = "TestCacheDb",
                     ExpirationFromAdd = TimeSpan.FromSeconds(ttl),
                 });
             cache.ClearAll();
@@ -204,7 +197,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
             Assert.AreEqual(1, misses);
             Assert.AreEqual("1", result);
 
-            CacheTestTools.AssertValueDoesntChangeWithin(cache, "key", "1", getter, stopwatch, ttl);
+            CacheTestTools.AssertValueDoesntChangeWithin(cache, "key", "1", getter, stopwatch, ttl - 1);
 
             // Should expire within TTL+60sec from insert
             CacheTestTools.AssertValueDoesChangeWithin(cache, "key", "1", getter, stopwatch, 60.1);
@@ -215,19 +208,18 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestMongoDbCacheTimeToLive_Sliding()
+        public void TestRedisCacheTimeToLive_Sliding()
         {
-            var ttl = 3;
+            var ttl = 10;
             int misses = 0;
             string result;
             var stopwatch = new Stopwatch();
             Func<string> getter = () => { misses++; return misses.ToString(); };
 
-            var cache = new MongoDbCache(
+            var cache = new RedisCache(
                 "sliding-expire-cache",
-                new MongoDbCachePolicy
+                new RedisCachePolicy
                 {
-                    DatabaseName = "TestCacheDb",
                     SlidingExpiration = TimeSpan.FromSeconds(ttl),
                 });
             cache.ClearAll();
@@ -242,7 +234,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
             Assert.AreEqual(1, misses);
             Assert.AreEqual("1", result);
 
-            CacheTestTools.AssertValueDoesntChangeWithin(cache, "key", "1", getter, stopwatch, ttl + 60);
+            CacheTestTools.AssertValueDoesntChangeWithin(cache, "key", "1", getter, stopwatch, ttl - 1 + 60);
 
             // Should expire within TTL+60sec from last access
             CacheTestTools.AssertValueDoesChangeAfter(cache, "key", "1", getter, stopwatch, ttl + 60.1);
@@ -253,9 +245,9 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestMongoDbCacheTimeToLive_Constant()
+        public void TestRedisCacheTimeToLive_Constant()
         {
-            var ttl = 3;
+            var ttl = 10;
             int misses = 0;
             string result;
             var stopwatch = new Stopwatch();
@@ -264,11 +256,10 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
             var expireAt = DateTime.Now.AddSeconds(ttl);
             stopwatch.Start();
 
-            var cache = new MongoDbCache(
+            var cache = new RedisCache(
                 "constant-expire",
-                new MongoDbCachePolicy
+                new RedisCachePolicy
                 {
-                    DatabaseName = "TestCacheDb",
                     AbsoluteExpiration = expireAt,
                 });
             cache.ClearAll();
@@ -282,7 +273,7 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
             Assert.AreEqual(1, misses);
             Assert.AreEqual("1", result);
 
-            CacheTestTools.AssertValueDoesntChangeWithin(cache, "key", "1", getter, stopwatch, ttl);
+            CacheTestTools.AssertValueDoesntChangeWithin(cache, "key", "1", getter, stopwatch, ttl - 1);
 
             // Should expire within TTL+60sec from insert
             CacheTestTools.AssertValueDoesChangeWithin(cache, "key", "1", getter, stopwatch, 60.1);
@@ -293,13 +284,12 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestMongoDbCacheGetTwice()
+        public void TestRedisCacheGetTwice()
         {
-            var cache = new MongoDbCache(
+            var cache = new RedisCache(
                 "cache1",
-                new MongoDbCachePolicy
+                new RedisCachePolicy
                 {
-                    DatabaseName = "TestCacheDb",
                 });
             cache.ClearAll();
 
@@ -317,13 +307,12 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestMongoDbCacheSetTwice()
+        public void TestRedisCacheSetTwice()
         {
-            var cache = new MongoDbCache(
+            var cache = new RedisCache(
                 "cache1",
-                new MongoDbCachePolicy
+                new RedisCachePolicy
                 {
-                    DatabaseName = "TestCacheDb",
                 });
             cache.ClearAll();
 

@@ -3,11 +3,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}</ProjectGuid>
+    <ProjectGuid>{7B954670-6296-4A8F-8B09-004BE53BEABF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PubComp.Caching.MongoDbCaching.UnitTests</RootNamespace>
-    <AssemblyName>PubComp.Caching.MongoDbCaching.UnitTests</AssemblyName>
+    <RootNamespace>PubComp.Caching.RedisCaching.UnitTests</RootNamespace>
+    <AssemblyName>PubComp.Caching.RedisCaching.UnitTests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -39,32 +39,24 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MongoDB.Bson, Version=2.0.1.27, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\MongoDB.Bson.2.0.1\lib\net45\MongoDB.Bson.dll</HintPath>
-    </Reference>
-    <Reference Include="MongoDB.Driver, Version=2.0.1.27, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\MongoDB.Driver.2.0.1\lib\net45\MongoDB.Driver.dll</HintPath>
-    </Reference>
-    <Reference Include="MongoDB.Driver.Core, Version=2.0.1.27, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\MongoDB.Driver.Core.2.0.1\lib\net45\MongoDB.Driver.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="MongoDB.Driver.Legacy, Version=2.0.1.27, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\mongocsharpdriver.2.0.1\lib\net45\MongoDB.Driver.Legacy.dll</HintPath>
-    </Reference>
-    <Reference Include="PubComp.NoSql.Core, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\PubComp.NoSql.Core.4.0.0\lib\net45\PubComp.NoSql.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="PubComp.NoSql.MongoDbDriver, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\PubComp.NoSql.MongoDbDriver.4.1.0\lib\net45\PubComp.NoSql.MongoDbDriver.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.6.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="PubComp.Testing.TestingUtils">
       <HintPath>..\packages\PubComp.Testing.TestingUtils.1.0.0\lib\net45\PubComp.Testing.TestingUtils.dll</HintPath>
+    </Reference>
+    <Reference Include="ServiceStack.Common">
+      <HintPath>..\packages\ServiceStack.Common.3.9.70\lib\net35\ServiceStack.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="ServiceStack.Interfaces">
+      <HintPath>..\packages\ServiceStack.Common.3.9.70\lib\net35\ServiceStack.Interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="ServiceStack.Redis">
+      <HintPath>..\packages\ServiceStack.Redis.3.9.71\lib\net35\ServiceStack.Redis.dll</HintPath>
+    </Reference>
+    <Reference Include="ServiceStack.Text">
+      <HintPath>..\packages\ServiceStack.Text.3.9.70\lib\net35\ServiceStack.Text.dll</HintPath>
     </Reference>
     <Reference Include="System" />
   </ItemGroup>
@@ -84,7 +76,7 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
-    <Compile Include="MongoDbCacheTests.cs" />
+    <Compile Include="RedisCacheTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -96,9 +88,9 @@
       <Project>{57585b9a-7003-461a-b812-ca48603c839f}</Project>
       <Name>Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MongoDbCaching\MongoDbCaching.csproj">
-      <Project>{7443dbd0-65db-4bbe-a1e7-d8bc0c55f2f5}</Project>
-      <Name>MongoDbCaching</Name>
+    <ProjectReference Include="..\RedisCaching\RedisCaching.csproj">
+      <Project>{8c3d1859-da12-4e27-b833-6f37726a3f45}</Project>
+      <Name>RedisCaching</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

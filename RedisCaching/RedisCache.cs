@@ -1,29 +1,25 @@
 ﻿using System;
+using System.Linq;
 using PubComp.Caching.Core;
-using PubComp.NoSql.MongoDbDriver;
 
-namespace PubComp.Caching.MongoDbCaching
+namespace PubComp.Caching.RedisCaching
 {
-    public class MongoDbCache : ICache
+    public class RedisCache : ICache
     {
+        private readonly String name;
         private readonly String connectionString;
-        private readonly String cacheDbName;
-        private readonly String cacheCollectionName;
         private readonly bool useSlidingExpiration;
         private readonly TimeSpan? expireWithin;
         private readonly DateTime? expireAt;
 
-        public MongoDbCache(String cacheCollectionName, MongoDbCachePolicy policy)
+        public RedisCache(String name, RedisCachePolicy policy)
         {
+            this.name = name;
+
             if (policy == null)
                 throw new ArgumentNullException("policy");
 
             this.connectionString = policy.ConnectionString;
-            
-            this.cacheDbName = !string.IsNullOrEmpty(policy.DatabaseName)
-                ? policy.DatabaseName : "CacheDb";
-            
-            this.cacheCollectionName = cacheCollectionName;
 
             if (policy.SlidingExpiration.HasValue && policy.SlidingExpiration.Value < TimeSpan.MaxValue)
             {
@@ -53,79 +49,63 @@ namespace PubComp.Caching.MongoDbCaching
             this.useSlidingExpiration = (policy.SlidingExpiration < TimeSpan.MaxValue);
         }
 
-        public string Name { get { return this.cacheCollectionName; } }
+        public string Name { get { return this.name; } }
 
         private CacheContext GetContext()
         {
-            return new CacheContext(this.connectionString, this.cacheDbName);
-        }
-
-        private MongoDbContext.EntitySet<String, CacheItem> GetEntitySet(CacheContext context)
-        {
-            if (expireWithin.HasValue || expireAt.HasValue)
-            {
-                return context.GetEntitySet(
-                    this.cacheDbName, this.cacheCollectionName, this.expireWithin ?? TimeSpan.FromSeconds(0));
-            }
-            else
-            {
-                return context.GetEntitySet(this.cacheDbName, this.cacheCollectionName, null);
-            }
+            return new CacheContext(this.connectionString);
         }
 
         private TValue GetOrAdd<TValue>(
             CacheContext context, string key, TValue newValue, bool doForceOverride = false)
         {
-            var set = GetEntitySet(context);
             var newItem = CreateCacheItem(key, newValue);
 
-            try
+            if (context.SetIfNotExists(newItem))
             {
-                set.Add(newItem);
+                if (newItem.ExpireIn.HasValue)
+                    context.SetExpirationTime(newItem);
                 return newValue;
             }
-            catch (MongoDB.Driver.MongoDuplicateKeyException)
-            {
-                var prevValue = GetCacheItem(set, key);
-                if (!doForceOverride && prevValue != null && prevValue.Value is TValue)
-                    return (TValue)prevValue.Value;
-                set.AddOrUpdate(newItem);
-                return newValue;
-            }
-            catch (NoSql.Core.DalFailure)
-            {
-                var prevValue = GetCacheItem(set, key);
-                if (prevValue != null && prevValue.Value is TValue)
-                    return (TValue)prevValue.Value;
-                set.AddOrUpdate(newItem);
-                return newValue;
-            }
+
+            var prevValue = GetCacheItem<TValue>(context, key);
+            if (!doForceOverride && prevValue != null && prevValue.Value is TValue)
+                return (TValue)prevValue.Value;
+
+            context.SetItem(newItem);
+            if (newItem.ExpireIn.HasValue)
+                context.SetExpirationTime(newItem);
+
+            return newValue;
         }
 
-        private CacheItem CreateCacheItem<TValue>(string key, TValue value)
+        private CacheItem<TValue> CreateCacheItem<TValue>(string key, TValue value)
         {
-            CacheItem newItem;
+            CacheItem<TValue> newItem;
 
             if (!expireAt.HasValue && expireWithin.HasValue)
-                newItem = new CacheItem(key, value, DateTime.Now);
+                newItem = new CacheItem<TValue>(this.Name, key, value, expireWithin.Value);
+            else if (expireAt.HasValue)
+                newItem = new CacheItem<TValue>(this.Name, key, value, expireAt.Value.Subtract(DateTime.Now));
             else
-                newItem = new CacheItem(key, value, expireAt);
+                newItem = new CacheItem<TValue>(this.Name, key, value);
 
             return newItem;
         }
 
-        private CacheItem GetCacheItem(MongoDbContext.EntitySet<String, CacheItem> set, string key)
+        private CacheItem<TValue> GetCacheItem<TValue>(CacheContext context, string key)
         {
-            var cacheItem = set.Get(key);
+            var cacheItem = context.GetItem<TValue>(this.Name, key);
             return cacheItem;
         }
 
-        private void UpdateExpirationTime(MongoDbContext.EntitySet<String, CacheItem> set, CacheItem cacheItem)
+        private void ResetExpirationTime<TValue>(CacheContext context, CacheItem<TValue> cacheItem)
         {
             if (expireWithin.HasValue && useSlidingExpiration)
             {
-                cacheItem.ExpireAt = DateTime.Now;
-                set.UpdateField(cacheItem, "ExpireAt");
+                context.SetItem<TValue>(cacheItem);
+                cacheItem.ExpireIn = this.expireWithin.Value;
+                context.SetExpirationTime(cacheItem);
             }
         }
 
@@ -143,15 +123,14 @@ namespace PubComp.Caching.MongoDbCaching
         {
             using (var context = GetContext())
             {
-                var set = GetEntitySet(context);
-                var cacheItem = GetCacheItem(set, key);
+                var cacheItem = context.GetItem<TValue>(this.Name, key);
 
                 if (cacheItem != null)
                 {
                     // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
                     value = cacheItem.Value is TValue ? (TValue)cacheItem.Value : default(TValue);
                     if (cacheItem != null)
-                        UpdateExpirationTime(set, cacheItem);
+                        ResetExpirationTime(context, cacheItem);
                     return true;
                 }
 
@@ -185,8 +164,7 @@ namespace PubComp.Caching.MongoDbCaching
         {
             using (var context = GetContext())
             {
-                var set = GetEntitySet(context);
-                set.Delete(key);
+                context.RemoveItem(this.Name, key);
             }
         }
 
@@ -194,8 +172,7 @@ namespace PubComp.Caching.MongoDbCaching
         {
             using (var context = GetContext())
             {
-                var set = GetEntitySet(context);
-                set.Delete(i => true);
+                context.ClearItems(this.Name);
             }
         }
     }
