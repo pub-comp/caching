@@ -11,7 +11,7 @@ namespace PubComp.Caching.Core
 
         public override ICache CreateCache()
         {
-            return new LayeredCache(this.Name, this.Policy.Level1CacheName, this.Policy.Level2CacheName);
+            return new LayeredCache(this.Name, this.Policy);
         }
     }
 }

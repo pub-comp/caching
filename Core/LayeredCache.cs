@@ -17,12 +17,21 @@ namespace PubComp.Caching.Core
         private readonly Object sync = new Object();
         private readonly LayeredCachePolicy policy;
 
+        public LayeredCache(String name, LayeredCachePolicy policy)
+            : this(
+                name,
+                (policy != null ? policy.Level1CacheName : null),
+                (policy != null ? policy.Level2CacheName : null))
+        {
+            this.policy = policy;
+        }
+
         /// <summary>
         /// Creates a layered cache
         /// </summary>
         /// <param name="name"></param>
-        /// <param name="level1CacheName">First cache to check (e.g. in-memory cache)</param>
-        /// <param name="level2CacheName">Fallback cache (e.g. distributed cache)</param>
+        /// <param name="level1CacheName">Name of first cache to check (e.g. in-memory cache), should be registered in CacheManager</param>
+        /// <param name="level2CacheName">Name of fallback cache (e.g. distributed cache), should be registered in CacheManager</param>
         public LayeredCache(String name, String level1CacheName, String level2CacheName)
         {
             this.name = name;
@@ -44,8 +53,15 @@ namespace PubComp.Caching.Core
 
             this.level1 = level1;
             this.level2 = level2;
+            this.policy = new LayeredCachePolicy { Level1CacheName = level1CacheName, Level2CacheName = level1CacheName };
         }
 
+        /// <summary>
+        /// Creates a layered cache
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="level1">First cache to check (e.g. in-memory cache)</param>
+        /// <param name="level2">Fallback cache (e.g. distributed cache)</param>
         public LayeredCache(String name, ICache level1, ICache level2)
         {
             this.name = name;
