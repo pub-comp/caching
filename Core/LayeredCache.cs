@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PubComp.Caching.Core
 {
@@ -36,10 +32,12 @@ namespace PubComp.Caching.Core
         {
             this.name = name;
 
+            // ReSharper disable once LocalVariableHidesMember
             var level1 = CacheManager.GetCache(level1CacheName);
             if (level1 == null)
                 throw new ApplicationException("Cache is not registered: level1CacheName=" + level1CacheName);
 
+            // ReSharper disable once LocalVariableHidesMember
             var level2 = CacheManager.GetCache(level2CacheName);
             if (level2 == null)
                 throw new ApplicationException("Cache is not registered: level2CacheName=" + level2CacheName);
@@ -93,7 +91,7 @@ namespace PubComp.Caching.Core
 
         private TValue GetterWrapper<TValue>(String key, Func<TValue> getter)
         {
-            return this.level2.Get<TValue>(key, getter);
+            return this.level2.Get(key, getter);
         }
 
         public bool TryGet<TValue>(string key, out TValue value)

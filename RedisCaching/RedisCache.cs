@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using PubComp.Caching.Core;
 
 namespace PubComp.Caching.RedisCaching
@@ -70,7 +69,7 @@ namespace PubComp.Caching.RedisCaching
 
             var prevValue = GetCacheItem<TValue>(context, key);
             if (!doForceOverride && prevValue != null && prevValue.Value is TValue)
-                return (TValue)prevValue.Value;
+                return prevValue.Value;
 
             context.SetItem(newItem);
             if (newItem.ExpireIn.HasValue)
@@ -103,7 +102,7 @@ namespace PubComp.Caching.RedisCaching
         {
             if (expireWithin.HasValue && useSlidingExpiration)
             {
-                context.SetItem<TValue>(cacheItem);
+                context.SetIfNotExists(cacheItem);
                 cacheItem.ExpireIn = this.expireWithin.Value;
                 context.SetExpirationTime(cacheItem);
             }
@@ -127,10 +126,8 @@ namespace PubComp.Caching.RedisCaching
 
                 if (cacheItem != null)
                 {
-                    // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
-                    value = cacheItem.Value is TValue ? (TValue)cacheItem.Value : default(TValue);
-                    if (cacheItem != null)
-                        ResetExpirationTime(context, cacheItem);
+                    value = cacheItem.Value;
+                    ResetExpirationTime(context, cacheItem);
                     return true;
                 }
 

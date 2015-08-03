@@ -67,10 +67,8 @@ namespace PubComp.Caching.MongoDbCaching
                 return context.GetEntitySet(
                     this.cacheDbName, this.cacheCollectionName, this.expireWithin ?? TimeSpan.FromSeconds(0));
             }
-            else
-            {
-                return context.GetEntitySet(this.cacheDbName, this.cacheCollectionName, null);
-            }
+
+            return context.GetEntitySet(this.cacheDbName, this.cacheCollectionName, null);
         }
 
         private TValue GetOrAdd<TValue>(
@@ -150,8 +148,7 @@ namespace PubComp.Caching.MongoDbCaching
                 {
                     // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
                     value = cacheItem.Value is TValue ? (TValue)cacheItem.Value : default(TValue);
-                    if (cacheItem != null)
-                        UpdateExpirationTime(set, cacheItem);
+                    UpdateExpirationTime(set, cacheItem);
                     return true;
                 }
 

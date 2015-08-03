@@ -36,3 +36,7 @@
 
 1.4.0:
 	* Core - added LayeredCache
+
+1.4.1:
+	* MongoDbCache - small code cleanup
+	* RedisCache - improved sliding expiration implementation - use GetOrSet() instead of Set() to clear previous expiration time

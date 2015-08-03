@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace PubComp.Caching.Core
+﻿namespace PubComp.Caching.Core
 {
     public class LayeredCachePolicy
     {
