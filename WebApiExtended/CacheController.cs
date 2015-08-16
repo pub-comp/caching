@@ -5,9 +5,9 @@ using PubComp.Caching.Core;
 
 namespace PubComp.Caching.WebApiExtended
 {
-    public class CacheControllerBase : ApiController
+    public class CacheController : ApiController
     {
-        protected readonly ILog Logger = LogManager.GetLogger<CacheControllerBase>();
+        protected readonly ILog Logger = LogManager.GetLogger<CacheController>();
 
         /// <summary>
         /// Clears all data from a named cache instance
