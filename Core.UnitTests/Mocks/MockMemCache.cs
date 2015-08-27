@@ -1,14 +1,13 @@
 ﻿using System;
-using PubComp.Caching.Core;
 using PubComp.Caching.SystemRuntime;
 
 namespace PubComp.Caching.Core.UnitTests.Mocks
 {
-    public class MockCache2 : ICache
+    public class MockMemCache : ICache
     {
         private readonly MockCacheInner innerCache;
 
-        public MockCache2(string name)
+        public MockMemCache(string name)
         {
             this.innerCache = new MockCacheInner(name);
         }

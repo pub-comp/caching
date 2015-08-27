@@ -67,7 +67,8 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
-    <Compile Include="CacheController.cs" />
+    <Compile Include="ExtendedCacheController.cs" />
+    <Compile Include="SimpleCacheController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

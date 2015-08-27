@@ -2,12 +2,12 @@
 
 namespace PubComp.Caching.Core.UnitTests.Mocks
 {
-    public class MockCache : ICache
+    public class MockNoCache : ICache
     {
         private readonly string name;
         private readonly MockCachePolicy policy;
 
-        public MockCache(String name, MockCachePolicy policy)
+        public MockNoCache(String name, MockCachePolicy policy)
         {
             this.name = name;
             this.policy = policy;

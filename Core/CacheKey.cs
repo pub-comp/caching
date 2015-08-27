@@ -148,6 +148,14 @@ namespace PubComp.Caching.Core
             return GetKey(methodInfo, parameterValues: arguments);
         }
 
+        public static string GetKey<TResult>(Expression<Func<TResult>> expression)
+        {
+            MethodInfo methodInfo;
+            object[] arguments;
+            LambdaHelper.GetMethodInfoAndArguments(expression, out methodInfo, out arguments);
+            return GetKey(methodInfo, parameterValues: arguments);
+        }
+
         public static string GetKey<T, TResult>(Expression<Func<T, TResult>> expression)
         {
             MethodInfo methodInfo;

@@ -19,6 +19,12 @@ namespace PubComp.Caching.Core
             GetMethodInfoAndArguments((LambdaExpression)expression, out methodInfo, out arguments);
         }
 
+        public static void GetMethodInfoAndArguments<TResult>(
+            Expression<Func<TResult>> expression, out MethodInfo methodInfo, out object[] arguments)
+        {
+            GetMethodInfoAndArguments((LambdaExpression)expression, out methodInfo, out arguments);
+        }
+
         public static void GetMethodInfoAndArguments<T, TResult>(
             Expression<Func<T, TResult>> expression, out MethodInfo methodInfo, out object[] arguments)
         {

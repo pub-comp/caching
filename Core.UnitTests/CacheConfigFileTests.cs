@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core.UnitTests.Mocks;
 using PubComp.Testing.TestingUtils;
@@ -44,12 +42,12 @@ namespace PubComp.Caching.Core.UnitTests
             LinqAssert.Any(config, c =>
                 c.Action == ConfigAction.Add
                 && c.Name == "cacheFromConfig2"
-                && c is MockCacheConfig
-                && ((MockCacheConfig)c).Policy != null
-                && ((MockCacheConfig)c).Policy.SlidingExpiration.HasValue
-                && ((MockCacheConfig)c).Policy.SlidingExpiration.Value.Minutes == 15
-                && ((MockCacheConfig)c).Policy.AbsoluteExpiration.HasValue == false
-                && ((MockCacheConfig)c).Policy.ExpirationFromAdd.HasValue == false);
+                && c is MockNoCacheConfig
+                && ((MockNoCacheConfig)c).Policy != null
+                && ((MockNoCacheConfig)c).Policy.SlidingExpiration.HasValue
+                && ((MockNoCacheConfig)c).Policy.SlidingExpiration.Value.Minutes == 15
+                && ((MockNoCacheConfig)c).Policy.AbsoluteExpiration.HasValue == false
+                && ((MockNoCacheConfig)c).Policy.ExpirationFromAdd.HasValue == false);
 
             LinqAssert.Any(config, c =>
                 c.Action == ConfigAction.Add
@@ -79,7 +77,7 @@ namespace PubComp.Caching.Core.UnitTests
         [TestMethod]
         public void TestCreateCacheFromCacheConfig_MockCacheConfig()
         {
-            var config = new MockCacheConfig
+            var config = new MockNoCacheConfig
             {
                 Action = ConfigAction.Add,
                 Name = "cacheName2",
@@ -90,10 +88,10 @@ namespace PubComp.Caching.Core.UnitTests
             };
             var cache = config.CreateCache();
             Assert.IsNotNull(cache);
-            Assert.IsInstanceOfType(cache, typeof(MockCache));
-            Assert.IsNotNull(((MockCache)cache).Policy);
-            Assert.IsNotNull(((MockCache)cache).Policy.SlidingExpiration);
-            Assert.AreEqual(new TimeSpan(0, 20, 0), ((MockCache)cache).Policy.SlidingExpiration);
+            Assert.IsInstanceOfType(cache, typeof(MockNoCache));
+            Assert.IsNotNull(((MockNoCache)cache).Policy);
+            Assert.IsNotNull(((MockNoCache)cache).Policy.SlidingExpiration);
+            Assert.AreEqual(new TimeSpan(0, 20, 0), ((MockNoCache)cache).Policy.SlidingExpiration);
         }
 
         [TestMethod]
@@ -107,10 +105,10 @@ namespace PubComp.Caching.Core.UnitTests
 
             var cache2 = CacheManager.GetCache("cacheFromConfig2");
             Assert.IsNotNull(cache2);
-            Assert.IsInstanceOfType(cache2, typeof(MockCache));
-            Assert.IsNotNull(((MockCache)cache2).Policy);
-            Assert.IsNotNull(((MockCache)cache2).Policy.SlidingExpiration);
-            Assert.AreEqual(new TimeSpan(0, 15, 0), ((MockCache)cache2).Policy.SlidingExpiration);
+            Assert.IsInstanceOfType(cache2, typeof(MockNoCache));
+            Assert.IsNotNull(((MockNoCache)cache2).Policy);
+            Assert.IsNotNull(((MockNoCache)cache2).Policy.SlidingExpiration);
+            Assert.AreEqual(new TimeSpan(0, 15, 0), ((MockNoCache)cache2).Policy.SlidingExpiration);
 
             var cache3 = CacheManager.GetCache("cacheFromConfig3");
             Assert.IsNull(cache3);

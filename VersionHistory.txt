@@ -44,3 +44,7 @@
 
 1.5.0:
 	* WebApiExtended - added with basic cache controller
+
+1.6.0:
+	* Core - added CacheControllerUtil for enabling simple register, clear, refresh functionality
+	* Revamped WebApiExteneded to use CacheControllerUtil and name change

@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PubComp.Testing.TestingUtils;
-using PubComp.Caching.Core.UnitTests;
 
 namespace PubComp.Caching.Core.UnitTests
 {
@@ -13,8 +9,8 @@ namespace PubComp.Caching.Core.UnitTests
         [TestMethod]
         public void TestLayeredCacheValidInnerCaches()
         {
-            var l1 = new Mocks.MockCache2("l1");
-            var l2 = new Mocks.MockCache2("l2");
+            var l1 = new Mocks.MockMemCache("l1");
+            var l2 = new Mocks.MockMemCache("l2");
 
             var cache = new LayeredCache("cache0", l1, l2);
 
@@ -118,21 +114,21 @@ namespace PubComp.Caching.Core.UnitTests
         [TestMethod][ExpectedException(typeof(ApplicationException))]
         public void TestLayeredCacheNullLevel1()
         {
-            var cache = new LayeredCache("cache0", null, new Mocks.MockCache2("l2"));
+            var cache = new LayeredCache("cache0", null, new Mocks.MockMemCache("l2"));
         }
 
         [TestMethod]
         [ExpectedException(typeof(ApplicationException))]
         public void TestLayeredCacheNullLevel2()
         {
-            var cache = new LayeredCache("cache0",  new Mocks.MockCache2("l1"), null);
+            var cache = new LayeredCache("cache0",  new Mocks.MockMemCache("l1"), null);
         }
 
         [TestMethod]
         [ExpectedException(typeof(ApplicationException))]
         public void TestLayeredCacheLevelsEqual()
         {
-            var l = new Mocks.MockCache2("l");
+            var l = new Mocks.MockMemCache("l");
             var cache = new LayeredCache("cache0", l, l);
         }
 
@@ -159,7 +155,7 @@ namespace PubComp.Caching.Core.UnitTests
             CacheManager.RemoveCache("l1");
             CacheManager.RemoveCache("l2");
 
-            CacheManager.SetCache("l1", new Mocks.MockCache2("l1"));
+            CacheManager.SetCache("l1", new Mocks.MockMemCache("l1"));
 
             var cache = new LayeredCache("cache0", "l1", "l2");
         }
@@ -173,7 +169,7 @@ namespace PubComp.Caching.Core.UnitTests
             CacheManager.RemoveCache("l1");
             CacheManager.RemoveCache("l2");
 
-            CacheManager.SetCache("l2", new Mocks.MockCache2("l2"));
+            CacheManager.SetCache("l2", new Mocks.MockMemCache("l2"));
 
             var cache = new LayeredCache("cache0", "l1", "l2");
         }
@@ -186,8 +182,8 @@ namespace PubComp.Caching.Core.UnitTests
             CacheManager.RemoveCache("l1");
             CacheManager.RemoveCache("l2");
 
-            CacheManager.SetCache("l1", new Mocks.MockCache2("l1"));
-            CacheManager.SetCache("l2", new Mocks.MockCache2("l2"));
+            CacheManager.SetCache("l1", new Mocks.MockMemCache("l1"));
+            CacheManager.SetCache("l2", new Mocks.MockMemCache("l2"));
 
             var cache = new LayeredCache("cache0", "l1", "l2");
         }
@@ -201,7 +197,7 @@ namespace PubComp.Caching.Core.UnitTests
             CacheManager.RemoveCache("l1");
             CacheManager.RemoveCache("l2");
 
-            var l = new Mocks.MockCache2("l");
+            var l = new Mocks.MockMemCache("l");
 
             CacheManager.SetCache("l1", l);
             CacheManager.SetCache("l2", l);
@@ -218,7 +214,7 @@ namespace PubComp.Caching.Core.UnitTests
             CacheManager.RemoveCache("l1");
             CacheManager.RemoveCache("l2");
 
-            CacheManager.SetCache("l*", new Mocks.MockCache2("l*"));
+            CacheManager.SetCache("l*", new Mocks.MockMemCache("l*"));
 
             var cache = new LayeredCache("cache0", "l1", "l2");
         }
