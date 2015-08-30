@@ -10,7 +10,7 @@ namespace PubComp.Caching.Core.UnitTests
     {
         private CacheControllerUtil controller;
         private Mocks.MockMemCache cache1;
-        private Mocks.MockMemCache memCache;
+        private Mocks.MockMemCache cache2;
         private Mocks.MockMemCache cache3;
 
         [TestInitialize]
@@ -23,8 +23,8 @@ namespace PubComp.Caching.Core.UnitTests
             cache1 = new Mocks.MockMemCache("cache1");
             CacheManager.SetCache(cache1.Name, cache1);
 
-            memCache = new Mocks.MockMemCache("cache2");
-            CacheManager.SetCache(memCache.Name, memCache);
+            cache2 = new Mocks.MockMemCache("cache2");
+            CacheManager.SetCache(cache2.Name, cache2);
 
             cache3 = new Mocks.MockMemCache(typeof(TestProvider).FullName);
             CacheManager.SetCache(cache3.Name, cache3);
@@ -34,6 +34,8 @@ namespace PubComp.Caching.Core.UnitTests
             TestProvider.Hits1 = 0;
             TestProvider.Hits2 = 0;
         }
+
+        #region Tests
 
         [TestMethod]
         public void TestCacheRegisterCache()
@@ -71,23 +73,23 @@ namespace PubComp.Caching.Core.UnitTests
                 "cache2", "keyB", () => new SubClass1 { Key = "keyB", Data1 = "dataB" }, false);
 
             BaseClass value1;
-            var found1 = this.memCache.TryGet("keyA", out value1);
+            var found1 = this.cache2.TryGet("keyA", out value1);
             Assert.IsTrue(found1);
             Assert.IsInstanceOfType(value1, typeof(SubClass1));
-            Assert.AreEqual(0, memCache.Misses);
+            Assert.AreEqual(0, cache2.Misses);
             
             BaseClass value2;
-            var found2 = this.memCache.TryGet("keyB", out value2);
+            var found2 = this.cache2.TryGet("keyB", out value2);
             Assert.IsFalse(found2);
-            Assert.AreEqual(1, memCache.Misses);
+            Assert.AreEqual(1, cache2.Misses);
 
             this.controller.RefreshCacheItem("cache2", "keyB");
 
             BaseClass value3;
-            var found3 = this.memCache.TryGet("keyB", out value3);
+            var found3 = this.cache2.TryGet("keyB", out value3);
             Assert.IsTrue(found3);
             Assert.IsInstanceOfType(value3, typeof(SubClass1));
-            Assert.AreEqual(1, memCache.Misses);
+            Assert.AreEqual(1, cache2.Misses);
         }
 
         [TestMethod]
@@ -96,9 +98,12 @@ namespace PubComp.Caching.Core.UnitTests
             this.controller.RegisterCacheItem(
                 () => new TestProvider().GetData("v1", 2, true), true);
 
+            Assert.AreEqual(0, cache1.Hits);
+
             var result = new TestProvider().GetData("v1", 2, true);
             Assert.AreEqual("GetData-v1/2/True-1", result);
             Assert.AreEqual(1, TestProvider.Hits1);
+            Assert.AreEqual(1, cache1.Hits);
         }
 
         [TestMethod]
@@ -107,10 +112,17 @@ namespace PubComp.Caching.Core.UnitTests
             this.controller.RegisterCacheItem(
                 () => new TestProvider().GetData2("v1", 2, true), true);
 
+            Assert.AreEqual(0, cache3.Hits);
+
             var result = new TestProvider().GetData2("v1", 2, true);
             Assert.AreEqual("GetData2-v1/2/True-1", result);
             Assert.AreEqual(1, TestProvider.Hits2);
+            Assert.AreEqual(1, cache3.Hits);
         }
+
+        #endregion
+
+        #region Nested Types
 
         public class BaseClass
         {
@@ -141,5 +153,7 @@ namespace PubComp.Caching.Core.UnitTests
                 return string.Concat("GetData2-", v1, "/", v2, "/", v3, "-", hits);
             }
         }
+
+        #endregion
     }
 }
