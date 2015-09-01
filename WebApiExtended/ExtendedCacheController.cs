@@ -20,7 +20,7 @@ namespace PubComp.Caching.WebApiExtended
         /// <param name="cacheName"></param>
         [HttpGet]
         [Route("{cacheName}")]
-        public void GetRegisteredCacheNames(string cacheName)
+        public void GetRegisteredCacheItemKeys(string cacheName)
         {
             this.Util.GetRegisteredCacheItemKeys(cacheName);
         }
