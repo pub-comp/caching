@@ -11,7 +11,7 @@ namespace PubComp.Caching.WebApiExtended
 
         public SimpleCacheController()
         {
-            this.Util = new CacheControllerUtil(msg => Log.Info(msg), msg => Log.Warn(msg));
+            this.Util = new CacheControllerUtil();
         }
 
         /// <summary>
@@ -23,7 +23,16 @@ namespace PubComp.Caching.WebApiExtended
         [Route("clear/{cacheName}")]
         public void Clear(string cacheName)
         {
-            this.Util.ClearCache(cacheName);
+            try
+            {
+                this.Util.ClearCache(cacheName);
+                Log.Info("Cache cleared: " + cacheName);
+            }
+            catch (CacheException ex)
+            {
+                Log.Warn(ex.Message);
+                throw;
+            }
         }
 
         /// <summary>
@@ -36,7 +45,16 @@ namespace PubComp.Caching.WebApiExtended
         [Route("clear/{cacheName}/{itemKey}")]
         public void Clear(string cacheName, string itemKey)
         {
-            this.Util.ClearCacheItem(cacheName, itemKey);
+            try
+            {
+                this.Util.ClearCacheItem(cacheName, itemKey);
+                Log.Info(string.Concat("Cache item cleared: ", cacheName, '/', itemKey));
+            }
+            catch (CacheException ex)
+            {
+                Log.Warn(ex.Message);
+                throw;
+            }
         }
     }
 }

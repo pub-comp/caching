@@ -1,4 +1,6 @@
-﻿using System.Web.Http;
+﻿using System.Collections.Generic;
+using System.Web.Http;
+using PubComp.Caching.Core;
 
 namespace PubComp.Caching.WebApiExtended
 {
@@ -9,9 +11,17 @@ namespace PubComp.Caching.WebApiExtended
         /// </summary>
         [HttpGet]
         [Route("")]
-        public void GetRegisteredCacheNames()
+        public IEnumerable<string> GetRegisteredCacheNames()
         {
-            this.Util.GetRegisteredCacheNames();
+            try
+            {
+                return this.Util.GetRegisteredCacheNames();
+            }
+            catch (CacheException ex)
+            {
+                Log.Warn(ex.Message);
+                throw;
+            }
         }
 
         /// <summary>
@@ -20,9 +30,17 @@ namespace PubComp.Caching.WebApiExtended
         /// <param name="cacheName"></param>
         [HttpGet]
         [Route("{cacheName}")]
-        public void GetRegisteredCacheItemKeys(string cacheName)
+        public IEnumerable<string> GetRegisteredCacheItemKeys(string cacheName)
         {
-            this.Util.GetRegisteredCacheItemKeys(cacheName);
+            try
+            {
+                return this.Util.GetRegisteredCacheItemKeys(cacheName);
+            }
+            catch (CacheException ex)
+            {
+                Log.Warn(ex.Message);
+                throw;
+            }
         }
 
         /// <summary>
@@ -35,7 +53,16 @@ namespace PubComp.Caching.WebApiExtended
         [Route("refresh/{cacheName}/{itemKey}")]
         public void RefreshCacheItem(string cacheName, string itemKey)
         {
-            this.Util.RefreshCacheItem(cacheName, itemKey);
+            try
+            {
+                this.Util.RefreshCacheItem(cacheName, itemKey);
+                Log.Info(string.Concat("Cache item refreshed: ", cacheName, '/', itemKey));
+            }
+            catch (CacheException ex)
+            {
+                Log.Warn(ex.Message);
+                throw;
+            }
         }
     }
 }

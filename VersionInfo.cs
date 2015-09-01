@@ -8,5 +8,5 @@ using System.Reflection;
 #if DEBUG
 [assembly: AssemblyInformationalVersion("1.6.0")]
 #else
-    [assembly: AssemblyInformationalVersion("1.5.0")]
+    [assembly: AssemblyInformationalVersion("1.6.0")]
 #endif
