@@ -49,6 +49,6 @@
 	* Core - added CacheControllerUtil for enabling simple register, clear, refresh functionality
 	* Revamped WebApiExteneded to use CacheControllerUtil and name change
 
-
 1.6.1:
 	* Fixed route for cache controllers
+	* Check if parameter is null in GetCache(name)

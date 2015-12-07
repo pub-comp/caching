@@ -133,16 +133,32 @@ namespace PubComp.Caching.Core.UnitTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(ApplicationException))]
+        [ExpectedException(typeof(ArgumentNullException))]
         public void TestLayeredCacheNullLevel1Name()
         {
+            CacheManager.RemoveCache("l");
+            CacheManager.RemoveCache("l*");
+            CacheManager.RemoveCache("l1");
+            CacheManager.RemoveCache("l2");
+
+            CacheManager.SetCache("l1", new Mocks.MockMemCache("l1"));
+            CacheManager.SetCache("l2", new Mocks.MockMemCache("l2"));
+
             var cache = new LayeredCache("cache0", null, "l2");
         }
 
         [TestMethod]
-        [ExpectedException(typeof(ApplicationException))]
+        [ExpectedException(typeof(ArgumentNullException))]
         public void TestLayeredCacheNullLevel2Name()
         {
+            CacheManager.RemoveCache("l");
+            CacheManager.RemoveCache("l*");
+            CacheManager.RemoveCache("l1");
+            CacheManager.RemoveCache("l2");
+
+            CacheManager.SetCache("l1", new Mocks.MockMemCache("l1"));
+            CacheManager.SetCache("l2", new Mocks.MockMemCache("l2"));
+
             var cache = new LayeredCache("cache0", "l1", null);
         }
 

@@ -1,11 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace PubComp.Caching.Core
 {
@@ -14,11 +14,11 @@ namespace PubComp.Caching.Core
         private static Func<MethodBase> callingMethodGetter;
         private static readonly object _loadLock = new object();
 
-        private static System.Threading.ReaderWriterLockSlim sync
-            = new System.Threading.ReaderWriterLockSlim(System.Threading.LockRecursionPolicy.NoRecursion);
+        private static ReaderWriterLockSlim sync
+            = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
-        private static readonly System.Collections.Concurrent.ConcurrentDictionary<CacheName, ICache> caches
-            = new System.Collections.Concurrent.ConcurrentDictionary<CacheName, ICache>();
+        private static readonly ConcurrentDictionary<CacheName, ICache> caches
+            = new ConcurrentDictionary<CacheName, ICache>();
 
         static CacheManager()
         {
@@ -101,6 +101,9 @@ namespace PubComp.Caching.Core
         /// <remarks>For better performance, store the result in client class</remarks>
         public static ICache GetCache(string name)
         {
+            if (name == null)
+                throw new ArgumentNullException("name");
+
             var cachesArray = GetCaches();
             
             var cachesSorted = cachesArray.OrderByDescending(c => c.Key.GetMatchLevel(name));
