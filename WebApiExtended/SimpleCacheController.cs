@@ -4,6 +4,7 @@ using PubComp.Caching.Core;
 
 namespace PubComp.Caching.WebApiExtended
 {
+    [RoutePrefix("api/cache/v1")]
     public class SimpleCacheController : ApiController
     {
         protected readonly CacheControllerUtil Util;
