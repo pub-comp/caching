@@ -9,13 +9,13 @@ namespace PubComp.Caching.Core
 {
     public class CacheControllerUtil
     {
-        private readonly ConcurrentDictionary<string, bool> registeredCacheNames;
-        private readonly ConcurrentDictionary<Tuple<string, string>, Func<object>> registeredCacheItems;
+        private static readonly ConcurrentDictionary<string, bool> RegisteredCacheNames;
+        private static readonly ConcurrentDictionary<Tuple<string, string>, Func<object>> RegisteredCacheItems;
 
-        public CacheControllerUtil()
+        static CacheControllerUtil()
         {
-            this.registeredCacheNames = new ConcurrentDictionary<string, bool>();
-            this.registeredCacheItems = new ConcurrentDictionary<Tuple<string, string>, Func<object>>();
+            RegisteredCacheNames = new ConcurrentDictionary<string, bool>();
+            RegisteredCacheItems = new ConcurrentDictionary<Tuple<string, string>, Func<object>>();
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace PubComp.Caching.Core
             }
 
             bool doEnableClear;
-            if (this.registeredCacheNames.TryGetValue(cacheName, out doEnableClear))
+            if (RegisteredCacheNames.TryGetValue(cacheName, out doEnableClear))
             {
                 if (!doEnableClear)
                 {
@@ -92,7 +92,7 @@ namespace PubComp.Caching.Core
                 throw new CacheException("Cache not registered - received undefined cacheName");
             }
 
-            this.registeredCacheNames.AddOrUpdate(
+            RegisteredCacheNames.AddOrUpdate(
                 cacheName,
                 name => doEnableClearEntireCache,
                 (name, existingValue) => doEnableClearEntireCache);
@@ -148,14 +148,14 @@ namespace PubComp.Caching.Core
                 throw new CacheException("Cache item not registered - received undefined itemKey");
             }
 
-            this.registeredCacheNames.GetOrAdd(cacheName, false);
+            RegisteredCacheNames.GetOrAdd(cacheName, false);
 
             var getter = getterExpression.Compile();
 
             Func<Tuple<string, string>, Func<object>, Func<object>> updateGetter
                 = (k, o) => getter;
 
-            this.registeredCacheItems.AddOrUpdate(
+            RegisteredCacheItems.AddOrUpdate(
                 Tuple.Create(cacheName, itemKey), getter, updateGetter);
 
             if (doInitialize)
@@ -201,12 +201,12 @@ namespace PubComp.Caching.Core
                 throw new CacheException("Cache item not registered - received undefined itemKey");
             }
 
-            this.registeredCacheNames.GetOrAdd(cacheName, false);
+            RegisteredCacheNames.GetOrAdd(cacheName, false);
 
             Func<Tuple<string, string>, Func<object>, Func<object>> updateGetter
                 = (k, o) => getter;
 
-            this.registeredCacheItems.AddOrUpdate(
+            RegisteredCacheItems.AddOrUpdate(
                 Tuple.Create(cacheName, itemKey), getter, updateGetter);
 
             if (doInitialize)
@@ -219,11 +219,20 @@ namespace PubComp.Caching.Core
         }
 
         /// <summary>
+        /// Clears all registrations (of named caches and cache items for remote clear/refresh access via controller)
+        /// </summary>
+        protected void ClearRegistrations()
+        {
+            RegisteredCacheItems.Clear();
+            RegisteredCacheNames.Clear();
+        }
+
+        /// <summary>
         /// Gets names of all registered cache instances
         /// </summary>
         public IEnumerable<string> GetRegisteredCacheNames()
         {
-            return this.registeredCacheNames.Keys.ToList();
+            return RegisteredCacheNames.Keys.ToList();
         }
 
         /// <summary>
@@ -237,7 +246,7 @@ namespace PubComp.Caching.Core
                 throw new CacheException("Received undefined cacheName");
             }
 
-            return this.registeredCacheItems.Keys.ToList()
+            return RegisteredCacheItems.Keys.ToList()
                 .Where(k => k.Item1 == cacheName)
                 .Select(k => k.Item2)
                 .ToList();
@@ -262,7 +271,7 @@ namespace PubComp.Caching.Core
 
             Func<object> registeredGetter;
 
-            if (this.registeredCacheItems.TryGetValue(Tuple.Create(cacheName, itemKey), out registeredGetter))
+            if (RegisteredCacheItems.TryGetValue(Tuple.Create(cacheName, itemKey), out registeredGetter))
             {
                 if (registeredGetter == null)
                 {

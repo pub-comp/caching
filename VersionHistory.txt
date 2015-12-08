@@ -52,3 +52,6 @@
 1.6.1:
 	* Fixed route for cache controllers
 	* Check if parameter is null in GetCache(name)
+
+1.6.2:
+	* Fixed lifetime of cache registrations via CacheControllerUtil
