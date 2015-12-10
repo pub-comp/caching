@@ -81,6 +81,19 @@ namespace PubComp.Caching.Core
         }
 
         /// <summary>
+        /// Registers all defined caches
+        /// </summary>
+        public void RegisterAllCaches()
+        {
+            var caches = CacheManager.GetCacheNames();
+
+            foreach (var cache in caches)
+            {
+                RegisterCache(cache, true);
+            }
+        }
+
+        /// <summary>
         /// Register a named cache instance for remote clear access via controller
         /// </summary>
         /// <param name="cacheName"></param>

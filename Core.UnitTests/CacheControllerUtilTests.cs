@@ -62,6 +62,19 @@ namespace PubComp.Caching.Core.UnitTests
         }
 
         [TestMethod]
+        public void TestCacheRegisterAllCaches_GetRegisteredCacheNames()
+        {
+            CacheManager.RemoveAllCaches();
+            CacheManager.SetCache(cache1.Name, cache1);
+            CacheManager.SetCache(cache2.Name, cache2);
+
+            this.cacheControllerUtil.RegisterAllCaches();
+            
+            var cacheNames = this.cacheControllerUtil.GetRegisteredCacheNames().ToList();
+            CollectionAssert.AreEquivalent(new[] { cache1.Name, cache2.Name }, cacheNames);
+        }
+
+        [TestMethod]
         public void TestGetRegisteredCacheNames()
         {
             var cacheNames = this.cacheControllerUtil.GetRegisteredCacheNames().ToList();

@@ -80,6 +80,25 @@ namespace PubComp.Caching.Core
             return GetCache(type.FullName);
         }
 
+        /// <summary>Gets a list of all cache names</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public static IEnumerable<string> GetCacheNames()
+        {
+            string[] cachesArray;
+
+            sync.EnterReadLock();
+            try
+            {
+                cachesArray = caches.Values.Select(cache => cache.Name).ToArray();
+            }
+            finally
+            {
+                sync.ExitReadLock();
+            }
+
+            return cachesArray;
+        }
+
         private static KeyValuePair<CacheName, ICache>[] GetCaches()
         {
             KeyValuePair<CacheName, ICache>[] cachesArray;
