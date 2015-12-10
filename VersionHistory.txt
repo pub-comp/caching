@@ -55,3 +55,6 @@
 
 1.6.2:
 	* Fixed lifetime of cache registrations via CacheControllerUtil
+
+1.6.2:
+	* Added RegisterAllCaches functionality
