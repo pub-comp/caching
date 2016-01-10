@@ -182,31 +182,110 @@ namespace PubComp.Caching.AopCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestKeyGenerationLambda()
+        public void TestKeyGenerationLambdaFromConst()
         {
-            Assert.AreEqual(0, cache1.Hits);
-            Assert.AreEqual(0, cache1.Misses);
+            const double doubleVal = 5.0;
 
             var service = new Service1();
+            Action cachedAction = () => service.MethodToCache1(doubleVal);
+            Func<string> cacheKeyGetter = () => CacheKey.GetKey((Service1 s) => s.MethodToCache1(doubleVal));
 
-            service.MethodToCache1(5.0);
-            Assert.AreEqual(0, cache1.Hits);
-            Assert.AreEqual(2, cache1.Misses);
+            AssertCacheWithClear(cache1, cachedAction, cacheKeyGetter);
+        }
 
-            service.MethodToCache1(5.0);
-            Assert.AreEqual(1, cache1.Hits);
-            Assert.AreEqual(2, cache1.Misses);
+        [TestMethod]
+        public void TestKeyGenerationLambdaFromProperty()
+        {
+            const double doubleVal = 5.0;
+            var testObject = new TestObj { DoubleProperty = doubleVal };
+            var service = new Service1();
+            Action cachedAction = () => service.MethodToCache1(testObject.DoubleProperty);
+            Func<string> cacheKeyGetter = () => CacheKey.GetKey((Service1 s) => s.MethodToCache1(testObject.DoubleProperty));
 
-            var key = CacheKey.GetKey((Service1 s) => s.MethodToCache1(5.0));
+            AssertCacheWithClear(cache1, cachedAction, cacheKeyGetter);
+        }
+
+        [TestMethod]
+        public void TestKeyGenerationLambdaFromField()
+        {
+            const double doubleVal = 5.0;
+            var testObject = new TestObj { DoubleField = doubleVal };
+            var service = new Service1();
+            Action cachedAction = () => service.MethodToCache1(testObject.DoubleField);
+            Func<string> cacheKeyGetter = () => CacheKey.GetKey((Service1 s) => s.MethodToCache1(testObject.DoubleField));
+
+            AssertCacheWithClear(cache1, cachedAction, cacheKeyGetter);
+        }
+
+        [TestMethod]
+        public void TestKeyGenerationLambdaFromStaticProperty()
+        {
+            const double doubleVal = 5.0;
+            TestObj.StaticDoubleProperty = doubleVal;
+            var service = new Service1();
+            Action cachedAction = () => service.MethodToCache1(TestObj.StaticDoubleProperty);
+            Func<string> cacheKeyGetter = () => CacheKey.GetKey((Service1 s) => s.MethodToCache1(TestObj.StaticDoubleProperty));
+
+            AssertCacheWithClear(cache1, cachedAction, cacheKeyGetter);
+        }
+
+        [TestMethod]
+        public void TestKeyGenerationLambdaFromStaticField()
+        {
+            const double doubleVal = 5.0;
+            TestObj.StaticDoubleField = doubleVal;
+            var service = new Service1();
+            Action cachedAction = () => service.MethodToCache1(TestObj.StaticDoubleField);
+            Func<string> cacheKeyGetter = () => CacheKey.GetKey((Service1 s) => s.MethodToCache1(TestObj.StaticDoubleField));
+
+            AssertCacheWithClear(cache1, cachedAction, cacheKeyGetter);
+        }
+
+        [TestMethod]
+        public void TestKeyGenerationLambdaFromInnerProperty()
+        {
+            const double doubleVal = 5.0;
+            var testObject = new TestObj { TestObjProperty = new TestObj { DoubleProperty = doubleVal } };
+            var service = new Service1();
+            Action cachedAction = () => service.MethodToCache1(testObject.TestObjProperty.DoubleProperty);
+            Func<string> cacheKeyGetter = () => CacheKey.GetKey((Service1 s) => s.MethodToCache1(testObject.TestObjProperty.DoubleProperty));
+
+            AssertCacheWithClear(cache1, cachedAction, cacheKeyGetter);
+        }
+
+        private void AssertCacheWithClear(MockCache cache, Action cachedAction, Func<string> cacheKeyGetter)
+        {
+            Assert.AreEqual(0, cache.Hits);
+            Assert.AreEqual(0, cache.Misses);
+
+            cachedAction();
+            Assert.AreEqual(0, cache.Hits);
+            Assert.AreEqual(2, cache.Misses);
+
+            cachedAction();
+            Assert.AreEqual(1, cache.Hits);
+            Assert.AreEqual(2, cache.Misses);
+
+            var key = cacheKeyGetter();
             cache1.Clear(key);
 
-            service.MethodToCache1(5.0);
-            Assert.AreEqual(1, cache1.Hits);
-            Assert.AreEqual(4, cache1.Misses);
+            cachedAction();
+            Assert.AreEqual(1, cache.Hits);
+            Assert.AreEqual(4, cache.Misses);
 
-            service.MethodToCache1(5.0);
-            Assert.AreEqual(2, cache1.Hits);
-            Assert.AreEqual(4, cache1.Misses);
+            cachedAction();
+            Assert.AreEqual(2, cache.Hits);
+            Assert.AreEqual(4, cache.Misses);
+        }
+
+        private class TestObj
+        {
+            public double DoubleProperty { get; set; }
+            public double DoubleField;
+            public static double StaticDoubleProperty { get; set; }
+            public static double StaticDoubleField;
+
+            public TestObj TestObjProperty { get; set; }
         }
     }
 }

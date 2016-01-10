@@ -58,3 +58,6 @@
 
 1.7.0:
 	* Added RegisterAllCaches functionality
+
+1.7.1:
+	* Bug fix for LambdaHelper: Add support for fields/properties as parameters in key generation expression

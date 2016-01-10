@@ -52,6 +52,40 @@ namespace PubComp.Caching.Core
             if (constantExpression != null)
                 return constantExpression.Value;
 
+            var memberExpression = exp as MemberExpression;
+            if (memberExpression != null)
+            {
+                var memberInfo = memberExpression.Member;
+
+                var fieldInfo = memberInfo as FieldInfo;
+                if (fieldInfo != null)
+                {
+                    if (fieldInfo.IsStatic)
+                    {
+                        return fieldInfo.GetValue(null);
+                    }
+                    else
+                    {
+                        var obj = GetValue(memberExpression.Expression);
+                        return fieldInfo.GetValue(obj);
+                    }
+                }
+
+                var propertyInfo = memberInfo as PropertyInfo;
+                if (propertyInfo != null)
+                {
+                    if (propertyInfo.GetMethod.IsStatic)
+                    {
+                        return propertyInfo.GetValue(null);
+                    }
+                    else
+                    {
+                        var obj = GetValue(memberExpression.Expression);
+                        return propertyInfo.GetValue(obj);
+                    }
+                }
+            }
+
             throw new NotSupportedException("Can not read parameter value of type: " + exp.Type.Name);
         }
     }
