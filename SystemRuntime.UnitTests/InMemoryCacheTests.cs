@@ -51,7 +51,7 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
         }
 
         [TestMethod]
-        public void TestMongoDbCacheNull()
+        public void TestInMemoryCacheNull()
         {
             var cache = new InMemoryCache("cache1", new TimeSpan(0, 2, 0));
 

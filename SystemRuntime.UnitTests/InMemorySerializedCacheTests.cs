@@ -68,5 +68,25 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             result = cache.Get("key", getter);
             LinqAssert.AreSame(new object[] { "1" }, result);
         }
+
+        [TestMethod]
+        public void TestInMemorySerializedCacheNull()
+        {
+            var cache = new InMemorySerializedCache("cache1", new TimeSpan(0, 2, 0));
+
+            int misses = 0;
+
+            Func<string> getter = () => { misses++; return null; };
+
+            string result;
+
+            result = cache.Get("key", getter);
+            Assert.AreEqual(1, misses);
+            Assert.AreEqual(null, result);
+
+            result = cache.Get("key", getter);
+            Assert.AreEqual(1, misses);
+            Assert.AreEqual(null, result);
+        }
     }
 }
