@@ -11,5 +11,15 @@
         /// Required parameter - level2 cache name
         /// </summary>
         public string Level2CacheName { get; set; }
+
+        /// <summary>
+        /// Notifications providers. Currently supports "redis", default is none. 
+        /// </summary>
+        public string AutoSyncProvider { get; set; }
+
+        public LayeredCachePolicy()
+        {
+            AutoSyncProvider = null;
+        }
     }
 }

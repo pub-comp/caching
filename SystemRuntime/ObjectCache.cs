@@ -1,5 +1,6 @@
 ﻿using System;
 using PubComp.Caching.Core;
+using PubComp.Caching.RedisCaching.StackExchange;
 
 namespace PubComp.Caching.SystemRuntime
 {
@@ -9,6 +10,7 @@ namespace PubComp.Caching.SystemRuntime
         private System.Runtime.Caching.ObjectCache innerCache;
         private readonly Object sync = new Object();
         private readonly InMemoryPolicy policy;
+        private CacheSynchronizer synchronizer;
 
         protected ObjectCache(
             String name, System.Runtime.Caching.ObjectCache innerCache, InMemoryPolicy policy)
@@ -16,14 +18,16 @@ namespace PubComp.Caching.SystemRuntime
             this.name = name;
             this.policy = policy;
             this.innerCache = innerCache;
-        }
 
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.AutoSyncProvider);
+        }
+        
         public string Name { get { return this.name; } }
 
         protected System.Runtime.Caching.ObjectCache InnerCache { get { return this.innerCache; } }
 
         protected InMemoryPolicy Policy { get { return this.policy; } }
-
+        
         public bool TryGet<TValue>(string key, out TValue value)
         {
             return TryGetInner(key, out value);

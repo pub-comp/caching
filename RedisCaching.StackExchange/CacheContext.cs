@@ -9,89 +9,18 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 {
     public class CacheContext : IDisposable
     {
-        private ConfigurationOptions config;
+        private RedisClient _redis;
         private IRedisConverter convert;
-        private IConnectionMultiplexer innerContext;
-        private IRedisMonitor redisMonitor;
-
+        
         public CacheContext(String connectionString, String converterType, String clusterType, int monitorPort, int monitorIntervalMilliseconds)
         {
-            config = ConfigurationOptions.Parse(connectionString);
             this.convert = RedisConverterFactory.CreateConverter(converterType);
-            RedisConnect();
-            RedisMonitor(clusterType, monitorPort, monitorIntervalMilliseconds);
+            _redis = new RedisClient(connectionString, clusterType, monitorPort,monitorIntervalMilliseconds);
         }
-
-        private void RedisConnect()
-        {
-            try
-            {
-                if (this.innerContext != null)
-                {
-                    this.innerContext.Close();
-                    this.innerContext.Dispose();
-                    this.innerContext = null;
-                }
-            }
-            finally
-            {
-                LogHelper.Log.Debug("Redis Reconnect: {0}", config);
-                this.innerContext = ConnectionMultiplexer.Connect(config);
-            }
-        }
-
-        private void RedisMonitor(string clusterType, int monitorPort, int monitorIntervalMilliseconds)
-        {
-            redisMonitor = RedisMonitorFactory.CreateMonitor(clusterType);
-            if (redisMonitor == null)
-            {
-                return;
-            }
-            redisMonitor.StartMonitor(config, monitorPort, monitorIntervalMilliseconds, MasterChanged);
-        }
-
-        private bool MasterChanged(IPEndPoint endpoint)
-        {
-            RedisConnect();
-            return true;
-        }
-
-        private IDatabase Database
-        {
-            get { return this.innerContext.GetDatabase(); }
-        }
-
-        private IServer GetMasterServer()
-        {
-            //return innerContext.GetServer("172.20.0.219:6379");
-            IServer master = null;
-            if (redisMonitor != null)
-            {
-                string serverEndpoint = string.Format("{0}:6379", redisMonitor.MasterEndpoint.Address);
-                master = innerContext.GetServer(serverEndpoint);
-            }
-            else
-            {
-                var servers = innerContext.GetEndPoints(false)
-                .Select(ep => innerContext.GetServer(ep)).ToList();
-                master = servers.Where(s => !s.IsSlave).FirstOrDefault();
-                
-            }
-
-            if (master == null)
-            {
-                LogHelper.Log.Fatal("GetMasterServer cannot detect master");
-                throw new Exception("GetMasterServer cannot detect master");
-            }
-
-            LogHelper.Log.Debug("GetMasterServer {0}", ((IPEndPoint)master.EndPoint).Address);
-            return master;
-        }
-
         internal CacheItem<TValue> GetItem<TValue>(String cacheName, String key)
         {
             var id = CacheItem<TValue>.GetId(cacheName, key);
-            var cacheItemString = Database.StringGet(id);
+            var cacheItemString = _redis.Database.StringGet(id);
             return convert.FromRedis<TValue>(cacheItemString);
         }
 
@@ -101,7 +30,7 @@ namespace PubComp.Caching.RedisCaching.StackExchange
             if (cacheItem.ExpireIn.HasValue)
                 expiry = cacheItem.ExpireIn;
 
-            Database.StringSet(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always, CommandFlags.FireAndForget);
+            _redis.Database.StringSet(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always, CommandFlags.FireAndForget);
         }
 
         internal bool SetIfNotExists<TValue>(CacheItem<TValue> cacheItem)
@@ -116,7 +45,7 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 
         private bool Contains(string key)
         {
-            return Database.KeyExists(key);
+            return _redis.Database.KeyExists(key);
         }
 
         internal void SetExpirationTime<TValue>(CacheItem<TValue> cacheItem)
@@ -133,25 +62,25 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 
         private void ExpireById(string id, TimeSpan timeSpan)
         {
-            Database.KeyExpire(id, timeSpan, CommandFlags.FireAndForget);
+            _redis.Database.KeyExpire(id, timeSpan, CommandFlags.FireAndForget);
         }
 
         internal void RemoveItem(String cacheName, String key)
         {
             var id = CacheItem<object>.GetId(cacheName, key);
-            Database.KeyDelete(id, CommandFlags.FireAndForget);
+            _redis.Database.KeyDelete(id, CommandFlags.FireAndForget);
         }
 
         internal void ClearItems(String cacheName)
         {
             var keyPrefix = CacheItem<object>.GetId(cacheName, string.Empty);
-            var keys = GetMasterServer().Keys(0, string.Format("*{0}*", keyPrefix), 1000, CommandFlags.None).ToArray();
-            Database.KeyDelete(keys, CommandFlags.FireAndForget);
+            var keys = _redis.MasterServer.Keys(0, string.Format("*{0}*", keyPrefix), 1000, CommandFlags.None).ToArray();
+            _redis.Database.KeyDelete(keys, CommandFlags.FireAndForget);
         }
 
         public void Dispose()
         {
-            this.innerContext.Dispose();
+            this._redis.Dispose();
         }
     }
 }

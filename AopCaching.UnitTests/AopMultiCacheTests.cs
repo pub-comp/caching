@@ -57,6 +57,15 @@ namespace PubComp.Caching.AopCaching.UnitTests
             LinqAssert.Any(results, r => r.Id == "k1");
             LinqAssert.Any(results, r => r.Id == "k2");
             LinqAssert.Any(results, r => r.Id == "k3");
+
+            results = service.GetItems(new[] { "k1", "k2", "k3" });
+
+            Assert.AreEqual(3, cache1.Hits);
+            Assert.AreEqual(3, cache1.Misses);
+            LinqAssert.Count(results, 3);
+            LinqAssert.Any(results, r => r.Id == "k1");
+            LinqAssert.Any(results, r => r.Id == "k2");
+            LinqAssert.Any(results, r => r.Id == "k3");
         }
 
         [TestMethod]

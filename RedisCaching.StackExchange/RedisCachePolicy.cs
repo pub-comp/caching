@@ -25,6 +25,11 @@ namespace PubComp.Caching.RedisCaching.StackExchange
         public int MonitorPort { get; set; }
 
         /// <summary>
+        /// Notifications providers. Currently supports "redis", default is none. 
+        /// </summary>
+        public string AutoSyncProvider { get; set; }
+
+        /// <summary>
         /// The interval in milliseconds for monitoring the master-replica. 
         /// </summary>
         public int MonitorIntervalMilliseconds { get; set; }
@@ -54,11 +59,12 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 
         public RedisCachePolicy()
         {
-            ConnectionString = @"172.16.0.44:6379,172.16.0.48:6379,172.16.0.43:6379,serviceName=mymaster";
+            ConnectionString = @"127.0.0.1:6379,serviceName=mymaster";
             MonitorIntervalMilliseconds = 5000;
             ClusterType = "replica";
             Converter = "json";
             MonitorPort = 26379;
+            AutoSyncProvider = null;
         }
     }
 }

@@ -3,50 +3,121 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using PubComp.Caching.Core;
 using PubComp.Caching.Core.UnitTests;
 using PubComp.Caching.RedisCaching.StackExchange;
 using PubComp.Testing.TestingUtils;
+using PubComp.Caching.SystemRuntime;
+using System.Configuration;
 
 namespace PubComp.Caching.RedisCaching.StackExchange.UnitTests
 {
     [TestClass]
     public class RedisCacheStackExchangeTests
     {
-        [TestMethod]
-        public void TestRedisCacheAllLoop()
-        {
-            var cache1 = new RedisCache(
-                "cache1",
-                new RedisCachePolicy
-                {
-                });
+        //[TestMethod]
+        //public void TestReadAppConfig()
+        //{
+        //    var config = ConfigurationManager.GetSection("PubComp/CacheNotificationsConfig") as IList<CacheNotificationsConfig>;
+        //}
 
-            cache1.ClearAll();
+        [TestMethod]
+        public void TestLoadRedisCacheFromConfigFile()
+        {
+            ICache redisCache = CacheManager.GetCache("redisCache");
+            ICache localCache = CacheManager.GetCache("localCache");
+            ICache layeredCache = CacheManager.GetCache("layeredCache");
+            
+            ICache testedCache = layeredCache;
+
+            testedCache.ClearAll();
+            redisCache.ClearAll();
+            localCache.ClearAll();
+
+            Thread.Sleep(5000);
 
             int keycount = 0;
-            while (keycount < 1000)
+            while (keycount < 10)
             {
                 try
                 {
                     string key = "key_" + keycount;
                     string val = "value_" + keycount;
-                    cache1.Set(key, val);
+                    testedCache.Set(key, val);
+
                     keycount++;
-                    Thread.Sleep(3000);
+                    Thread.Sleep(100);
+
                     string valFromCache;
-                    cache1.TryGet(key, out valFromCache);
+
+                    testedCache.TryGet(key, out valFromCache);
                     Assert.AreEqual(val, valFromCache);
-                    System.Diagnostics.Debug.WriteLine("SetGet {0} {1}", key, valFromCache);
+                    System.Diagnostics.Debug.WriteLine("SetGet-{0} {1} {2}", testedCache.Name, key, valFromCache);
+
+                    redisCache.TryGet(key, out valFromCache);
+                    Assert.AreEqual(val, valFromCache);
+                    System.Diagnostics.Debug.WriteLine("SetGet-{0} {1} {2}", redisCache.Name, key, valFromCache);
+
+                    localCache.TryGet(key, out valFromCache);
+                    Assert.AreEqual(val, valFromCache);
+                    System.Diagnostics.Debug.WriteLine("SetGet-{0} {1} {2}", localCache.Name, key, valFromCache);
+
                 }
                 catch (Exception exp)
                 {
                     System.Diagnostics.Debug.WriteLine("Error: {0}" + exp.Message);
                 }
-                
-
-
-
             }
+
+        }
+
+        [TestMethod]
+        public void TestRedisCacheAllLoop()
+        {
+            var redisCache = new RedisCache(
+                "C1",
+                new RedisCachePolicy
+                {
+                });
+            var localCache = new InMemoryCache("C1", new TimeSpan(0, 2, 0));
+
+            redisCache.ClearAll();
+            //localCache.ClearAll();
+            Thread.Sleep(5000);
+            int keycount = 0;
+            while (keycount < 10)
+            {
+                try
+                {
+                    string key = "key_" + keycount;
+                    string val = "value_" + keycount;
+                    redisCache.Set(key, val);
+                    localCache.Set(key, val);
+
+                    keycount++;
+                    Thread.Sleep(100);
+
+                    string valFromCache;
+
+                    redisCache.TryGet(key, out valFromCache);
+                    Assert.AreEqual(val, valFromCache);
+                    System.Diagnostics.Debug.WriteLine("SetGet-{0} {1} {2}", redisCache.Name, key, valFromCache);
+
+                    localCache.TryGet(key, out valFromCache);
+                    Assert.AreEqual(val, valFromCache);
+                    System.Diagnostics.Debug.WriteLine("SetGet-{0} {1} {2}", localCache.Name, key, valFromCache);
+                }
+                catch (Exception exp)
+                {
+                    System.Diagnostics.Debug.WriteLine("Error: {0}" + exp.Message);
+                }
+            }
+
+            localCache.Clear("key_6");
+
+            Thread.Sleep(5000);
+
+
         }
 
         [TestMethod]

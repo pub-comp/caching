@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
+using PubComp.Caching.Core;
 using PubComp.Caching.RedisCaching.StackExchange;
 using StackExchange.Redis;
 
@@ -31,6 +32,8 @@ namespace PubComp.Caching.RedisCaching.StackExchange
         string Type { get; } 
         RedisValue ToRedis<TValue>(CacheItem<TValue> cacheItem);
         CacheItem<TValue> FromRedis<TValue>(RedisValue cacheItemString);
+        RedisValue ToRedis(CacheItemNotification notification);
+        CacheItemNotification FromRedis(RedisValue cacheNotificationString);
     }
 
     
@@ -42,11 +45,21 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 
         public RedisValue ToRedis<TValue>(CacheItem<TValue> cacheItem)
         {
-            if (cacheItem == null)
+            return To(cacheItem);
+        }
+
+        public RedisValue ToRedis(CacheItemNotification notification)
+        {
+            return To(notification);
+        }
+        
+        private RedisValue To<TValue>(TValue item)
+        {
+            if (item == null)
                 return RedisValue.Null;
 
             var cacheItemString = Newtonsoft.Json.JsonConvert.SerializeObject(
-                cacheItem,
+                item,
                 new Newtonsoft.Json.JsonSerializerSettings
                 {
                     TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
@@ -61,8 +74,21 @@ namespace PubComp.Caching.RedisCaching.StackExchange
             if (string.IsNullOrEmpty(cacheItemString))
                 return null;
 
-            var cacheItem = Newtonsoft.Json.JsonConvert.DeserializeObject<CacheItem<TValue>>(
-                cacheItemString,
+            return From<CacheItem<TValue>>(cacheItemString);
+        }
+
+        public CacheItemNotification FromRedis(RedisValue cacheNotificationString)
+        {
+            if (string.IsNullOrEmpty(cacheNotificationString))
+                return null;
+
+            return From<CacheItemNotification>(cacheNotificationString);
+        }
+
+        public TValue From<TValue>(RedisValue stringValue)
+        {
+            var cacheItem = Newtonsoft.Json.JsonConvert.DeserializeObject<TValue>(
+                stringValue,
                 new Newtonsoft.Json.JsonSerializerSettings
                 {
                     TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
@@ -83,13 +109,18 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 
         public RedisValue ToRedis<TValue>(CacheItem<TValue> cacheItem)
         {
-            if (cacheItem == null)
+            return To(cacheItem);
+        }
+
+        private RedisValue To<TValue>(TValue data)
+        {
+            if (data == null)
                 return RedisValue.Null;
 
             using (var stream = new MemoryStream())
             {
                 var formatter = new BinaryFormatter();
-                formatter.Serialize(stream, cacheItem);
+                formatter.Serialize(stream, data);
                 stream.Flush();
                 stream.Position = 0;
                 return Convert.ToBase64String(stream.ToArray());
@@ -101,14 +132,28 @@ namespace PubComp.Caching.RedisCaching.StackExchange
             if (string.IsNullOrEmpty(cacheItemString))
                 return null;
 
-            byte[] b = Convert.FromBase64String(cacheItemString);
+            return From<CacheItem<TValue>>(cacheItemString);
+        }
+
+        private TValue From<TValue>(RedisValue stringValue)
+        {
+            byte[] b = Convert.FromBase64String(stringValue);
             using (var stream = new MemoryStream(b))
             {
                 var formatter = new BinaryFormatter();
                 stream.Seek(0, SeekOrigin.Begin);
-                return (CacheItem<TValue>) formatter.Deserialize(stream);
+                return (TValue)formatter.Deserialize(stream);
             }
         }
 
+        public RedisValue ToRedis(CacheItemNotification notification)
+        {
+            return To(notification);
+        }
+
+        public CacheItemNotification FromRedis(RedisValue cacheNotificationString)
+        {
+            return From<CacheItemNotification>(cacheNotificationString);
+        }
     }
 }

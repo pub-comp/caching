@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Policy;
 using PubComp.Caching.Core;
 
 namespace PubComp.Caching.RedisCaching.StackExchange
@@ -15,6 +16,13 @@ namespace PubComp.Caching.RedisCaching.StackExchange
         private readonly int monitorPort;
         private readonly int monitorIntervalMilliseconds;
         private readonly CacheContext _cache = null;
+        private CacheSynchronizer synchronizer;
+
+        public string Name { get { return this.name; } }
+        
+        private CacheContext Cache {
+            get { return _cache; }
+        }
 
         public RedisCache(String name, RedisCachePolicy policy)
         {
@@ -61,13 +69,7 @@ namespace PubComp.Caching.RedisCaching.StackExchange
             this.useSlidingExpiration = (policy.SlidingExpiration < TimeSpan.MaxValue);
 
             _cache = new CacheContext(this.connectionString, this.converterType, this.clusterType, this.monitorPort, this.monitorIntervalMilliseconds);
-        }
-
-        public string Name { get { return this.name; } }
-
-        
-        private CacheContext Cache {
-            get { return _cache; }
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, policy.AutoSyncProvider);
         }
 
         private TValue GetOrAdd<TValue>(
@@ -77,18 +79,14 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 
             if (context.SetIfNotExists(newItem))
             {
-                //if (newItem.ExpireIn.HasValue)
-                //    context.SetExpirationTime(newItem);
                 return newValue;
             }
 
             var prevValue = GetCacheItem<TValue>(context, key);
             if (!doForceOverride && prevValue != null && prevValue.Value is TValue)
                 return prevValue.Value;
-
+            
             context.SetItem(newItem);
-            //if (newItem.ExpireIn.HasValue)
-            //    context.SetExpirationTime(newItem);
 
             return newValue;
         }
@@ -163,7 +161,7 @@ namespace PubComp.Caching.RedisCaching.StackExchange
             return GetOrAdd(Cache, key, value);
         }
 
-        public void Clear(string key)
+        public void Clear(String key)
         {
             Cache.RemoveItem(this.Name, key);
         }

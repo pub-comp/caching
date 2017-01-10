@@ -6,7 +6,13 @@ namespace PubComp.Caching.SystemRuntime
     {
         public InMemoryPolicy()
         {
+            AutoSyncProvider = null;
         }
+
+        /// <summary>
+        /// Notifications providers. Currently supports "redis", default is none. 
+        /// </summary>
+        public string AutoSyncProvider { get; set; }
 
         /// <summary>
         /// Gets or sets a value that indicates whether a cache entry should be evicted at a specified time.

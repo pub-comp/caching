@@ -131,6 +131,29 @@ namespace PubComp.Caching.Core
             return (cache.Key.Prefix != null && cache.Key.GetMatchLevel(name) >= cache.Key.Prefix.Length) ? cache.Value : null;
         }
 
+        public static ICacheNotifier GetCacheNotificationsProvider(string cacheName, string providername)
+        {
+            if (cacheName == null)
+                throw new ArgumentNullException("cacheName");
+
+            if (providername == null)
+                throw new ArgumentNullException("providername");
+
+            var cacheNotificationConfig = 
+                ConfigurationManager.GetSection("PubComp/CacheNotificationsConfig") as IList<CacheNotificationsConfig>;
+
+            if (cacheNotificationConfig == null)
+                return null;
+
+            var cacheNotificationConfigItem =
+                cacheNotificationConfig.Where(configItem => configItem.Name == providername).FirstOrDefault();
+
+            if (cacheNotificationConfigItem == null)
+                return null;
+
+            return cacheNotificationConfigItem.CreateCacheNotifications(cacheName);
+        }
+
         private class CacheComparer : IEqualityComparer<ICache>
         {
             public bool Equals(ICache x, ICache y)
