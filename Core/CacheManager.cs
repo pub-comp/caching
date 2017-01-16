@@ -131,6 +131,19 @@ namespace PubComp.Caching.Core
             return (cache.Key.Prefix != null && cache.Key.GetMatchLevel(name) >= cache.Key.Prefix.Length) ? cache.Value : null;
         }
 
+        /// <summary>Gets a cache by name - return a specialized cache implementation type</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public static TCache GetCache<TCache>(string name) where TCache : ICache
+        {
+            ICache cache = GetCache(name);
+            if(! (cache is TCache))
+            {
+                throw new ArgumentException("The specified cache does not implements type " + typeof(TCache));
+            }
+            return (TCache)cache;
+
+        }
+
         public static ICacheNotifier GetCacheNotificationsProvider(string cacheName, string providername)
         {
             if (cacheName == null)
