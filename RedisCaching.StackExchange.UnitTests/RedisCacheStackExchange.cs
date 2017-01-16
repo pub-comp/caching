@@ -489,36 +489,56 @@ namespace PubComp.Caching.RedisCaching.StackExchange.UnitTests
         }
 
         [TestMethod]
-        public void TestRedisCacheLoadTest()
+        public void TestRedisCacheMassSetDataLoadTest()
         {
-            try
-            {
-                var redisCache = CacheManager.GetCache("redisCache");
-                redisCache.ClearAll();
+            var redisCache = CacheManager.GetCache("redisCache");
+            redisCache.ClearAll();
                 
-                int keycount = 0;
-                List<MockCacheItem> list = new List<MockCacheItem>();
-                while (keycount++ < 100000)
-                {
-                    list.Add(MockCacheItem.GetNewMockInstance(keycount.ToString()));
-                }
-
-                var stopWatch = Stopwatch.StartNew();
-                Parallel.ForEach(list, (item =>
-                {
-                    redisCache.Set(item.Key, item);
-                }));
-
-                TimeSpan elapsed = stopWatch.Elapsed;
-                System.Diagnostics.Debug.WriteLine("TestRedisCacheLoadTest::Finished, Elapsed " + elapsed.Seconds.ToString());
-
-                bool isFast = elapsed.Seconds < 20;//took less then 20 seconds
-                Assert.IsFalse(isFast, "Redis load test was too slow");
-            }
-            catch (Exception exp)
+            int keycount = 0;
+            List<MockCacheItem> list = new List<MockCacheItem>();
+            while (keycount++ < 100000)
             {
-                System.Diagnostics.Debug.WriteLine("TestRedisCacheLoadTest::Error: " + exp.Message);
+                list.Add(MockCacheItem.GetNewMockInstance(keycount.ToString()));
             }
+
+            var stopWatch = Stopwatch.StartNew();
+            Parallel.ForEach(list, (item =>
+            {
+                redisCache.Set(item.Key, item);
+            }));
+
+            TimeSpan elapsed = stopWatch.Elapsed;
+            System.Diagnostics.Debug.WriteLine("TestRedisCacheLoadTest::Finished, Elapsed " + elapsed.Seconds.ToString());
+
+            bool isFast = elapsed.Seconds < 20;//took less then 20 seconds
+            Assert.IsTrue(isFast, "Redis SET load test was too slow, took: " + elapsed.Seconds);
+        }
+
+        [TestMethod]
+        public void TestRedisCacheMassGetDataLoadTest()
+        {
+            var redisCache = CacheManager.GetCache("redisCache");
+
+            int keycount = 0;
+            List<string> list = new List<string>();
+            while (keycount++ < 100000)
+            {
+                list.Add(MockCacheItem.GetKey(keycount.ToString()));
+            }
+
+            var stopWatch = Stopwatch.StartNew();
+            Parallel.ForEach(list, (key =>
+            {
+                MockCacheItem item;
+                redisCache.TryGet(key, out item);
+                Assert.IsNotNull(item);
+            }));
+
+            TimeSpan elapsed = stopWatch.Elapsed;
+            System.Diagnostics.Debug.WriteLine("TestRedisCacheLoadTest::Finished, Elapsed " + elapsed.Seconds.ToString());
+
+            bool isFast = elapsed.Seconds < 20;//took less then 20 seconds
+            Assert.IsTrue(isFast, "Redis GET load test was too slow, took: " + elapsed.Seconds);
         }
     }
 }

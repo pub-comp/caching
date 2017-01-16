@@ -13,13 +13,20 @@ namespace PubComp.Caching.RedisCaching.StackExchange.UnitTests.Mocks
             return new MockCacheItem(key);
         }
 
+        public static string GetKey(string key)
+        {
+            return "key_" + key;
+        }
+
         private MockCacheItem(string key)
         {
-            Key = "key_" + key;
+            Key = MockCacheItem.GetKey(key);
             Value = "value_" + key;
             Payload = "payload_" + key + "_" + Guid.NewGuid().ToString();
             TimeUtc = DateTime.UtcNow;
         }
+
+        public MockCacheItem(){ }
 
         public string Key { get; set; }
         public string Value { get; set; }
