@@ -9,6 +9,8 @@ using PubComp.Caching.RedisCaching.StackExchange;
 using PubComp.Testing.TestingUtils;
 using PubComp.Caching.SystemRuntime;
 using System.Configuration;
+using System.Threading.Tasks;
+using PubComp.Caching.RedisCaching.StackExchange.UnitTests.Mocks;
 
 namespace PubComp.Caching.RedisCaching.StackExchange.UnitTests
 {
@@ -123,12 +125,14 @@ namespace PubComp.Caching.RedisCaching.StackExchange.UnitTests
         [TestMethod]
         public void TestRedisCacheBasic()
         {
-            var cache1 = new RedisCache(
-                "cache1",
-                new RedisCachePolicy
-                {
-                });
-            
+            //var cache1 = new RedisCache(
+            //    "cache1",
+            //    new RedisCachePolicy
+            //    {
+            //    });
+
+            var cache1 = CacheManager.GetCache("redisCache");
+
             cache1.ClearAll();
             
             int misses1 = 0;
@@ -482,6 +486,39 @@ namespace PubComp.Caching.RedisCaching.StackExchange.UnitTests
             wasFound = cache.TryGet("key", out result);
             Assert.AreEqual(true, wasFound);
             Assert.AreEqual("2", result);
+        }
+
+        [TestMethod]
+        public void TestRedisCacheLoadTest()
+        {
+            try
+            {
+                var redisCache = CacheManager.GetCache("redisCache");
+                redisCache.ClearAll();
+                
+                int keycount = 0;
+                List<MockCacheItem> list = new List<MockCacheItem>();
+                while (keycount++ < 100000)
+                {
+                    list.Add(MockCacheItem.GetNewMockInstance(keycount.ToString()));
+                }
+
+                var stopWatch = Stopwatch.StartNew();
+                Parallel.ForEach(list, (item =>
+                {
+                    redisCache.Set(item.Key, item);
+                }));
+
+                TimeSpan elapsed = stopWatch.Elapsed;
+                System.Diagnostics.Debug.WriteLine("TestRedisCacheLoadTest::Finished, Elapsed " + elapsed.Seconds.ToString());
+
+                bool isFast = elapsed.Seconds < 20;//took less then 20 seconds
+                Assert.IsFalse(isFast, "Redis load test was too slow");
+            }
+            catch (Exception exp)
+            {
+                System.Diagnostics.Debug.WriteLine("TestRedisCacheLoadTest::Error: " + exp.Message);
+            }
         }
     }
 }
