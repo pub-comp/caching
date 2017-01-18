@@ -12,7 +12,7 @@ namespace PubComp.Caching.Core
     public class CacheManager
     {
         private static Func<MethodBase> callingMethodGetter;
-        private static readonly object _loadLock = new object();
+        private static readonly object loadLock = new object();
 
         private static ReaderWriterLockSlim sync
             = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
@@ -121,7 +121,7 @@ namespace PubComp.Caching.Core
         public static ICache GetCache(string name)
         {
             if (name == null)
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
 
             var cachesArray = GetCaches();
             
@@ -129,6 +129,40 @@ namespace PubComp.Caching.Core
             var cache = cachesSorted.FirstOrDefault();
 
             return (cache.Key.Prefix != null && cache.Key.GetMatchLevel(name) >= cache.Key.Prefix.Length) ? cache.Value : null;
+        }
+
+        /// <summary>Gets a cache by name - return a specialized cache implementation type</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public static TCache GetCache<TCache>(string name) where TCache : ICache
+        {
+            var cache = GetCache(name);
+            if (!(cache is TCache))
+                throw new ArgumentException("The specified cache is not of type " + typeof(TCache));
+
+            return (TCache)cache;
+        }
+
+        public static ICacheNotifier GetNotifierForCache(string cacheName, string providername)
+        {
+            if (cacheName == null)
+                throw new ArgumentNullException(nameof(cacheName));
+
+            if (providername == null)
+                throw new ArgumentNullException(nameof(providername));
+
+            var cacheNotificationConfig = 
+                ConfigurationManager.GetSection("PubComp/CacheNotificationsConfig") as IList<CacheNotificationsConfig>;
+
+            if (cacheNotificationConfig == null)
+                return null;
+
+            var cacheNotificationConfigItem =
+                cacheNotificationConfig.FirstOrDefault(configItem => configItem.Name == providername);
+
+            if (cacheNotificationConfigItem == null)
+                return null;
+
+            return cacheNotificationConfigItem.CreateCacheNotifications(cacheName);
         }
 
         private class CacheComparer : IEqualityComparer<ICache>
@@ -198,7 +232,7 @@ namespace PubComp.Caching.Core
             Func<MethodBase> method = callingMethodGetter;
             if (method == null)
             {
-                lock (_loadLock)
+                lock (loadLock)
                 {
                     if (callingMethodGetter == null)
                         callingMethodGetter = CreateGetClassNameFunction();

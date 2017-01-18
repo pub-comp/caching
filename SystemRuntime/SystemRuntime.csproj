@@ -65,6 +65,10 @@
       <Project>{57585b9a-7003-461a-b812-ca48603c839f}</Project>
       <Name>Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\RedisCaching.StackExchange\RedisCaching.StackExchange.csproj">
+      <Project>{222025fc-2d4c-4a4d-b4f9-b874cfe6507f}</Project>
+      <Name>RedisCaching.StackExchange</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

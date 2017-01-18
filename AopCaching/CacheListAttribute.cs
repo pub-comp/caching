@@ -233,6 +233,12 @@ namespace PubComp.Caching.AopCaching
                 }
             }
 
+            if (missingKeys == null || !(missingKeys as List<string>).Any())
+            {
+                args.ReturnValue = resultList;
+                return;
+            }
+
             args.Arguments[this.keyParameterNumber] = missingKeys;
             base.OnInvoke(args);
             var resultsFromerInner = args.ReturnValue;

@@ -51,10 +51,14 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="CacheNotificationsConfigurationHandler.cs" />
+    <Compile Include="CacheNotificationsConfig.cs" />
     <Compile Include="CacheControllerUtil.cs" />
     <Compile Include="CacheException.cs" />
     <Compile Include="CacheKey.cs" />
+    <Compile Include="CacheSynchronizer.cs" />
     <Compile Include="ConfigAction.cs" />
+    <Compile Include="ICacheNotifier.cs" />
     <Compile Include="LambdaHelper.cs" />
     <Compile Include="LayeredCache.cs" />
     <Compile Include="LayeredCacheConfig.cs" />
