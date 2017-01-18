@@ -10,7 +10,7 @@ namespace PubComp.Caching.SystemRuntime
         private System.Runtime.Caching.ObjectCache innerCache;
         private readonly Object sync = new Object();
         private readonly InMemoryPolicy policy;
-        private CacheSynchronizer synchronizer;
+        private readonly CacheSynchronizer synchronizer;
 
         protected ObjectCache(
             String name, System.Runtime.Caching.ObjectCache innerCache, InMemoryPolicy policy)
@@ -19,7 +19,7 @@ namespace PubComp.Caching.SystemRuntime
             this.policy = policy;
             this.innerCache = innerCache;
 
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.AutoSyncProvider);
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.SyncProvider);
         }
         
         public string Name { get { return this.name; } }

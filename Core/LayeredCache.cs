@@ -12,7 +12,7 @@ namespace PubComp.Caching.Core
         private ICache level2;
         private readonly Object sync = new Object();
         private readonly LayeredCachePolicy policy;
-        private CacheSynchronizer synchronizer;
+        private readonly CacheSynchronizer synchronizer;
 
         public LayeredCache(String name, LayeredCachePolicy policy)
             : this(
@@ -52,9 +52,9 @@ namespace PubComp.Caching.Core
 
             this.level1 = level1;
             this.level2 = level2;
-            this.policy = new LayeredCachePolicy { Level1CacheName = level1CacheName, Level2CacheName = level1CacheName };
 
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.AutoSyncProvider);
+            this.policy = new LayeredCachePolicy { Level1CacheName = level1CacheName, Level2CacheName = level1CacheName };
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.SyncProvider);
         }
         
         /// <summary>
@@ -83,7 +83,8 @@ namespace PubComp.Caching.Core
             this.level1 = level1;
             this.level2 = level2;
 
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.AutoSyncProvider);
+            this.policy = new LayeredCachePolicy { Level1CacheName = level1.Name, Level2CacheName = level2.Name };
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.SyncProvider);
         }
 
         public string Name { get { return this.name; } }

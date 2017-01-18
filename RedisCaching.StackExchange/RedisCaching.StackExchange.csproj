@@ -59,7 +59,7 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
-    <Compile Include="RedisCacheNotificationsConfig.cs" />
+    <Compile Include="RedisCacheNotifierConfig.cs" />
     <Compile Include="RedisClient.cs" />
     <Compile Include="CacheContext.cs" />
     <Compile Include="CacheItem.cs" />
@@ -67,8 +67,8 @@
     <Compile Include="Logger.cs" />
     <Compile Include="RedisCache.cs" />
     <Compile Include="RedisCacheConfig.cs" />
-    <Compile Include="RedisCacheNotifications.cs" />
-    <Compile Include="RedisCacheNotificationsPolicy.cs" />
+    <Compile Include="RedisCacheNotifier.cs" />
+    <Compile Include="RedisCacheNotifierPolicy.cs" />
     <Compile Include="RedisCachePolicy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RedisConverter.cs" />

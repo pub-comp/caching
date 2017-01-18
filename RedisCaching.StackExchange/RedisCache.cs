@@ -15,13 +15,13 @@ namespace PubComp.Caching.RedisCaching.StackExchange
         private readonly string clusterType;
         private readonly int monitorPort;
         private readonly int monitorIntervalMilliseconds;
-        private readonly CacheContext _cache = null;
-        private CacheSynchronizer synchronizer;
+        private readonly CacheContext innerCache = null;
+        private readonly CacheSynchronizer synchronizer;
 
         public string Name { get { return this.name; } }
         
-        private CacheContext Cache {
-            get { return _cache; }
+        private CacheContext InnerCache {
+            get { return innerCache; }
         }
 
         public RedisCache(String name, RedisCachePolicy policy)
@@ -68,8 +68,8 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 
             this.useSlidingExpiration = (policy.SlidingExpiration < TimeSpan.MaxValue);
 
-            _cache = new CacheContext(this.connectionString, this.converterType, this.clusterType, this.monitorPort, this.monitorIntervalMilliseconds);
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, policy.AutoSyncProvider);
+            innerCache = new CacheContext(this.connectionString, this.converterType, this.clusterType, this.monitorPort, this.monitorIntervalMilliseconds);
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, policy.SyncProvider);
         }
 
         private TValue GetOrAdd<TValue>(
@@ -133,12 +133,12 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 
         protected virtual bool TryGetInner<TValue>(String key, out TValue value)
         {
-            var cacheItem = Cache.GetItem<TValue>(this.Name, key);
+            var cacheItem = InnerCache.GetItem<TValue>(this.Name, key);
 
             if (cacheItem != null)
             {
                 value = cacheItem.Value;
-                ResetExpirationTime(Cache, cacheItem);
+                ResetExpirationTime(InnerCache, cacheItem);
                 return true;
             }
 
@@ -148,7 +148,7 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 
         protected virtual void Add<TValue>(String key, TValue value)
         {
-            GetOrAdd(Cache, key, value, true);
+            GetOrAdd(InnerCache, key, value, true);
         }
 
         public TValue Get<TValue>(string key, Func<TValue> getter)
@@ -158,17 +158,17 @@ namespace PubComp.Caching.RedisCaching.StackExchange
                 return value;
 
             value = getter();
-            return GetOrAdd(Cache, key, value);
+            return GetOrAdd(InnerCache, key, value);
         }
 
         public void Clear(String key)
         {
-            Cache.RemoveItem(this.Name, key);
+            InnerCache.RemoveItem(this.Name, key);
         }
 
         public void ClearAll()
         {
-            Cache.ClearItems(this.Name);
+            InnerCache.ClearItems(this.Name);
         }
     }
 }

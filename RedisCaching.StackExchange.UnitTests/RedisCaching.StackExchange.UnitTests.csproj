@@ -70,7 +70,7 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="Mocks\MockCacheItem.cs" />
-    <Compile Include="RedisCacheStackExchange.cs" />
+    <Compile Include="RedisCacheStackExchangeTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

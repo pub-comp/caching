@@ -2,7 +2,7 @@
 
 namespace PubComp.Caching.RedisCaching.StackExchange
 {
-    public class RedisCacheNotificationsPolicy
+    public class RedisCacheNotifierPolicy
     {
         /// <summary>
         /// Required parameter - connection string to MongoDB
@@ -15,7 +15,7 @@ namespace PubComp.Caching.RedisCaching.StackExchange
         public string Converter { get; set; }
 
         /// <summary>
-        /// Redis ClusterType. Currently supports "replica" (default) or "none" (in the future "cluster"). 
+        /// Redis ClusterType. Currently supports "replica" (default) or "none" (and in the future "cluster"). 
         /// </summary>
         public string ClusterType { get; set; }
 
@@ -29,11 +29,11 @@ namespace PubComp.Caching.RedisCaching.StackExchange
         /// </summary>
         public int MonitorIntervalMilliseconds { get; set; }
         
-        public RedisCacheNotificationsPolicy()
+        public RedisCacheNotifierPolicy()
         {
-            ConnectionString = @"172.16.0.44:6379,172.16.0.48:6379,172.16.0.43:6379,serviceName=mymaster";
+            ConnectionString = @"127.0.0.1:6379,serviceName=mymaster";
             MonitorIntervalMilliseconds = 5000;
-            ClusterType = "replica";
+            ClusterType = "none";
             Converter = "json";
             MonitorPort = 26379;
         }

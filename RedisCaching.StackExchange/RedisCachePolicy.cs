@@ -27,7 +27,7 @@ namespace PubComp.Caching.RedisCaching.StackExchange
         /// <summary>
         /// Notifications providers. Currently supports "redis", default is none. 
         /// </summary>
-        public string AutoSyncProvider { get; set; }
+        public string SyncProvider { get; set; }
 
         /// <summary>
         /// The interval in milliseconds for monitoring the master-replica. 
@@ -61,10 +61,10 @@ namespace PubComp.Caching.RedisCaching.StackExchange
         {
             ConnectionString = @"127.0.0.1:6379,serviceName=mymaster";
             MonitorIntervalMilliseconds = 5000;
-            ClusterType = "replica";
+            ClusterType = "none";
             Converter = "json";
             MonitorPort = 26379;
-            AutoSyncProvider = null;
+            SyncProvider = null;
         }
     }
 }

@@ -4,16 +4,16 @@ using StackExchange.Redis;
 
 namespace PubComp.Caching.RedisCaching.StackExchange
 {
-    public class RedisCacheNotifications : ICacheNotifier
+    public class RedisCacheNotifier : ICacheNotifier
     {
         private readonly string _cacheName;
         private Func<CacheItemNotification, bool> _callback;
         private readonly IRedisConverter _convert;
-        private RedisCacheNotificationsPolicy _policy;
+        private RedisCacheNotifierPolicy _policy;
         private readonly RedisClient _redis;
         private readonly string _sender;
 
-        public RedisCacheNotifications(string cacheName, RedisCacheNotificationsPolicy policy)
+        public RedisCacheNotifier(string cacheName, RedisCacheNotifierPolicy policy)
         {
             _policy = policy;
             _cacheName = cacheName;

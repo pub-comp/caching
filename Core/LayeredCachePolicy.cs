@@ -15,11 +15,11 @@
         /// <summary>
         /// Notifications providers. Currently supports "redis", default is none. 
         /// </summary>
-        public string AutoSyncProvider { get; set; }
+        public string SyncProvider { get; set; }
 
         public LayeredCachePolicy()
         {
-            AutoSyncProvider = null;
+            SyncProvider = null;
         }
     }
 }

@@ -5,14 +5,14 @@ namespace PubComp.Caching.Core
     public class CacheSynchronizer
     {
         private readonly ICache cache;
-        private readonly ICacheNotifier notifications;
+        private readonly ICacheNotifier notifier;
 
-        public CacheSynchronizer(ICache cache, ICacheNotifier notifications)
+        public CacheSynchronizer(ICache cache, ICacheNotifier notifier)
         {
             this.cache = cache;
-            this.notifications = notifications;
+            this.notifier = notifier;
 
-            this.notifications.Subscribe(CacheUpdated);
+            this.notifier.Subscribe(CacheUpdated);
         }
         
         private bool CacheUpdated(CacheItemNotification notification)
@@ -34,11 +34,11 @@ namespace PubComp.Caching.Core
             return true;
         }
 
-        public static CacheSynchronizer CreateCacheSynchronizer(ICache cache, string autoSyncProviderName)
+        public static CacheSynchronizer CreateCacheSynchronizer(ICache cache, string syncProviderName)
         {
-            if (!String.IsNullOrEmpty(autoSyncProviderName))
+            if (!String.IsNullOrEmpty(syncProviderName))
             {
-                var notifications = CacheManager.GetCacheNotificationsProvider(cache.Name, autoSyncProviderName);
+                var notifications = CacheManager.GetNotifierForCache(cache.Name, syncProviderName);
 
                 if (notifications != null)
                 {

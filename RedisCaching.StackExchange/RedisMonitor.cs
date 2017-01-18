@@ -109,7 +109,6 @@ namespace PubComp.Caching.RedisCaching.StackExchange
             _innerConnection.GetSubscriber(ServiceName).SubscribeAsync("+switch-master", (channel, message) =>
             {
                 Debug.WriteLine("Master Changed Event from Sentinel: {0}:{1}", channel, message);
-                //message:  mymaster 172.16.0.43 6379 172.16.0.44 6379
                 Monitor();
             }).Wait();
         }
