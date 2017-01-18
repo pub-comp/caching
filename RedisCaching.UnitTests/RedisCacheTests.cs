@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using PubComp.Caching.Core;
 using PubComp.Caching.Core.UnitTests;
+using PubComp.Caching.RedisCaching.UnitTests.Mocks;
 using PubComp.Testing.TestingUtils;
 
 namespace PubComp.Caching.RedisCaching.UnitTests
@@ -10,6 +13,45 @@ namespace PubComp.Caching.RedisCaching.UnitTests
     [TestClass]
     public class RedisCacheTests
     {
+        [TestMethod]
+        public void TestRedisCacheBasic()
+        {
+            var cache1 = new RedisCache(
+                "cache1",
+                new RedisCachePolicy
+                {
+                });
+
+            cache1.ClearAll();
+            
+            int misses1 = 0;
+            Func<string> getter1 = () => { misses1++; return misses1.ToString(); };
+
+            int misses2 = 0;
+            Func<string> getter2 = () => { misses2++; return misses2.ToString(); };
+
+            string result;
+
+            result = cache1.Get("key1", getter1);
+            Assert.AreEqual(1, misses1);
+            Assert.AreEqual("1", result);
+
+            result = cache1.Get("key2", getter1);
+            Assert.AreEqual(2, misses1);
+            Assert.AreEqual("2", result);
+            
+            cache1.ClearAll();
+
+            result = cache1.Get("key1", getter1);
+            Assert.AreEqual(3, misses1);
+            Assert.AreEqual("3", result);
+
+            result = cache1.Get("key2", getter1);
+            Assert.AreEqual(4, misses1);
+            Assert.AreEqual("4", result);
+        }
+
+
         [TestMethod]
         public void TestRedisCacheTwoCaches()
         {
@@ -332,6 +374,59 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             wasFound = cache.TryGet("key", out result);
             Assert.AreEqual(true, wasFound);
             Assert.AreEqual("2", result);
+        }
+
+        [TestMethod][Ignore]
+        public void TestRedisCacheMassSetDataLoadTest()
+        {
+            var redisCache = CacheManager.GetCache("redisCache");
+            redisCache.ClearAll();
+                
+            int keycount = 0;
+            List<MockCacheItem> list = new List<MockCacheItem>();
+            while (keycount++ < 100000)
+            {
+                list.Add(MockCacheItem.GetNewMockInstance(keycount.ToString()));
+            }
+
+            var stopWatch = Stopwatch.StartNew();
+            Parallel.ForEach(list, (item =>
+            {
+                redisCache.Set(item.Key, item);
+            }));
+
+            TimeSpan elapsed = stopWatch.Elapsed;
+            System.Diagnostics.Debug.WriteLine("TestRedisCacheLoadTest::Finished, Elapsed " + elapsed.Seconds.ToString());
+
+            bool isFast = elapsed.Seconds < 20;//took less then 20 seconds
+            Assert.IsTrue(isFast, "Redis SET load test was too slow, took: " + elapsed.Seconds);
+        }
+
+        [TestMethod][Ignore]
+        public void TestRedisCacheMassGetDataLoadTest()
+        {
+            var redisCache = CacheManager.GetCache("redisCache");
+
+            int keycount = 0;
+            List<string> list = new List<string>();
+            while (keycount++ < 100000)
+            {
+                list.Add(MockCacheItem.GetKey(keycount.ToString()));
+            }
+
+            var stopWatch = Stopwatch.StartNew();
+            Parallel.ForEach(list, (key =>
+            {
+                MockCacheItem item;
+                redisCache.TryGet(key, out item);
+                Assert.IsNotNull(item);
+            }));
+
+            TimeSpan elapsed = stopWatch.Elapsed;
+            System.Diagnostics.Debug.WriteLine("TestRedisCacheLoadTest::Finished, Elapsed " + elapsed.Seconds.ToString());
+
+            bool isFast = elapsed.Seconds < 20;//took less then 20 seconds
+            Assert.IsTrue(isFast, "Redis GET load test was too slow, took: " + elapsed.Seconds);
         }
     }
 }

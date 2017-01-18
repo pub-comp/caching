@@ -1,6 +1,6 @@
 ﻿using PubComp.Caching.Core;
 
-namespace PubComp.Caching.RedisCaching.StackExchange
+namespace PubComp.Caching.RedisCaching
 {
     public class RedisCacheNotifierConfig : CacheNotificationsConfig
     {

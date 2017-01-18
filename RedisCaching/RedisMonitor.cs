@@ -6,7 +6,7 @@ using System.Net;
 using System.Threading.Tasks;
 using StackExchange.Redis;
 
-namespace PubComp.Caching.RedisCaching.StackExchange
+namespace PubComp.Caching.RedisCaching
 {
     internal class RedisMonitorFactory
     {
@@ -33,11 +33,17 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 
     internal class RedisReplicaMonitor : IRedisMonitor
     {
-        private IConnectionMultiplexer _innerConnection;
-        private IPEndPoint _master;
-        private Func<IPEndPoint, bool> _masterChanged;
-        private int Port = 26379;
-        private string ServiceName = "mymaster";
+        private IConnectionMultiplexer innerConnection;
+        private IPEndPoint master;
+        private Func<IPEndPoint, bool> onMasterChanged;
+        private int port = 26379;
+        private string serviceName = "mymaster";
+        private readonly NLog.ILogger log;
+
+        internal RedisReplicaMonitor()
+        {
+            this.log = NLog.LogManager.GetLogger(nameof(RedisReplicaMonitor));
+        }
 
         private bool Monitoring { get; set; }
 
@@ -45,7 +51,7 @@ namespace PubComp.Caching.RedisCaching.StackExchange
         {
             get
             {
-                return _master;
+                return master;
             }
         }
 
@@ -54,18 +60,17 @@ namespace PubComp.Caching.RedisCaching.StackExchange
         {
             try
             {
-                Port = monitorPort;
-                ServiceName = config.ServiceName;
-                _innerConnection = GetConnection(config);
-                _masterChanged = masterChanged;
+                port = monitorPort;
+                serviceName = config.ServiceName;
+                innerConnection = GetConnection(config);
+                this.onMasterChanged = masterChanged;
                 Monitoring = true;
                 MonitorOnce();
-                //MonitorPull(monitorIntervalMilliseconds);
                 MonitorPush();
             }
             catch (Exception exp)
             {
-                LogHelper.Log.Fatal("No master found. Reason:{0}", exp.Message);
+                log.Fatal("No master found. Reason:{0}", exp.Message);
                 throw new EntryPointNotFoundException("No master found");
             }
         }
@@ -77,27 +82,27 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 
         private IEnumerable<IServer> GetServers()
         {
-            var servers = _innerConnection.GetEndPoints(false)
-                .Select(ep => _innerConnection.GetServer(ep)).ToList();
+            var servers = innerConnection.GetEndPoints(false)
+                .Select(ep => innerConnection.GetServer(ep)).ToList();
             return servers;
         }
 
         private ConnectionMultiplexer GetConnection(ConfigurationOptions config)
         {
-            // create a connection
+            // Create a connection
             var options = new ConfigurationOptions
             {
                 CommandMap = CommandMap.Sentinel,
                 AllowAdmin = true,
                 TieBreaker = "",
-                ServiceName = ServiceName,
+                ServiceName = serviceName,
                 SyncTimeout = 5000
             };
 
             IEnumerable<IPAddress> sentinels = config.EndPoints.Select(ep => (ep as IPEndPoint).Address).ToList();
             foreach (var ipAddress in sentinels)
             {
-                options.EndPoints.Add(ipAddress, Port);
+                options.EndPoints.Add(ipAddress, port);
             }
 
             var connection = ConnectionMultiplexer.Connect(options, Console.Out);
@@ -106,7 +111,7 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 
         private void MonitorPush()
         {
-            _innerConnection.GetSubscriber(ServiceName).SubscribeAsync("+switch-master", (channel, message) =>
+            innerConnection.GetSubscriber(serviceName).SubscribeAsync("+switch-master", (channel, message) =>
             {
                 Debug.WriteLine("Master Changed Event from Sentinel: {0}:{1}", channel, message);
                 Monitor();
@@ -139,19 +144,19 @@ namespace PubComp.Caching.RedisCaching.StackExchange
             {
                 if (sentinel.IsConnected)
                 {
-                    var masterEndpoint = (IPEndPoint) sentinel.SentinelGetMasterAddressByName(ServiceName, CommandFlags.None);
+                    var masterEndpoint = (IPEndPoint) sentinel.SentinelGetMasterAddressByName(serviceName, CommandFlags.None);
                     var sentinelEndpoint = (IPEndPoint) sentinel.EndPoint;
-                    LogHelper.Log.Info("Monitor Master: Sentinel:{0}, Report Master:{1}", sentinelEndpoint.Address, masterEndpoint.Address);
-                    if (_master == null)
+                    log.Debug("Monitor Master: Sentinel:{0}, Report Master:{1}", sentinelEndpoint.Address, masterEndpoint.Address);
+                    if (master == null)
                     {
-                        _master = masterEndpoint;
-                        LogHelper.Log.Info("Init Master: {0}", _master.Address);
+                        master = masterEndpoint;
+                        log.Debug("Init Master: {0}", master.Address);
                     }
-                    else if (!masterEndpoint.Address.ToString().Equals(_master.Address.ToString()))
+                    else if (!masterEndpoint.Address.ToString().Equals(master.Address.ToString()))
                     {
-                        _master = masterEndpoint;
-                        LogHelper.Log.Warn("Master Changed: {0}", _master.Address);
-                        _masterChanged(masterEndpoint);
+                        master = masterEndpoint;
+                        log.Debug("Master Changed: {0}", master.Address);
+                        onMasterChanged(masterEndpoint);
                         break;
                     }
                 }

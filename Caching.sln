@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{57585B9A-7003-461A-B812-CA48603C839F}"
 EndProject
@@ -45,21 +45,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbCaching.UnitTests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbCaching.NuGet", "MongoDbCaching.NuGet\MongoDbCaching.NuGet.csproj", "{0E13EAB4-0860-4BF9-AA88-08E7C4D18DDD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching", "RedisCaching\RedisCaching.csproj", "{8C3D1859-DA12-4E27-B833-6F37726A3F45}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching.UnitTests", "RedisCaching.UnitTests\RedisCaching.UnitTests.csproj", "{7B954670-6296-4A8F-8B09-004BE53BEABF}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching.NuGet", "RedisCaching.NuGet\RedisCaching.NuGet.csproj", "{AEA78BE1-BBBE-40A0-A777-A8F5F8C18718}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExtended", "WebApiExtended\WebApiExtended.csproj", "{71227AFD-AD23-41F4-A888-795563F58B82}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExtended.NuGet", "WebApiExtended.NuGet\WebApiExtended.NuGet.csproj", "{F1AF6540-8BA2-41E1-90B9-9691E0838EE8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching.StackExchange", "RedisCaching.StackExchange\RedisCaching.StackExchange.csproj", "{222025FC-2D4C-4A4D-B4F9-B874CFE6507F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching", "RedisCaching\RedisCaching.csproj", "{222025FC-2D4C-4A4D-B4F9-B874CFE6507F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching.StackExchange.NuGet", "RedisCaching.StackExchange.NuGet\RedisCaching.StackExchange.NuGet.csproj", "{66171FCC-70F4-4313-BACD-61802466FAF0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching.NuGet", "RedisCaching.NuGet\RedisCaching.NuGet.csproj", "{66171FCC-70F4-4313-BACD-61802466FAF0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching.StackExchange.UnitTests", "RedisCaching.StackExchange.UnitTests\RedisCaching.StackExchange.UnitTests.csproj", "{F269276A-2B35-44C3-8F7A-2F414DA67F92}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching.UnitTests", "RedisCaching.UnitTests\RedisCaching.UnitTests.csproj", "{F269276A-2B35-44C3-8F7A-2F414DA67F92}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -115,18 +109,6 @@ Global
 		{0E13EAB4-0860-4BF9-AA88-08E7C4D18DDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0E13EAB4-0860-4BF9-AA88-08E7C4D18DDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0E13EAB4-0860-4BF9-AA88-08E7C4D18DDD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8C3D1859-DA12-4E27-B833-6F37726A3F45}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8C3D1859-DA12-4E27-B833-6F37726A3F45}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8C3D1859-DA12-4E27-B833-6F37726A3F45}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8C3D1859-DA12-4E27-B833-6F37726A3F45}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7B954670-6296-4A8F-8B09-004BE53BEABF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7B954670-6296-4A8F-8B09-004BE53BEABF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7B954670-6296-4A8F-8B09-004BE53BEABF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7B954670-6296-4A8F-8B09-004BE53BEABF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AEA78BE1-BBBE-40A0-A777-A8F5F8C18718}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AEA78BE1-BBBE-40A0-A777-A8F5F8C18718}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AEA78BE1-BBBE-40A0-A777-A8F5F8C18718}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AEA78BE1-BBBE-40A0-A777-A8F5F8C18718}.Release|Any CPU.Build.0 = Release|Any CPU
 		{71227AFD-AD23-41F4-A888-795563F58B82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{71227AFD-AD23-41F4-A888-795563F58B82}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{71227AFD-AD23-41F4-A888-795563F58B82}.Release|Any CPU.ActiveCfg = Release|Any CPU

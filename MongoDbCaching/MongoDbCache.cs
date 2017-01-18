@@ -12,6 +12,7 @@ namespace PubComp.Caching.MongoDbCaching
         private readonly bool useSlidingExpiration;
         private readonly TimeSpan? expireWithin;
         private readonly DateTime? expireAt;
+        private readonly CacheSynchronizer synchronizer;
 
         public MongoDbCache(String cacheCollectionName, MongoDbCachePolicy policy)
         {
@@ -51,6 +52,8 @@ namespace PubComp.Caching.MongoDbCaching
             }
 
             this.useSlidingExpiration = (policy.SlidingExpiration < TimeSpan.MaxValue);
+
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, policy.SyncProvider);
         }
 
         public string Name { get { return this.cacheCollectionName; } }

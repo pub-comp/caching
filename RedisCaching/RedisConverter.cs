@@ -1,17 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Threading.Tasks;
 using PubComp.Caching.Core;
-using PubComp.Caching.RedisCaching.StackExchange;
 using StackExchange.Redis;
 
-namespace PubComp.Caching.RedisCaching.StackExchange
+namespace PubComp.Caching.RedisCaching
 {
-
     internal class RedisConverterFactory
     {
         public static IRedisConverter CreateConverter(string type)
@@ -20,10 +14,8 @@ namespace PubComp.Caching.RedisCaching.StackExchange
             {
                 return new RedisConverterJson();
             }
-            else
-            {
-                return new RedisConverterBinary();
-            }
+
+            return new RedisConverterBinary();
         }
     }
 
@@ -35,11 +27,11 @@ namespace PubComp.Caching.RedisCaching.StackExchange
         RedisValue ToRedis(CacheItemNotification notification);
         CacheItemNotification FromRedis(RedisValue cacheNotificationString);
     }
-
     
     internal class RedisConverterJson : IRedisConverter
     {
-        public string Type {
+        public string Type
+        {
             get { return "json"; }
         }
 
@@ -97,7 +89,6 @@ namespace PubComp.Caching.RedisCaching.StackExchange
 
             return cacheItem;
         }
-
     }
 
     internal class RedisConverterBinary : IRedisConverter

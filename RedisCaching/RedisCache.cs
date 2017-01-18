@@ -10,15 +10,39 @@ namespace PubComp.Caching.RedisCaching
         private readonly bool useSlidingExpiration;
         private readonly TimeSpan? expireWithin;
         private readonly DateTime? expireAt;
+        private readonly string converterType;
+        private readonly string clusterType;
+        private readonly int monitorPort;
+        private readonly int monitorIntervalMilliseconds;
+        private readonly CacheContext innerCache;
+        private readonly CacheSynchronizer synchronizer;
+        private readonly NLog.ILogger log;
+
+        public string Name { get { return this.name; } }
+
+        private CacheContext InnerCache
+        {
+            get { return innerCache; }
+        }
 
         public RedisCache(String name, RedisCachePolicy policy)
         {
             this.name = name;
+            this.log = NLog.LogManager.GetLogger(nameof(RedisCache));
+
+            log.Debug("Init Cache {0}", this.name);
 
             if (policy == null)
-                throw new ArgumentNullException("policy");
+            {
+                log.Error("Invalid Policy for Cache {0}", this.name);
+                throw new ArgumentNullException(nameof(policy));
+            }
 
             this.connectionString = policy.ConnectionString;
+            this.monitorPort = policy.MonitorPort;
+            this.monitorIntervalMilliseconds = policy.MonitorIntervalMilliseconds;
+            this.converterType = policy.Converter;
+            this.clusterType = policy.ClusterType;
 
             if (policy.SlidingExpiration.HasValue && policy.SlidingExpiration.Value < TimeSpan.MaxValue)
             {
@@ -46,13 +70,9 @@ namespace PubComp.Caching.RedisCaching
             }
 
             this.useSlidingExpiration = (policy.SlidingExpiration < TimeSpan.MaxValue);
-        }
 
-        public string Name { get { return this.name; } }
-
-        private CacheContext GetContext()
-        {
-            return new CacheContext(this.connectionString);
+            this.innerCache = new CacheContext(this.connectionString, this.converterType, this.clusterType, this.monitorPort, this.monitorIntervalMilliseconds);
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, policy.SyncProvider);
         }
 
         private TValue GetOrAdd<TValue>(
@@ -62,18 +82,14 @@ namespace PubComp.Caching.RedisCaching
 
             if (context.SetIfNotExists(newItem))
             {
-                if (newItem.ExpireIn.HasValue)
-                    context.SetExpirationTime(newItem);
                 return newValue;
             }
 
             var prevValue = GetCacheItem<TValue>(context, key);
             if (!doForceOverride && prevValue != null && prevValue.Value is TValue)
                 return prevValue.Value;
-
+            
             context.SetItem(newItem);
-            if (newItem.ExpireIn.HasValue)
-                context.SetExpirationTime(newItem);
 
             return newValue;
         }
@@ -120,28 +136,22 @@ namespace PubComp.Caching.RedisCaching
 
         protected virtual bool TryGetInner<TValue>(String key, out TValue value)
         {
-            using (var context = GetContext())
+            var cacheItem = InnerCache.GetItem<TValue>(this.Name, key);
+
+            if (cacheItem != null)
             {
-                var cacheItem = context.GetItem<TValue>(this.Name, key);
-
-                if (cacheItem != null)
-                {
-                    value = cacheItem.Value;
-                    ResetExpirationTime(context, cacheItem);
-                    return true;
-                }
-
-                value = default(TValue);
-                return false;
+                value = cacheItem.Value;
+                ResetExpirationTime(InnerCache, cacheItem);
+                return true;
             }
+
+            value = default(TValue);
+            return false;
         }
 
         protected virtual void Add<TValue>(String key, TValue value)
         {
-            using (var context = GetContext())
-            {
-                GetOrAdd(context, key, value, true);
-            }
+            GetOrAdd(InnerCache, key, value, true);
         }
 
         public TValue Get<TValue>(string key, Func<TValue> getter)
@@ -150,27 +160,18 @@ namespace PubComp.Caching.RedisCaching
             if (TryGetInner(key, out value))
                 return value;
 
-            using (var context = GetContext())
-            {
-                value = getter();
-                return GetOrAdd(context, key, value);
-            }
+            value = getter();
+            return GetOrAdd(InnerCache, key, value);
         }
 
-        public void Clear(string key)
+        public void Clear(String key)
         {
-            using (var context = GetContext())
-            {
-                context.RemoveItem(this.Name, key);
-            }
+            InnerCache.RemoveItem(this.Name, key);
         }
 
         public void ClearAll()
         {
-            using (var context = GetContext())
-            {
-                context.ClearItems(this.Name);
-            }
+            InnerCache.ClearItems(this.Name);
         }
     }
 }

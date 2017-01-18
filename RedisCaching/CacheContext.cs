@@ -1,97 +1,83 @@
 ﻿using System;
 using System.Linq;
+using StackExchange.Redis;
 
 namespace PubComp.Caching.RedisCaching
 {
     public class CacheContext : IDisposable
     {
-        private readonly String connectionString;
-        protected readonly ServiceStack.Redis.RedisClient innerContext;
-
-        public CacheContext(String connectionString)
+        private readonly RedisClient client;
+        private readonly IRedisConverter convert;
+        
+        public CacheContext(String connectionString, String converterType, String clusterType, int monitorPort, int monitorIntervalMilliseconds)
         {
-            this.connectionString = connectionString;
-            this.innerContext = new ServiceStack.Redis.RedisClient(new Uri(connectionString));
+            this.convert = RedisConverterFactory.CreateConverter(converterType);
+            this.client = new RedisClient(connectionString, clusterType, monitorPort,monitorIntervalMilliseconds);
         }
-
-        internal String ToString<TValue>(CacheItem<TValue> cacheItem)
-        {
-            if (cacheItem == null)
-                return null;
-
-            var cacheItemString = Newtonsoft.Json.JsonConvert.SerializeObject(
-                cacheItem,
-                new Newtonsoft.Json.JsonSerializerSettings
-                {
-                    TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
-                    TypeNameAssemblyFormat = System.Runtime.Serialization.Formatters.FormatterAssemblyStyle.Simple,
-                });
-
-            return cacheItemString;
-        }
-
-        internal CacheItem<TValue> FromString<TValue>(String cacheItemString)
-        {
-            if (string.IsNullOrEmpty(cacheItemString))
-                return null;
-
-            var cacheItem = Newtonsoft.Json.JsonConvert.DeserializeObject<CacheItem<TValue>>(
-                cacheItemString,
-                new Newtonsoft.Json.JsonSerializerSettings
-                {
-                    TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
-                    TypeNameAssemblyFormat = System.Runtime.Serialization.Formatters.FormatterAssemblyStyle.Simple,
-                });
-
-            return cacheItem;
-        }
-
         internal CacheItem<TValue> GetItem<TValue>(String cacheName, String key)
         {
             var id = CacheItem<TValue>.GetId(cacheName, key);
-            var cacheItemString = this.innerContext.GetValue(id);
-            return FromString<TValue>(cacheItemString);
+            var cacheItemString = client.Database.StringGet(id);
+            return convert.FromRedis<TValue>(cacheItemString);
         }
 
         internal void SetItem<TValue>(CacheItem<TValue> cacheItem)
         {
-            this.innerContext.SetEntry(cacheItem.Id, ToString(cacheItem));
+            TimeSpan? expiry = null;
+            if (cacheItem.ExpireIn.HasValue)
+                expiry = cacheItem.ExpireIn;
+
+            client.Database.StringSet(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always, CommandFlags.FireAndForget);
         }
 
         internal bool SetIfNotExists<TValue>(CacheItem<TValue> cacheItem)
         {
-            return this.innerContext.SetEntryIfNotExists(cacheItem.Id, ToString(cacheItem));
+            if (Contains(cacheItem.Id))
+            {
+                return false;
+            }
+            SetItem(cacheItem);
+            return true;
+        }
+
+        private bool Contains(string key)
+        {
+            return client.Database.KeyExists(key);
         }
 
         internal void SetExpirationTime<TValue>(CacheItem<TValue> cacheItem)
         {
             if (cacheItem.ExpireIn.HasValue)
-                this.innerContext.ExpireEntryIn(cacheItem.Id, cacheItem.ExpireIn.Value);
+                ExpireById(cacheItem.Id, cacheItem.ExpireIn.Value);
         }
 
         internal void ExpireItemIn<TValue>(String cacheName, String key, TimeSpan timeSpan)
         {
             var id = CacheItem<TValue>.GetId(cacheName, key);
-            this.innerContext.ExpireEntryIn(id, timeSpan);
+            ExpireById(id, timeSpan);
+        }
+
+        private void ExpireById(string id, TimeSpan timeSpan)
+        {
+            client.Database.KeyExpire(id, timeSpan, CommandFlags.FireAndForget);
         }
 
         internal void RemoveItem(String cacheName, String key)
         {
             var id = CacheItem<object>.GetId(cacheName, key);
-            this.innerContext.RemoveEntry(key);
+            client.Database.KeyDelete(id, CommandFlags.FireAndForget);
         }
 
         internal void ClearItems(String cacheName)
         {
             var keyPrefix = CacheItem<object>.GetId(cacheName, string.Empty);
-            var keysToClear = this.innerContext.GetAllKeys().AsQueryable()
-                .Where(k => k.StartsWith(keyPrefix)).ToArray();
-            this.innerContext.RemoveEntry(keysToClear);
+            var keys = client.MasterServer.Keys(0, string.Format("*{0}*", keyPrefix), 1000, CommandFlags.None).ToArray();
+            client.Database.KeyDelete(keys, CommandFlags.FireAndForget);
         }
 
         public void Dispose()
         {
-            this.innerContext.Dispose();
+            this.client.Dispose();
         }
     }
 }

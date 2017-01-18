@@ -1,6 +1,5 @@
 ﻿using System;
 using PubComp.Caching.Core;
-using PubComp.Caching.RedisCaching.StackExchange;
 
 namespace PubComp.Caching.SystemRuntime
 {

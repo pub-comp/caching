@@ -1,21 +1,22 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using StackExchange.Redis;
 
-namespace PubComp.Caching.RedisCaching.StackExchange
+namespace PubComp.Caching.RedisCaching
 {
     public class RedisClient : IDisposable
     {
-        private ConfigurationOptions config;
+        private readonly ConfigurationOptions config;
+        private readonly NLog.ILogger log;
         private IConnectionMultiplexer innerContext;
         private IRedisMonitor redisMonitor;
 
         public RedisClient(String connectionString, String clusterType, int monitorPort, int monitorIntervalMilliseconds)
         {
-            config = ConfigurationOptions.Parse(connectionString);
+            this.config = ConfigurationOptions.Parse(connectionString);
+            this.log = NLog.LogManager.GetLogger(nameof(RedisClient));
+
             RedisConnect();
             RedisMonitor(clusterType, monitorPort, monitorIntervalMilliseconds);
         }
@@ -33,7 +34,7 @@ namespace PubComp.Caching.RedisCaching.StackExchange
             }
             finally
             {
-                LogHelper.Log.Debug("Redis Reconnect: {0}", config);
+                log.Debug("Redis Reconnect: {0}", config);
                 this.innerContext = ConnectionMultiplexer.Connect(config);
             }
         }
@@ -42,9 +43,8 @@ namespace PubComp.Caching.RedisCaching.StackExchange
         {
             redisMonitor = RedisMonitorFactory.CreateMonitor(clusterType);
             if (redisMonitor == null)
-            {
                 return;
-            }
+
             redisMonitor.StartMonitor(config, monitorPort, monitorIntervalMilliseconds, MasterChanged);
         }
 
@@ -68,30 +68,29 @@ namespace PubComp.Caching.RedisCaching.StackExchange
         {
             get
             {
-                IServer master = null;
+                IServer master;
                 if (redisMonitor != null)
                 {
-                    string serverEndpoint = string.Format("{0}:6379", redisMonitor.MasterEndpoint.Address);
+                    string serverEndpoint = $"{redisMonitor.MasterEndpoint.Address}:6379";
                     master = innerContext.GetServer(serverEndpoint);
                 }
                 else
                 {
                     var servers = innerContext.GetEndPoints(false)
                     .Select(ep => innerContext.GetServer(ep)).ToList();
-                    master = servers.Where(s => !s.IsSlave).FirstOrDefault();
+                    master = servers.FirstOrDefault(s => !s.IsSlave);
 
                 }
 
                 if (master == null)
                 {
-                    LogHelper.Log.Fatal("GetMasterServer cannot detect master");
-                    throw new Exception("GetMasterServer cannot detect master");
+                    log.Fatal("GetMasterServer cannot detect master");
+                    throw new ApplicationException("GetMasterServer cannot detect master");
                 }
 
-                LogHelper.Log.Debug("GetMasterServer {0}", ((IPEndPoint)master.EndPoint).Address);
+                log.Debug("GetMasterServer {0}", ((IPEndPoint)master.EndPoint).Address);
                 return master;
             }
-            //return innerContext.GetServer("172.20.0.219:6379");
         }
 
         public void Dispose()

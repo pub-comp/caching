@@ -37,6 +37,11 @@ namespace PubComp.Caching.MongoDbCaching
         /// which indicates that a cache entry has no sliding expiration time</remarks>
         public TimeSpan? SlidingExpiration { get; set; }
 
+        /// <summary>
+        /// Notifications providers. Currently supports "redis", default is none. 
+        /// </summary>
+        public string SyncProvider { get; set; }
+
         public MongoDbCachePolicy()
         {
             ConnectionString = new PubComp.NoSql.MongoDbDriver.MongoDbConnectionInfo().ConnectionString;
