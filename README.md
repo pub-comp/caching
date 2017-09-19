@@ -2,7 +2,7 @@
 
 This project enables simple plug and play caching with various implementations and enables you to add your own implemenations.
 
-NuGets (available at [nuget.org](http://nuget.org):
+NuGets (available at [nuget.org](http://nuget.org)):
 
 The core - `ICache`, `CacheManager`, `LayeredCache`:
   [PubComp.Caching.Core](https://www.nuget.org/packages/PubComp.Caching.Core/)
