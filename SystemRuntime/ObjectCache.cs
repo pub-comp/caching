@@ -18,7 +18,7 @@ namespace PubComp.Caching.SystemRuntime
             this.policy = policy;
             this.innerCache = innerCache;
 
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.SyncProvider);
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy?.SyncProvider);
         }
         
         public string Name { get { return this.name; } }
