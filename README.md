@@ -2,6 +2,20 @@
 
 This project enables simple plug and play caching with various implementations and enables you to add your own implemenations.
 
+NuGets (available at [nuget.org](http://nuget.org)):
+
+The core - `ICache`, `CacheManager`, `LayeredCache`:
+  [PubComp.Caching.Core](https://www.nuget.org/packages/PubComp.Caching.Core/)
+
+`InMemoryCache` based on `System.Runtime.Caching.ObjectCache`:
+  [PubComp.Caching.SystemRuntime](https://www.nuget.org/packages/PubComp.Caching.SystemRuntime/)
+
+`RedisCache` based on `StackExchange.Redis`:
+  [PubComp.Caching.RedisCaching](https://www.nuget.org/packages/PubComp.Caching.RedisCaching/)
+
+AOP (Aspect Oriented Programming) caching based on `PostSharp`:
+  [PubComp.Caching.AopCaching](https://www.nuget.org/packages/PubComp.Caching.AopCaching/)
+
 You can access the cache directly via its interface:
 
 ~~~
@@ -73,12 +87,36 @@ usage:
 var cache = CacheManager.GetCache("localCacheLRU");
 ~~~
 
-or
+or via AOP (Aspect Oriented Programming) - wrap a method with cache, so that the underlaying method is only called on cache misses:
 
 ~~~
 [Cache("localCache")]
 private List<Item> MethodToCache()
 {
     // data retrieval goes here
+}
+~~~
+
+You can also cache an IList of items, each time running the underlaying method only for the missing keys:
+
+~~~
+[CacheList(typeof(MockDataKeyConverter))]
+public IList<MockData> GetItems(IList<string> keys)
+{
+	return keys.Select(k => new MockData { Id = k }).ToList();
+}
+
+public class MockData
+{
+    public string Id { get; set; }
+    public string Value { get; set; }
+}
+
+public class MockDataKeyConverter : IDataKeyConverter<string, MockData>
+{
+    public string GetKey(MockData data)
+    {
+        return data.Id;
+    }
 }
 ~~~
