@@ -152,6 +152,10 @@ or via config file:
   
   <PubComp>
     <CacheConfig>
+      <!-- You can either use ' or &quot; in the policy JSON -->
+      <!-- Each cache can be of a different type e.g. local (PubComp.Caching.SystemRuntime) or Redis (PubComp.Caching.RedisCaching.RedisCache) and with a different policy -->
+      <!-- Each cache type can have various policies e.g. ExpirationFromAdd, SlidingExpiration -->
+      <!-- You can create your own cache type, just direct the config to your assembly and class -->
       <add name="localCache" assembly="PubComp.Caching.SystemRuntime" type="PubComp.Caching.SystemRuntime.InMemoryCache"
         policy="{'ExpirationFromAdd':'01:00:00'}" />
       <add name="localCacheLRU" assembly="PubComp.Caching.SystemRuntime" type="PubComp.Caching.SystemRuntime.InMemoryCache"
