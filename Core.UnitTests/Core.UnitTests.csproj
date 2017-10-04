@@ -44,9 +44,12 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="PostSharp, Version=4.0.39.0, Culture=neutral, PublicKeyToken=b13fd38b8f9c99d7, processorArchitecture=MSIL">
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.4.4.1\lib\net45\NLog.dll</HintPath>
+    </Reference>
+    <Reference Include="PostSharp, Version=4.1.23.0, Culture=neutral, PublicKeyToken=b13fd38b8f9c99d7, processorArchitecture=MSIL">
+      <HintPath>..\packages\PostSharp.4.1.23\lib\net35-client\PostSharp.dll</HintPath>
       <Private>True</Private>
-      <HintPath>..\packages\PostSharp.4.0.39\lib\net35-client\PostSharp.dll</HintPath>
     </Reference>
     <Reference Include="PubComp.Testing.TestingUtils">
       <HintPath>..\packages\PubComp.Testing.TestingUtils.1.0.0\lib\net45\PubComp.Testing.TestingUtils.dll</HintPath>
@@ -77,11 +80,20 @@
     <Compile Include="CacheManagerTests.cs" />
     <Compile Include="CacheTestTools.cs" />
     <Compile Include="LayeredCacheTests.cs" />
+    <Compile Include="Mocks\B64EncConnectionString.cs" />
+    <Compile Include="Mocks\B64EncConnectionStringConfig.cs" />
     <Compile Include="Mocks\MockMemCache.cs" />
     <Compile Include="Mocks\MockCachePolicy.cs" />
     <Compile Include="Mocks\MockNoCache.cs" />
     <Compile Include="Mocks\MockMemCacheConfig.cs" />
     <Compile Include="Mocks\MockNoCacheConfig.cs" />
+    <Compile Include="Mocks\NoNotifier.cs" />
+    <Compile Include="Mocks\NoNotifierConfig.cs" />
+    <Compile Include="Mocks\NoNotifierPolicy.cs" />
+    <Compile Include="Mocks\PlainConnectionString.cs" />
+    <Compile Include="Mocks\UrlEncConnectionString.cs" />
+    <Compile Include="Mocks\PlainConnectionStringConfig.cs" />
+    <Compile Include="Mocks\UrlEncConnectionStringConfig.cs" />
     <Compile Include="NoCacheTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -103,9 +115,6 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="TestingUtils.Readme.txt" />
-  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>
@@ -126,10 +135,10 @@
   </Choose>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\packages\PostSharp.4.0.39\tools\PostSharp.targets" Condition="Exists('..\packages\PostSharp.4.0.39\tools\PostSharp.targets')" />
+  <Import Project="..\packages\PostSharp.4.1.23\tools\PostSharp.targets" Condition="Exists('..\packages\PostSharp.4.1.23\tools\PostSharp.targets')" />
   <Target Name="EnsurePostSharpImported" BeforeTargets="BeforeBuild" Condition="'$(PostSharp30Imported)' == ''">
-    <Error Condition="!Exists('..\packages\PostSharp.4.0.39\tools\PostSharp.targets')" Text="This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://www.postsharp.net/links/nuget-restore." />
-    <Error Condition="Exists('..\packages\PostSharp.4.0.39\tools\PostSharp.targets')" Text="The build restored NuGet packages. Build the project again to include these packages in the build. For more information, see http://www.postsharp.net/links/nuget-restore." />
+    <Error Condition="!Exists('..\packages\PostSharp.4.1.23\tools\PostSharp.targets')" Text="This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://www.postsharp.net/links/nuget-restore." />
+    <Error Condition="Exists('..\packages\PostSharp.4.1.23\tools\PostSharp.targets')" Text="The build restored NuGet packages. Build the project again to include these packages in the build. For more information, see http://www.postsharp.net/links/nuget-restore." />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

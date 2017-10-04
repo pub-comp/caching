@@ -1,4 +1,5 @@
 ﻿using System;
+using PubComp.Caching.Core.Notifications;
 
 namespace PubComp.Caching.Core
 {
@@ -36,17 +37,16 @@ namespace PubComp.Caching.Core
 
         public static CacheSynchronizer CreateCacheSynchronizer(ICache cache, string syncProviderName)
         {
-            if (!String.IsNullOrEmpty(syncProviderName))
-            {
-                var notifications = CacheManager.GetNotifierForCache(cache.Name, syncProviderName);
+            if (string.IsNullOrEmpty(syncProviderName))
+                return null;
 
-                if (notifications != null)
-                {
-                    var synchronizer = new CacheSynchronizer(cache, notifications);
-                    return synchronizer;
-                }
-            }
-            return null;
+            var notifications = CacheManager.GetNotifier(syncProviderName);
+
+            if (notifications == null)
+                return null;
+
+            var synchronizer = new CacheSynchronizer(cache, notifications);
+            return synchronizer;
         }
     }
 }

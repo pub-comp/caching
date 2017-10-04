@@ -44,6 +44,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.4.4.1\lib\net45\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="PostSharp, Version=4.1.23.0, Culture=neutral, PublicKeyToken=b13fd38b8f9c99d7, processorArchitecture=MSIL">
       <HintPath>..\packages\PostSharp.4.1.23\lib\net35-client\PostSharp.dll</HintPath>
       <Private>True</Private>
@@ -73,6 +76,8 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="Mocks\B64EncConnectionString.cs" />
+    <Compile Include="Mocks\B64EncConnectionStringConfig.cs" />
     <Compile Include="Mocks\MockCacheItem.cs" />
     <Compile Include="RedisCacheTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

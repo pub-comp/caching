@@ -17,10 +17,28 @@ namespace PubComp.Caching.MongoDbCaching
         public MongoDbCache(String cacheCollectionName, MongoDbCachePolicy policy)
         {
             if (policy == null)
-                throw new ArgumentNullException("policy");
+                throw new ArgumentNullException(nameof(policy));
 
-            this.connectionString = policy.ConnectionString;
-            
+            if (!string.IsNullOrEmpty(policy.ConnectionName))
+            {
+                this.connectionString = CacheManager.GetConnectionString(policy.ConnectionName)?.ConnectionString;
+
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    throw new ArgumentException(
+                        $"{nameof(ICacheConnectionString.ConnectionString)} not found for {nameof(policy.ConnectionName)} {policy.ConnectionName}", $"{nameof(policy)}.{nameof(policy.ConnectionName)}");
+                }
+            }
+            else if (!string.IsNullOrEmpty(policy.ConnectionString))
+            {
+                this.connectionString = policy.ConnectionString;
+            }
+            else
+            {
+                throw new ArgumentException(
+                    $"{nameof(policy.ConnectionString)} is undefined", $"{nameof(policy)}.{nameof(policy.ConnectionString)}");
+            }
+
             this.cacheDbName = !string.IsNullOrEmpty(policy.DatabaseName)
                 ? policy.DatabaseName : "CacheDb";
             

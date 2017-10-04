@@ -66,3 +66,6 @@
 	* Added built in cache nofitications & synchronization
 	* Changed RedisCache to use StackExchange
 	* Implementation of notifier using Redis
+
+2.0:
+	* Revamped configuration for connection strings & notifications / sychronization

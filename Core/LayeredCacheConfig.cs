@@ -1,4 +1,6 @@
-﻿namespace PubComp.Caching.Core
+﻿using PubComp.Caching.Core.Config;
+
+namespace PubComp.Caching.Core
 {
     public class LayeredCacheConfig : CacheConfig
     {

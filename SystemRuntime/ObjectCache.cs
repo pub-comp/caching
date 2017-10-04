@@ -9,6 +9,10 @@ namespace PubComp.Caching.SystemRuntime
         private System.Runtime.Caching.ObjectCache innerCache;
         private readonly Object sync = new Object();
         private readonly InMemoryPolicy policy;
+        
+        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
+        private readonly string notiferName;
+
         private readonly CacheSynchronizer synchronizer;
 
         protected ObjectCache(
@@ -18,7 +22,8 @@ namespace PubComp.Caching.SystemRuntime
             this.policy = policy;
             this.innerCache = innerCache;
 
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy?.SyncProvider);
+            this.notiferName = this.policy?.SyncProvider;
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.notiferName);
         }
         
         public string Name { get { return this.name; } }
@@ -39,11 +44,10 @@ namespace PubComp.Caching.SystemRuntime
 
         protected virtual bool TryGetInner<TValue>(String key, out TValue value)
         {
-            var item = innerCache.Get(key, null) as CacheItem;
-
-            if (item != null)
+            if (innerCache.Get(key, null) is CacheItem item)
             {
                 // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
+                // ReSharper disable once MergeConditionalExpression
                 value = item.Value is TValue ? (TValue)item.Value : default(TValue);
                 return true;
             }

@@ -5,7 +5,7 @@ namespace PubComp.Caching.SystemRuntime
     public class InMemoryPolicy
     {
         /// <summary>
-        /// Notifications providers. Currently supports "redis", default is none. 
+        /// Notifications provider name. Default is null/undefined.
         /// </summary>
         public string SyncProvider { get; set; }
 

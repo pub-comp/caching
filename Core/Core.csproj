@@ -51,20 +51,25 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
-    <Compile Include="CacheNotificationsConfigurationHandler.cs" />
-    <Compile Include="CacheNotificationsConfig.cs" />
+    <Compile Include="Config\ConnectionStringConfig.cs" />
+    <Compile Include="NoCacheConfig.cs" />
+    <Compile Include="Notifications\CacheItemActionTypes.cs" />
+    <Compile Include="Notifications\CacheItemNotification.cs" />
+    <Compile Include="Config\NotifierConfig.cs" />
     <Compile Include="CacheControllerUtil.cs" />
     <Compile Include="CacheException.cs" />
     <Compile Include="CacheKey.cs" />
     <Compile Include="CacheSynchronizer.cs" />
-    <Compile Include="ConfigAction.cs" />
-    <Compile Include="ICacheNotifier.cs" />
+    <Compile Include="Config\ConfigAction.cs" />
+    <Compile Include="Config\ConfigNode.cs" />
+    <Compile Include="ICacheConnectionString.cs" />
+    <Compile Include="Notifications\ICacheNotifier.cs" />
     <Compile Include="LambdaHelper.cs" />
     <Compile Include="LayeredCache.cs" />
     <Compile Include="LayeredCacheConfig.cs" />
     <Compile Include="LayeredCachePolicy.cs" />
-    <Compile Include="NoCacheConfig.cs" />
-    <Compile Include="CacheConfig.cs" />
+    <Compile Include="Config\NoCacheConfig.cs" />
+    <Compile Include="Config\CacheConfig.cs" />
     <Compile Include="CacheConfigurationHandler.cs" />
     <Compile Include="CacheManager.cs" />
     <Compile Include="CacheName.cs" />

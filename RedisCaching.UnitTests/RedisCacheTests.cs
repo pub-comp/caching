@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.UnitTests;
 using PubComp.Caching.RedisCaching.UnitTests.Mocks;
+using PubComp.Caching.SystemRuntime;
 using PubComp.Testing.TestingUtils;
 
 namespace PubComp.Caching.RedisCaching.UnitTests
@@ -427,6 +429,53 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             bool isFast = elapsed.Seconds < 20;//took less then 20 seconds
             Assert.IsTrue(isFast, "Redis GET load test was too slow, took: " + elapsed.Seconds);
+        }
+
+        [TestMethod]
+        public void TestRedisReadConfig()
+        {
+            var redisCache = CacheManager.GetCache("redisCache");
+            Assert.IsInstanceOfType(redisCache, typeof(RedisCache));
+            Assert.AreEqual("redisCache", redisCache.Name);
+            Assert.AreEqual("127.0.0.1:6379,serviceName=mymaster,allowAdmin=true", GetFieldValue(redisCache));
+
+            var notifier = CacheManager.GetNotifier("redisNotifier");
+            Assert.IsInstanceOfType(notifier, typeof(RedisCacheNotifier));
+            Assert.AreEqual("redisNotifier", notifier.Name);
+            Assert.AreEqual("127.0.0.1:6379,serviceName=mymaster", GetFieldValue(notifier));
+
+            var connectionString = CacheManager.GetConnectionString("localRedis");
+            Assert.IsInstanceOfType(connectionString, typeof(RedisConnectionString));
+            Assert.AreEqual("127.0.0.1:6379,serviceName=mymaster", connectionString.ConnectionString);
+
+            var connectionStringAdmin = CacheManager.GetConnectionString("localRedisAdmin");
+            Assert.IsInstanceOfType(connectionStringAdmin, typeof(B64EncConnectionString));
+            Assert.AreEqual("127.0.0.1:6379,serviceName=mymaster,allowAdmin=true", connectionStringAdmin.ConnectionString);
+
+            var localCache = CacheManager.GetCache("localCache");
+            Assert.IsInstanceOfType(localCache, typeof(InMemoryCache));
+            Assert.AreEqual("localCache", localCache.Name);
+            Assert.AreEqual("redisNotifier", GetFieldValue(localCache, "notiferName"));
+        }
+
+        private static string GetFieldValue(object obj, string fieldName = "connectionString")
+        {
+            return GetFieldValue(obj.GetType(), obj, fieldName);
+        }
+
+        private static string GetFieldValue(Type type, object obj, string fieldName = "connectionString")
+        {
+            var field = type.GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            if (field == null && type != typeof(object))
+                return GetFieldValue(type.BaseType, obj, fieldName);
+
+            Assert.IsNotNull(field);
+            Assert.AreEqual(typeof(string), field.FieldType);
+
+            return field.GetValue(obj) as string;
         }
     }
 }

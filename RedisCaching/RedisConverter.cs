@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using PubComp.Caching.Core;
+using PubComp.Caching.Core.Notifications;
 using StackExchange.Redis;
 
 namespace PubComp.Caching.RedisCaching

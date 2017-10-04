@@ -2,12 +2,20 @@
 
 namespace PubComp.Caching.RedisCaching
 {
+    // ReSharper disable UnusedAutoPropertyAccessor.Global
+    // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
+    // ReSharper disable MemberCanBePrivate.Global
     public class RedisCachePolicy
     {
         /// <summary>
-        /// Required parameter - connection string to MongoDB
+        /// Connection string to Redis. You must either fill this in or ConnectionName.
         /// </summary>
         public string ConnectionString { get; set; }
+
+        /// <summary>
+        /// Connection string name. You must either fill this in or ConnectionString.
+        /// </summary>
+        public string ConnectionName { get; set; }
 
         /// <summary>
         /// Redic converter. Currently supports "json" (default) or "binary". 
@@ -25,7 +33,7 @@ namespace PubComp.Caching.RedisCaching
         public int MonitorPort { get; set; }
 
         /// <summary>
-        /// Notifications providers. Currently supports "redis", default is none (null). 
+        /// Notifications provider name. Default is null/undefined.
         /// </summary>
         public string SyncProvider { get; set; }
 

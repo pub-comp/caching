@@ -6,56 +6,45 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
+using PubComp.Caching.Core.Config;
+using PubComp.Caching.Core.Notifications;
 
 namespace PubComp.Caching.Core
 {
     public class CacheManager
     {
         private static Func<MethodBase> callingMethodGetter;
-        private static readonly object loadLock = new object();
 
-        private static ReaderWriterLockSlim sync
+        // ReSharper disable once InconsistentNaming
+        private static readonly ReaderWriterLockSlim cachesSync
             = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
+        // ReSharper disable once InconsistentNaming
         private static readonly ConcurrentDictionary<CacheName, ICache> caches
             = new ConcurrentDictionary<CacheName, ICache>();
+
+        // ReSharper disable once InconsistentNaming
+        private static readonly ReaderWriterLockSlim notifiersSync
+            = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+
+        // ReSharper disable once InconsistentNaming
+        private static readonly ConcurrentDictionary<string, ICacheNotifier> notifiers
+            = new ConcurrentDictionary<string, ICacheNotifier>();
+
+        // ReSharper disable once InconsistentNaming
+        private static readonly ReaderWriterLockSlim connectionStringsSync
+            = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+
+        // ReSharper disable once InconsistentNaming
+        private static readonly ConcurrentDictionary<string, ICacheConnectionString> connectionStrings
+            = new ConcurrentDictionary<string, ICacheConnectionString>();
 
         static CacheManager()
         {
             InitializeFromConfig();
         }
 
-        public static void InitializeFromConfig()
-        {
-            var config = LoadConfig();
-            ApplyConfig(config);
-        }
-
-        private static IList<CacheConfig> LoadConfig()
-        {
-            var config = ConfigurationManager.GetSection("PubComp/CacheConfig") as IList<CacheConfig>;
-            return config;
-        }
-
-        private static void ApplyConfig(IList<CacheConfig> config)
-        {
-            if (config == null)
-                return;
-
-            foreach (var item in config)
-            {
-                switch (item.Action)
-                {
-                    case ConfigAction.Remove:
-                        SetCache(item.Name, null);
-                        break;
-
-                    case ConfigAction.Add:
-                        SetCache(item.Name, item.CreateCache());
-                        break;
-                }
-            }
-        }
+        #region Cache access API
 
         /// <summary>Gets a cache instance using full name of calling method's class</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
@@ -84,36 +73,19 @@ namespace PubComp.Caching.Core
         /// <remarks>For better performance, store the result in client class</remarks>
         public static IEnumerable<string> GetCacheNames()
         {
-            string[] cachesArray;
+            string[] names;
 
-            sync.EnterReadLock();
+            cachesSync.EnterReadLock();
             try
             {
-                cachesArray = caches.Values.Select(cache => cache.Name).ToArray();
+                names = caches.Values.Select(v => v.Name).ToArray();
             }
             finally
             {
-                sync.ExitReadLock();
+                cachesSync.ExitReadLock();
             }
 
-            return cachesArray;
-        }
-
-        private static KeyValuePair<CacheName, ICache>[] GetCaches()
-        {
-            KeyValuePair<CacheName, ICache>[] cachesArray;
-
-            sync.EnterReadLock();
-            try
-            {
-                cachesArray = caches.ToArray();
-            }
-            finally
-            {
-                sync.ExitReadLock();
-            }
-
-            return cachesArray;
+            return names;
         }
 
         /// <summary>Gets a cache by name</summary>
@@ -142,90 +114,307 @@ namespace PubComp.Caching.Core
             return (TCache)cache;
         }
 
-        public static ICacheNotifier GetNotifierForCache(string cacheName, string providername)
+        /// <summary>Gets a list of all notifier names</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public static IEnumerable<string> GetNotifierNames()
         {
-            if (cacheName == null)
-                throw new ArgumentNullException(nameof(cacheName));
+            string[] names;
 
-            if (providername == null)
-                throw new ArgumentNullException(nameof(providername));
-
-            var cacheNotificationConfig = 
-                ConfigurationManager.GetSection("PubComp/CacheNotificationsConfig") as IList<CacheNotificationsConfig>;
-
-            if (cacheNotificationConfig == null)
-                return null;
-
-            var cacheNotificationConfigItem =
-                cacheNotificationConfig.FirstOrDefault(configItem => configItem.Name == providername);
-
-            if (cacheNotificationConfigItem == null)
-                return null;
-
-            return cacheNotificationConfigItem.CreateCacheNotifications(cacheName);
-        }
-
-        private class CacheComparer : IEqualityComparer<ICache>
-        {
-            public bool Equals(ICache x, ICache y)
+            notifiersSync.EnterReadLock();
+            try
             {
-                if (x == null || y == null)
-                    return x == y;
-                
-                return x.Name == y.Name;
+                names = notifiers.Values.Select(v => v.Name).ToArray();
+            }
+            finally
+            {
+                notifiersSync.ExitReadLock();
             }
 
-            public int GetHashCode(ICache obj)
-            {
-                if (obj == null)
-                    return 0;
+            return names;
+        }
 
-                return (obj.Name ?? string.Empty).GetHashCode();
+        /// <summary>Gets a notifier by name</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public static ICacheNotifier GetNotifier(string name)
+        {
+            if (name == null)
+                throw new ArgumentNullException(nameof(name));
+
+            ICacheNotifier result;
+
+            notifiersSync.EnterReadLock();
+            try
+            {
+                notifiers.TryGetValue(name, out result);
+            }
+            finally
+            {
+                notifiersSync.ExitReadLock();
+            }
+
+            return result;
+        }
+
+        /// <summary>Gets a list of all connection string names</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public static IEnumerable<string> GetConnectionStringNames()
+        {
+            string[] names;
+
+            connectionStringsSync.EnterReadLock();
+            try
+            {
+                names = connectionStrings.Values.Select(v => v.Name).ToArray();
+            }
+            finally
+            {
+                connectionStringsSync.ExitReadLock();
+            }
+
+            return names;
+        }
+
+        /// <summary>Gets a connection string by name</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public static ICacheConnectionString GetConnectionString(string name)
+        {
+            if (name == null)
+                throw new ArgumentNullException(nameof(name));
+
+            ICacheConnectionString result;
+
+            connectionStringsSync.EnterReadLock();
+            try
+            {
+                connectionStrings.TryGetValue(name, out result);
+            }
+            finally
+            {
+                connectionStringsSync.ExitReadLock();
+            }
+
+            return result;
+        }
+
+        #endregion
+
+        private static KeyValuePair<CacheName, ICache>[] GetCaches()
+        {
+            KeyValuePair<CacheName, ICache>[] cachesArray;
+
+            cachesSync.EnterReadLock();
+            try
+            {
+                cachesArray = caches.ToArray();
+            }
+            finally
+            {
+                cachesSync.ExitReadLock();
+            }
+
+            return cachesArray;
+        }
+
+        private static void SyncSet(ReaderWriterLockSlim syncObj, Action action)
+        {
+            cachesSync.EnterWriteLock();
+            try
+            {
+                action();
+            }
+            finally
+            {
+                cachesSync.ExitWriteLock();
             }
         }
 
-        /// <summary>Adds or sets a cache by name</summary>
+        #region Cache configuration API
+
+        /// <summary>
+        /// Sets named cached according to application config (app.config/web.config)
+        /// This method is called automatically by static constructor.
+        /// Initialization cab be overriden using SetCache and RemoveCache (and this method)
+        /// </summary>
+        public static void InitializeFromConfig()
+        {
+            var config = LoadConfig();
+            ApplyConfig(config);
+        }
+
+        /// <summary>
+        /// Adds or sets a cache by name
+        /// This method is to be used during application intialization, it does not delete or replace the cache if already in use!
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="cache"></param>
         /// <remarks>Cache name can end with wildcard '*'</remarks>
         public static void SetCache(string name, ICache cache)
         {
             var cacheName = new CacheName(name);
 
-            sync.EnterWriteLock();
-            try
+            void Action()
             {
                 if (cache == null)
                 {
-                    ICache oldCache;
-                    caches.TryRemove(cacheName, out oldCache);
+                    // ReSharper disable once UnusedVariable
+                    caches.TryRemove(cacheName, out var oldValue);
                 }
                 else
                 {
-                    caches.AddOrUpdate(cacheName, cache, (n, c) => cache);
+                    caches.AddOrUpdate(cacheName, cache, (k, v) => cache);
                 }
             }
-            finally
-            {
-                sync.ExitWriteLock();
-            }
+
+            SyncSet(cachesSync, Action);
         }
 
+        /// <summary>
+        /// Removes a cache registration with a given name.
+        /// This method is to be used during application intialization, it does not delete or replace the cache if already in use!
+        /// </summary>
+        /// <param name="name"></param>
         public static void RemoveCache(string name)
         {
-            SetCache(name, null);
+            var cacheName = new CacheName(name);
+
+            void Action()
+            {
+                // ReSharper disable once UnusedVariable
+                caches.TryRemove(cacheName, out var oldValue);
+            }
+
+            SyncSet(cachesSync, Action);
         }
 
+        /// <summary>
+        /// Removes all cache registrations with any given name.
+        /// This method is to be used during application intialization, it does not delete or replace the cache if already in use!
+        /// </summary>
         public static void RemoveAllCaches()
         {
-            sync.EnterWriteLock();
-            try
+            void Action()
             {
                 caches.Clear();
             }
-            finally
-            {
-                sync.ExitWriteLock();
-            }
+
+            SyncSet(cachesSync, Action);
         }
+
+        /// <summary>
+        /// Adds or sets a cache by name
+        /// This method is to be used during application intialization, it does not delete or replace the cache if already in use!
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="connectionString"></param>
+        /// <remarks>Cache name can end with wildcard '*'</remarks>
+        public static void SetConnectionString(string name, ICacheConnectionString connectionString)
+        {
+            void Action()
+            {
+                if (connectionString == null)
+                {
+                    // ReSharper disable once UnusedVariable
+                    connectionStrings.TryRemove(name, out var oldValue);
+                }
+                else
+                {
+                    connectionStrings.AddOrUpdate(name, connectionString, (k, v) => connectionString);
+                }
+            }
+
+            SyncSet(connectionStringsSync, Action);
+        }
+
+        /// <summary>
+        /// Removes a cache registration with a given name.
+        /// This method is to be used during application intialization, it does not delete or replace the cache if already in use!
+        /// </summary>
+        /// <param name="name"></param>
+        public static void RemoveConnectionString(string name)
+        {
+            void Action()
+            {
+                // ReSharper disable once UnusedVariable
+                connectionStrings.TryRemove(name, out var oldValue);
+            }
+
+            SyncSet(connectionStringsSync, Action);
+        }
+
+        /// <summary>
+        /// Removes all cache registrations with any given name.
+        /// This method is to be used during application intialization, it does not delete or replace the cache if already in use!
+        /// </summary>
+        public static void RemoveAllConnectionStrings()
+        {
+            void Action()
+            {
+                connectionStrings.Clear();
+            }
+
+            SyncSet(connectionStringsSync, Action);
+        }
+
+        /// <summary>
+        /// Adds or sets a notifier by name
+        /// This method is to be used during application intialization, it does not delete or replace the notifier if already in use!
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="notifier"></param>
+        public static void SetNotifier(string name, ICacheNotifier notifier)
+        {
+            void Action()
+            {
+                if (notifier == null)
+                {
+                    // ReSharper disable once UnusedVariable
+                    notifiers.TryRemove(name, out var oldValue);
+                }
+                else
+                {
+                    notifiers.AddOrUpdate(name, notifier, (k, v) => notifier);
+                }
+            }
+
+            SyncSet(notifiersSync, Action);
+        }
+
+        /// <summary>
+        /// Removes a notifier registration with a given name.
+        /// This method is to be used during application intialization, it does not delete or replace the notifier if already in use!
+        /// </summary>
+        /// <param name="name"></param>
+        public static void RemoveNotifier(string name)
+        {
+            void Action()
+            {
+                // ReSharper disable once UnusedVariable
+                notifiers.TryRemove(name, out var oldValue);
+            }
+
+            SyncSet(notifiersSync, Action);
+        }
+
+        /// <summary>
+        /// Removes all notifier registrations with any given name.
+        /// This method is to be used during application intialization, it does not delete or replace the notifier if already in use!
+        /// </summary>
+        public static void RemoveAllNotifiers()
+        {
+            void Action()
+            {
+                notifiers.Clear();
+            }
+
+            SyncSet(notifiersSync, Action);
+        }
+
+        #endregion
+
+        #region Automatic cache naming
+
+        // ReSharper disable once InconsistentNaming
+        private static readonly object loadLock = new object();
 
         private static MethodBase GetCallingMethod()
         {
@@ -266,5 +455,111 @@ namespace PubComp.Caching.Core
 
             return function;
         }
+
+        #endregion
+
+        private static IList<ConfigNode> LoadConfig()
+        {
+            var config = ConfigurationManager.GetSection("PubComp/CacheConfig") as IList<ConfigNode>;
+            return config;
+        }
+
+        private static void ApplyConfig(IList<ConfigNode> config)
+        {
+            if (config == null)
+                return;
+
+            var connectionConfigs = new List<ConnectionStringConfig>();
+            var notifierConfigs = new List<NotifierConfig>();
+            var cacheConfigs = new List<CacheConfig>();
+            var connectionRemoveIndexes = new List<int>();
+            var notifierRemoveIndexes = new List<int>();
+            var cacheRemoveIndexes = new List<int>();
+
+            foreach (var item in config)
+            {
+                switch (item.Action)
+                {
+                    case ConfigAction.Remove:
+                        // Remove existing nodes
+                        RemoveCache(item.Name);
+                        RemoveNotifier(item.Name);
+                        RemoveConnectionString(item.Name);
+
+                        // Save which pending nodes to remove
+                        connectionRemoveIndexes.AddRange(
+                            connectionConfigs.Select((cfg, index) => Tuple.Create(index, cfg))
+                                .Where(c => c.Item2.Name == item.Name).Select(c => c.Item1).Reverse());
+                        notifierRemoveIndexes.AddRange(
+                            notifierConfigs.Select((cfg, index) => Tuple.Create(index, cfg))
+                                .Where(c => c.Item2.Name == item.Name).Select(c => c.Item1).Reverse());
+                        cacheRemoveIndexes.AddRange(
+                            cacheConfigs.Select((cfg, index) => Tuple.Create(index, cfg))
+                                .Where(c => c.Item2.Name == item.Name).Select(c => c.Item1).Reverse());
+                        break;
+
+                    case ConfigAction.Add:
+                        // Add to pending nodes
+                        if (item is CacheConfig cacheConfig)
+                        {
+                            cacheConfigs.Add(cacheConfig);
+                        }
+                        else if (item is NotifierConfig notifierConfig)
+                        {
+                            notifierConfigs.Add(notifierConfig);
+                        }
+                        else if (item is ConnectionStringConfig connectionStringConfig)
+                        {
+                            connectionConfigs.Add(connectionStringConfig);
+                        }
+                        break;
+                }
+            }
+
+            // Remove pending nodes marked for removal
+            cacheRemoveIndexes = cacheRemoveIndexes.OrderByDescending(i => i).ToList();
+            notifierRemoveIndexes = notifierRemoveIndexes.OrderByDescending(i => i).ToList();
+            connectionRemoveIndexes = connectionRemoveIndexes.OrderByDescending(i => i).ToList();
+            foreach (var i in cacheRemoveIndexes)
+                cacheConfigs.RemoveAt(i);
+            foreach (var i in notifierRemoveIndexes)
+                notifierConfigs.RemoveAt(i);
+            foreach (var i in connectionRemoveIndexes)
+                connectionConfigs.RemoveAt(i);
+
+            // Add still pending nodes,
+            // order by types (to enable forward declaration)
+            // and then by appearance in config
+            foreach (var item in connectionConfigs)
+                SetConnectionString(item.Name, item.CreateConnectionString());
+            foreach (var item in notifierConfigs)
+                SetNotifier(item.Name, item.CreateCacheNotifier());
+            foreach (var item in cacheConfigs)
+                SetCache(item.Name, item.CreateCache());
+        }
+
+        //#region Nested types
+
+        //private class CacheComparer : IEqualityComparer<ICache>
+        //{
+        //    public bool Equals(ICache x, ICache y)
+        //    {
+        //        if (x == null || y == null)
+        //            return x == y;
+
+        //        return x.Name == y.Name;
+        //    }
+
+        //    public int GetHashCode(ICache obj)
+        //    {
+        //        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+        //        if (obj == null)
+        //            return 0;
+
+        //        return (obj.Name ?? string.Empty).GetHashCode();
+        //    }
+        //}
+
+        //#endregion
     }
 }

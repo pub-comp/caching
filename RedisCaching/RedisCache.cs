@@ -5,8 +5,9 @@ namespace PubComp.Caching.RedisCaching
 {
     public class RedisCache : ICache
     {
-        private readonly String name;
-        private readonly String connectionString;
+        private readonly string name;
+        private readonly string connectionString;
+        private readonly string notiferName;
         private readonly bool useSlidingExpiration;
         private readonly TimeSpan? expireWithin;
         private readonly DateTime? expireAt;
@@ -28,7 +29,7 @@ namespace PubComp.Caching.RedisCaching
         public RedisCache(String name, RedisCachePolicy policy)
         {
             this.name = name;
-            this.log = NLog.LogManager.GetLogger(nameof(RedisCache));
+            this.log = NLog.LogManager.GetLogger(typeof(RedisCache).FullName);
 
             log.Debug("Init Cache {0}", this.name);
 
@@ -38,7 +39,26 @@ namespace PubComp.Caching.RedisCaching
                 throw new ArgumentNullException(nameof(policy));
             }
 
-            this.connectionString = policy.ConnectionString;
+            if (!string.IsNullOrEmpty(policy.ConnectionName))
+            {
+                this.connectionString = CacheManager.GetConnectionString(policy.ConnectionName)?.ConnectionString;
+
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    throw new ArgumentException(
+                        $"{nameof(ICacheConnectionString.ConnectionString)} not found for {nameof(policy.ConnectionName)} {policy.ConnectionName}", $"{nameof(policy)}.{nameof(policy.ConnectionName)}");
+                }
+            }
+            else if (!string.IsNullOrEmpty(policy.ConnectionString))
+            {
+                this.connectionString = policy.ConnectionString;
+            }
+            else
+            {
+                throw new ArgumentException(
+                    $"{nameof(policy.ConnectionString)} is undefined", $"{nameof(policy)}.{nameof(policy.ConnectionString)}");
+            }
+
             this.monitorPort = policy.MonitorPort;
             this.monitorIntervalMilliseconds = policy.MonitorIntervalMilliseconds;
             this.converterType = policy.Converter;
@@ -71,8 +91,12 @@ namespace PubComp.Caching.RedisCaching
 
             this.useSlidingExpiration = (policy.SlidingExpiration < TimeSpan.MaxValue);
 
-            this.innerCache = new CacheContext(this.connectionString, this.converterType, this.clusterType, this.monitorPort, this.monitorIntervalMilliseconds);
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, policy.SyncProvider);
+            this.innerCache = new CacheContext(
+                this.connectionString, this.converterType, this.clusterType, this.monitorPort, this.monitorIntervalMilliseconds);
+
+            this.notiferName = policy.SyncProvider;
+
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.notiferName);
         }
 
         private TValue GetOrAdd<TValue>(
@@ -156,6 +180,7 @@ namespace PubComp.Caching.RedisCaching
 
         public TValue Get<TValue>(string key, Func<TValue> getter)
         {
+            // ReSharper disable once InlineOutVariableDeclaration
             TValue value;
             if (TryGetInner(key, out value))
                 return value;

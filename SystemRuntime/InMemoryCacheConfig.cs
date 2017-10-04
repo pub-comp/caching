@@ -1,5 +1,5 @@
-﻿using System.Runtime.Caching;
-using PubComp.Caching.Core;
+﻿using PubComp.Caching.Core;
+using PubComp.Caching.Core.Config;
 
 namespace PubComp.Caching.SystemRuntime
 {

@@ -1,5 +1,5 @@
 ﻿using System.Web.Http;
-using Common.Logging;
+using NLog;
 using PubComp.Caching.Core;
 
 namespace PubComp.Caching.WebApiExtended
@@ -8,7 +8,7 @@ namespace PubComp.Caching.WebApiExtended
     public class SimpleCacheController : ApiController
     {
         protected readonly CacheControllerUtil Util;
-        protected readonly ILog Log = LogManager.GetLogger<SimpleCacheController>();
+        protected readonly ILogger Log = LogManager.GetLogger(typeof(SimpleCacheController).FullName);
 
         public SimpleCacheController()
         {

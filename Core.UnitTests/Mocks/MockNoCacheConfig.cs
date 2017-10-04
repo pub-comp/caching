@@ -1,4 +1,6 @@
-﻿namespace PubComp.Caching.Core.UnitTests.Mocks
+﻿using PubComp.Caching.Core.Config;
+
+namespace PubComp.Caching.Core.UnitTests.Mocks
 {
     public class MockNoCacheConfig : CacheConfig
     {

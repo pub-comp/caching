@@ -5,9 +5,14 @@ namespace PubComp.Caching.MongoDbCaching
     public class MongoDbCachePolicy
     {
         /// <summary>
-        /// Required parameter - connection string to MongoDB
+        /// Connection string to MongoDB. You must either fill this in or ConnectionName.
         /// </summary>
         public string ConnectionString { get; set; }
+
+        /// <summary>
+        /// Connection string name. You must either fill this in or ConnectionString.
+        /// </summary>
+        public string ConnectionName { get; set; }
 
         /// <summary>
         /// Optional parameter - database name in MongoDB, defaults to CacheDb
@@ -38,7 +43,7 @@ namespace PubComp.Caching.MongoDbCaching
         public TimeSpan? SlidingExpiration { get; set; }
 
         /// <summary>
-        /// Notifications providers. Currently supports "redis", default is none. 
+        /// Notifications provider name. Default is null/undefined.
         /// </summary>
         public string SyncProvider { get; set; }
 

@@ -86,9 +86,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="TestingUtils.Readme.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <Choose>

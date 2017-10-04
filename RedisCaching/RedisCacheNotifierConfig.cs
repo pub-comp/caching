@@ -1,14 +1,15 @@
-﻿using PubComp.Caching.Core;
+﻿using PubComp.Caching.Core.Config;
+using PubComp.Caching.Core.Notifications;
 
 namespace PubComp.Caching.RedisCaching
 {
-    public class RedisCacheNotifierConfig : CacheNotificationsConfig
+    public class RedisCacheNotifierConfig : NotifierConfig
     {
         public RedisCacheNotifierPolicy Policy { get; set; }
 
-        public override ICacheNotifier CreateCacheNotifications(string cachename)
+        public override ICacheNotifier CreateCacheNotifier()
         {
-            return new RedisCacheNotifier(cachename, this.Policy);
+            return new RedisCacheNotifier(this.Name, this.Policy);
         }
     }
 }
