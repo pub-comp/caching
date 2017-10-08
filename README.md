@@ -301,9 +301,9 @@ You can extend this project with you own classes by creating an assembly (a clas
 
 ### Adding Your Own Cache Type
 
-* YourCache - the actual cache's code. Implement from `ICache`
-* YourCacheConfig - a factory for creating an instance of your cache from a given policy
-* YourCachePolicy - the policy for your cache - any parameters you need for constructing your cache e.g. eviction policy, connection details
+* YourCache - the actual cache's code. Must implement `ICache`
+* YourCacheConfig - a factory for creating an instance of your cache from a given policy. Must inherit from `CacheConfig`.
+* YourCachePolicy - the policy for your cache - any parameters you need for constructing your cache e.g. eviction policy, connection details. Must be serializable to from JSON.
 
 You will then be able to configure usage of your cache like so:
 
