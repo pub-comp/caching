@@ -18,7 +18,8 @@ This project enables simple plug and play caching with various implementations a
   - [Getting The Key](#getting-the-key)
   - [Caching Multiple Items By Key](#caching-multiple-items-by-key)
   - [Ignoring Specific Parameters](#ignoring-specific-parameters)
-
+- [Extending With Your Own Classes](#extending-with-your-own-classes)
+  - [Adding Your Own Cache Type](#adding-your-own-cache-type)
 ## NuGets
 
 (available at [nuget.org](http://nuget.org))
@@ -292,4 +293,25 @@ using the `DoNotIncludeInCacheKey` attribute (`DoNotIncludeInCacheKeyAttribute`)
 public string MethodToCache1(int id, [DoNotIncludeInCacheKey]object obj)
 {
 }
+~~~
+
+## Extending With Your Own Classes
+
+You can extend this project with you own classes by creating an assembly (a class library project) with the following classes:
+
+### Adding Your Own Cache Type
+
+* YourCache - the actual cache's code. Implement from `ICache`
+* YourCacheConfig - a factory for creating an instance of your cache from a given policy
+* YourCachePolicy - the policy for your cache - any parameters you need for constructing your cache e.g. eviction policy, connection details
+
+You will then be able to configure usage of your cache like so:
+
+~~~xml
+<PubComp>
+  <CacheConfig>
+    <add name="cacheName" assembly="YourAssembly" type="YourType"
+      policy="JSON goes here" />
+  </CacheConfig>
+</PubComp>
 ~~~
