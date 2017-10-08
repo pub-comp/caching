@@ -17,6 +17,8 @@ namespace PubComp.Caching.AopCaching
         private string methodName;
         private string[] parameterTypeNames;
         private int[] indexesNotToCache;
+        private bool isClassGeneric;
+        private bool isMethodGeneric;
 
         public CacheAttribute()
         {
@@ -29,10 +31,15 @@ namespace PubComp.Caching.AopCaching
 
         public override void CompileTimeInitialize(System.Reflection.MethodBase method, AspectInfo aspectInfo)
         {
-            if (this.cacheName == null)
-                this.cacheName = method.DeclaringType.FullName;
+            var type = method.DeclaringType;
 
-            this.className = method.DeclaringType.FullName;
+            if (this.cacheName == null)
+                this.cacheName = type.FullName;
+
+            this.isClassGeneric = type.IsGenericType;
+            this.isMethodGeneric = method.IsGenericMethod;
+
+            this.className = type.FullName;
             this.methodName = method.Name;
             var parameters = method.GetParameters();
             this.parameterTypeNames = parameters.Select(p => p.ParameterType.FullName).ToArray();
@@ -68,9 +75,17 @@ namespace PubComp.Caching.AopCaching
                 return;
             }
 
+            var classNameNonGeneric = !this.isClassGeneric
+                ? this.className
+                : args.Method.DeclaringType.FullName;
+
+            var parameterTypeNamesNonGeneric = !this.isMethodGeneric
+                ? this.parameterTypeNames
+                : args.Method.GetParameters().Select(p => p.ParameterType.FullName).ToArray();
+
             var parameterValues = args.Arguments.Where((arg, index) => !this.indexesNotToCache.Contains(index)).ToArray();
 
-            var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues).ToString();
+            var key = new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues).ToString();
 
             args.ReturnValue = cacheToUse.Get<object>(key, () => { base.OnInvoke(args); return args.ReturnValue; });
         }

@@ -12,11 +12,12 @@ namespace PubComp.Caching.AopCaching.UnitTests
     {
         private static MockCache cache1;
         private static MockCache cache2;
+        private static MockCache cache3;
 
         [ClassInitialize]
         public static void ClassInitialize(TestContext testContext)
         {
-            const string cache1Name = "PubComp.Caching.AopCaching.UnitTests.Mocks.*";
+            const string cache1Name = "PubComp.Caching.AopCaching.UnitTests.Mocks.Service*";
             cache1 = CacheManager.GetCache(cache1Name) as MockCache;
             if (cache1 == null || cache1.Name != cache1Name)
                 cache1 = new MockCache(cache1Name);
@@ -27,6 +28,12 @@ namespace PubComp.Caching.AopCaching.UnitTests
             if (cache2 == null || cache2.Name != cache2Name)
                 cache2 = new MockCache(cache2Name);
             CacheManager.SetCache(cache2.Name, cache2);
+
+            const string cache3Name = "PubComp.Caching.AopCaching.UnitTests.Mocks.Generic*";
+            cache3 = CacheManager.GetCache(cache3Name) as MockCache;
+            if (cache3 == null || cache3.Name != cache3Name)
+                cache3 = new MockCache(cache3Name);
+            CacheManager.SetCache(cache3.Name, cache3);
         }
 
         [TestInitialize]
@@ -34,6 +41,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
         {
             cache1.ClearAll();
             cache2.ClearAll();
+            cache3.ClearAll();
         }
 
         [TestMethod]
@@ -125,6 +133,11 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual(1, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual("222222", result);
+
+            result = service.MethodToCache1(11, new MockObject(2222));
+            Assert.AreEqual(2, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+            Assert.AreEqual("111111", result);
         }
 
         [TestMethod]
@@ -152,12 +165,50 @@ namespace PubComp.Caching.AopCaching.UnitTests
         }
 
         [TestMethod]
+        public void TestCacheWithGenericClass()
+        {
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(0, cache3.Misses);
+
+            var result1 = new GenericService<int>().MethodToCache1("5");
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            var result2 = new GenericService<int>().MethodToCache1("5");
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            var result3 = new GenericService<byte>().MethodToCache1("5");
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(4, cache3.Misses);
+        }
+
+        [TestMethod]
+        public void TestCacheWithGenericClassAndGenericKey()
+        {
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(0, cache3.Misses);
+
+            var result1 = new GenericService<int>().MethodToCache2<string>("5");
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            var result2 = new GenericService<int>().MethodToCache2<string>("5");
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            var result3 = new GenericService<int>().MethodToCache2<int>(5);
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(4, cache3.Misses);
+        }
+
+        [TestMethod]
         public void TestKeyGeneration()
         {
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(0, cache1.Misses);
 
-            var methodInfo = typeof(Service1).GetMethod("MethodToCache1", new[] { typeof(double) });
+            var methodInfo = typeof(Service1).GetMethod(nameof(Service1.MethodToCache1), new[] { typeof(double) });
 
             var service = new Service1();
             
@@ -179,6 +230,64 @@ namespace PubComp.Caching.AopCaching.UnitTests
             service.MethodToCache1(5.0);
             Assert.AreEqual(2, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
+        }
+
+        [TestMethod]
+        public void TestKeyGenerationGenericMethod()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new Service1();
+
+            service.MethodToCache2(5.0);
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+
+            service.MethodToCache2(5.0);
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+
+            var key = CacheKey.GetKey(() => service.MethodToCache2<double>(5.0));
+            cache1.Clear(key);
+
+            service.MethodToCache2(5.0);
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+
+            service.MethodToCache2(5.0);
+            Assert.AreEqual(2, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+        }
+
+        [TestMethod]
+        public void TestKeyGenerationGenericClass()
+        {
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(0, cache3.Misses);
+
+            var methodInfo = typeof(GenericService<int>).GetMethod(nameof(GenericService<int>.MethodToCache1), new[] { typeof(double) });
+
+            var service = new GenericService<int>();
+
+            service.MethodToCache1(5.0);
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            service.MethodToCache1(5.0);
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            var key = CacheKey.GetKey(methodInfo, 5.0);
+            cache3.Clear(key);
+
+            service.MethodToCache1(5.0);
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(4, cache3.Misses);
+
+            service.MethodToCache1(5.0);
+            Assert.AreEqual(2, cache3.Hits);
+            Assert.AreEqual(4, cache3.Misses);
         }
 
         [TestMethod]

@@ -30,6 +30,8 @@ namespace PubComp.Caching.AopCaching
         private MethodInfo addData;
         private MethodInfo addDataRange;
         private MethodInfo convertDataToKey;
+        private bool isClassGeneric;
+        private bool isMethodGeneric;
 
         public CacheListAttribute(Type dataKeyConverterType, int keyParameterNumber = 0)
         {
@@ -152,10 +154,15 @@ namespace PubComp.Caching.AopCaching
 
         public override void CompileTimeInitialize(System.Reflection.MethodBase method, AspectInfo aspectInfo)
         {
-            if (this.cacheName == null)
-                this.cacheName = method.DeclaringType.FullName;
+            var type = method.DeclaringType;
 
-            this.className = method.DeclaringType.FullName;
+            if (this.cacheName == null)
+                this.cacheName = type.FullName;
+
+            this.isClassGeneric = type.IsGenericType;
+            this.isMethodGeneric = method.IsGenericMethod;
+
+            this.className = type.FullName;
             this.methodName = method.Name;
             var parameters = method.GetParameters();
             this.parameterTypeNames = parameters.Select(p => p.ParameterType.FullName).ToArray();
@@ -246,6 +253,14 @@ namespace PubComp.Caching.AopCaching
 
             var converter = createDataKeyConverter.Invoke(new object[0]);
 
+            var classNameNonGeneric = !this.isClassGeneric
+                ? this.className
+                : args.Method.DeclaringType.FullName;
+
+            var parameterTypeNamesNonGeneric = !this.isMethodGeneric
+                ? this.parameterTypeNames
+                : args.Method.GetParameters().Select(p => p.ParameterType.FullName).ToArray();
+
             foreach (var result in resultsFromerInner as IEnumerable)
             {
                 var k = convertDataToKey.Invoke(converter, new object[] { result });
@@ -254,7 +269,7 @@ namespace PubComp.Caching.AopCaching
                 this.addKey.Invoke(keyList, new object[] { k });
                 parameterValues[this.keyParameterNumber] = keyList;
 
-                var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues).ToString();
+                var key = new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues).ToString();
                 cacheToUse.Set<object>(key, result);
             }
 

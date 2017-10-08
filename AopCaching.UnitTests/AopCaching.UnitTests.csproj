@@ -70,6 +70,7 @@
     <Compile Include="Mocks\MockCache.cs" />
     <Compile Include="Mocks\MockObject.cs" />
     <Compile Include="Mocks\MultiService.cs" />
+    <Compile Include="Mocks\GenericService.cs" />
     <Compile Include="Mocks\Service2.cs" />
     <Compile Include="Mocks\Service1.cs" />
     <Compile Include="AopCacheTests.cs" />
