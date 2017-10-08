@@ -41,7 +41,7 @@ You can access the cache directly via its interface:
 
 ### Get
 
-~~~
+~~~csharp
 ICache cache = new InMemoryCache("myLocalCache", new InMemoryPolicy());
 MyData data = cache.Get("myKey", () => FallbackMethodToRun());
 ~~~
@@ -52,7 +52,7 @@ in the above usage, the method will be run only if the requested key is not in t
 
 or 
 
-~~~
+~~~csharp
 ICache cache = new RedisCache("myRemoteCache", new RedisCachePolicy());
 MyData data;
 if (!cache.TryGet("myKey", out data))
@@ -68,7 +68,7 @@ the above lines of code are equivalent to using the .Get() API
 
 or use a PostSharp based aspect to wrap a method with cache:
 
-~~~
+~~~csharp
 [Cache]
 MyData AMethodThatNeedsCaching(string parameter1, int parameter2)
 {
@@ -78,7 +78,7 @@ MyData AMethodThatNeedsCaching(string parameter1, int parameter2)
 
 calling the above method (e.g. with parameter values "one", 2) will be equivalent to calling a non aspect declared method with:
 
-~~~
+~~~csharp
 var key = "{"ClassName":"MyNameSpace.MyClassName","MethodName":"MyMethod","ParameterTypeNames":["System.String","System.Int32"],"ParmaterValues":["one",2]}";
 MyData result = myCache.Get(key, () => MyMethod("one", 2));
 ~~~
@@ -87,7 +87,7 @@ MyData result = myCache.Get(key, () => MyMethod("one", 2));
 
 You can clear a specific item from the cache:
 
-~~~
+~~~csharp
 myCache.Clear("myKey");
 ~~~
 
@@ -95,13 +95,13 @@ myCache.Clear("myKey");
 
 or clear the entire cache (all items):
 
-~~~
+~~~csharp
 myCache.ClearAll();
 ~~~
 
 If you have multiple caches, clearing one will NOT affect the other e.g.
 
-~~~
+~~~csharp
 ICache cache1 = new InMemoryCache("myLocalCache", new InMemoryPolicy());
 ICache cache2 = new InMemoryCache("myLocalCache", new InMemoryPolicy());
 
@@ -117,7 +117,7 @@ When you create a cache, you pass a name and the policy.
 
 You can use the `CacheManager` to get a cache with a specific name e.g.
 
-~~~
+~~~csharp
 var cache = CacheManager.GetCache("myLocalCache");
 ~~~
 
@@ -125,20 +125,20 @@ var cache = CacheManager.GetCache("myLocalCache");
 
 A cache can be created programatically:
 
-~~~
+~~~csharp
 var cache = new InMemoryCache("myOtherLocalCache", new InMemoryPolicy());
 ~~~
 
 or received from the `CacheManager` which can be configured via code:
 
-~~~
+~~~csharp
 CacheManager.SetCache("noCache*", new NoCache("noCache"));
 var cache = CacheManager.GetCache("noCache1");
 ~~~
 
 or via config file:
 
-~~~
+~~~xml
   <configSections>
     <sectionGroup name="PubComp">
       <section
@@ -164,7 +164,7 @@ or via config file:
 
 You can request a cache, by name, from the `CacheManager`:
 
-~~~
+~~~csharp
 var cache = CacheManager.GetCache("localCacheLRU");
 ~~~
 
@@ -172,7 +172,7 @@ or via AOP (Aspect Oriented Programming)...
 
 Wrap a method with cache, so that the underlaying method is only called on cache misses:
 
-~~~
+~~~csharp
 [Cache("localCache")]
 private List<Item> MethodToCache()
 {
@@ -188,7 +188,7 @@ You can also cache an IList of items, each time running the underlaying method o
 
 Using AOP, you can easily wrap a method with a lazy-loading cache:
 
-~~~
+~~~csharp
 [Cache("localCache")]
 private List<Item> MethodToCache()
 {
@@ -200,7 +200,7 @@ The return value will be cached under a unique key, built from the class' full n
 
 so that the following methods will not have the same key:
 
-~~~
+~~~csharp
 [Cache("localCache")]
 private List<Item> MethodToCache(string x)
 {
@@ -224,13 +224,13 @@ private List<Item> MethodToCache(byte x)
 
 You can get the key used by the `Cache` aspect (`CacheAttribute`), in order to enable manual clearing of the data like so:
 
-~~~
+~~~csharp
 var key = CacheKey.GetKey(() => service.MethodToCache("parameterValue"));
 ~~~
 
 and then clear as usual:
 
-~~~
+~~~csharp
 CacheManager.GetCache("localCache").Clear(key);
 ~~~
 
@@ -241,7 +241,7 @@ When using this way, the underlaying method (e.g. DB access) is called only for 
 
 Example:
 
-~~~
+~~~csharp
 // Both IDs parameter and return type have to be of type IList<>
 [CacheList(typeof(MockDataKeyConverter))]
 public IList<MockData> GetItems(IList<string> keys)
@@ -271,7 +271,7 @@ public class MockDataKeyConverter : IDataKeyConverter<string, MockData>
 
 If the keys are not the first parameter of the method, use `keyParameterNumber` to instruct the aspect which parameter to use (0-based):
 
-~~~
+~~~csharp
 [CacheList(typeof(MockDataKeyConverter), keyParameterNumber = 1)]
 public IList<MockData> GetItems(string parameter0, IList<string> keys)
 {
@@ -287,7 +287,7 @@ public IList<MockData> GetItems(string parameter0, IList<string> keys)
 You can instruct the aspects (`Cache` and `CacheList`) to ignore a specific parameter when generating the cache-key
 using the `DoNotIncludeInCacheKey` attribute (`DoNotIncludeInCacheKeyAttribute`):
 
-~~~
+~~~csharp
 [Cache]
 public string MethodToCache1(int id, [DoNotIncludeInCacheKey]object obj)
 {
