@@ -7,7 +7,7 @@ This project enables simple plug and play caching with various implementations a
 - [NuGets](#nugets)
 - [Basic Usage](#basic-usage)
   - [Get](#get)
-  - [TryGet](#try-get)
+  - [TryGet](#tryget)
   - [AOP Wrapper](#aop-wrapper)
   - [Clear Item](#clear-item)
   - [Clear All](#clear-all)
