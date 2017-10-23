@@ -201,5 +201,35 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual("d", results[2].Id);
             Assert.AreEqual("d2222", results[2].Value);
         }
+
+        [TestMethod]
+        public void TestMultiCacheWith3ItemsGuidKey()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var id1 = Guid.NewGuid();
+            var id2 = Guid.NewGuid();
+            var id3 = Guid.NewGuid();
+
+            var service = new MultiService2();
+            var results = service.GetItems(new[] { id1, id2, id3 });
+
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(3, cache1.Misses);
+            LinqAssert.Count(results, 3);
+            LinqAssert.Any(results, r => r.Id == id1);
+            LinqAssert.Any(results, r => r.Id == id2);
+            LinqAssert.Any(results, r => r.Id == id3);
+
+            results = service.GetItems(new[] { id1, id2, id3 });
+
+            Assert.AreEqual(3, cache1.Hits);
+            Assert.AreEqual(3, cache1.Misses);
+            LinqAssert.Count(results, 3);
+            LinqAssert.Any(results, r => r.Id == id1);
+            LinqAssert.Any(results, r => r.Id == id2);
+            LinqAssert.Any(results, r => r.Id == id3);
+        }
     }
 }

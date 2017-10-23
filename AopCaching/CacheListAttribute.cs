@@ -30,6 +30,7 @@ namespace PubComp.Caching.AopCaching
         private MethodInfo addData;
         private MethodInfo addDataRange;
         private MethodInfo convertDataToKey;
+        private MethodInfo keysCount;
         private bool isClassGeneric;
         private bool isMethodGeneric;
 
@@ -196,6 +197,7 @@ namespace PubComp.Caching.AopCaching
             this.addKey = keyListType.GetMethod("Add", new[] { this.keyType });
             this.addData = dataListType.GetMethod("Add", new[] { this.dataType });
             this.addDataRange = dataListType.GetMethod("AddRange", new[] { dataEnumerableType });
+            this.keysCount = keyListType.GetProperty("Count").GetGetMethod();
         }
 
         public override void OnInvoke(MethodInterceptionArgs args)
@@ -240,7 +242,7 @@ namespace PubComp.Caching.AopCaching
                 }
             }
 
-            if (missingKeys == null || !(missingKeys as List<string>).Any())
+            if (missingKeys == null || 0 == (int)keysCount.Invoke(missingKeys, new object[0]))
             {
                 args.ReturnValue = resultList;
                 return;
