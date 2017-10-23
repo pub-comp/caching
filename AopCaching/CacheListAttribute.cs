@@ -74,13 +74,13 @@ namespace PubComp.Caching.AopCaching
             return false;
         }
 
-        public override bool CompileTimeValidate(System.Reflection.MethodBase method)
+        public override bool CompileTimeValidate(MethodBase method)
         {
             Type keyType, dataType;
             if (!TryGetKeyDataTypes(this.dataKeyConverterType, out keyType, out dataType))
             {
                 PostSharp.Extensibility.Message.Write(
-                    PostSharp.MessageLocation.Of(method),
+                    PostSharp.Extensibility.MessageLocation.Of(method),
                     PostSharp.Extensibility.SeverityType.Error,
                     "Custom01",
                     "The type provided does not implement IDataKeyConverter<TKey, TData>.");
@@ -91,10 +91,10 @@ namespace PubComp.Caching.AopCaching
             if (this.dataKeyConverterType.IsAbstract || this.dataKeyConverterType.GetConstructor(new Type[0]) == null)
             {
                 PostSharp.Extensibility.Message.Write(
-                    PostSharp.MessageLocation.Of(method),
+                    PostSharp.Extensibility.MessageLocation.Of(method),
                     PostSharp.Extensibility.SeverityType.Error,
                     "Custom01",
-                    string.Format("{0} is abstract or does not have a public parameter-less constructor", this.dataKeyConverterType.FullName));
+                    $"{this.dataKeyConverterType.FullName} is abstract or does not have a public parameter-less constructor");
 
                 return false;
             }
@@ -105,10 +105,10 @@ namespace PubComp.Caching.AopCaching
             if (method.GetParameters().Length <= this.keyParameterNumber)
             {
                 PostSharp.Extensibility.Message.Write(
-                    PostSharp.MessageLocation.Of(method),
+                    PostSharp.Extensibility.MessageLocation.Of(method),
                     PostSharp.Extensibility.SeverityType.Error,
                     "Custom01",
-                    string.Format("The method {0} does not have a parameter {1}.", method.Name, this.keyParameterNumber));
+                    $"The method {method.Name} does not have a parameter {this.keyParameterNumber}.");
                 
                 return false;
             }
@@ -117,7 +117,7 @@ namespace PubComp.Caching.AopCaching
             if (keysParameterType != keyIListType)
             {
                 PostSharp.Extensibility.Message.Write(
-                    PostSharp.MessageLocation.Of(method),
+                    PostSharp.Extensibility.MessageLocation.Of(method),
                     PostSharp.Extensibility.SeverityType.Error,
                     "Custom01",
                     string.Format("The parameter {1} of method {0} != IList<TKey>.", method.Name, this.keyParameterNumber));
@@ -125,14 +125,14 @@ namespace PubComp.Caching.AopCaching
                 return false;
             }
 
-            var methodInfo = method as System.Reflection.MethodInfo;
-            if (methodInfo == null || methodInfo.ReturnType == null)
+            var methodInfo = method as MethodInfo;
+            if (methodInfo == null || methodInfo.ReturnType == typeof(void))
             {
                 PostSharp.Extensibility.Message.Write(
-                    PostSharp.MessageLocation.Of(method),
+                    PostSharp.Extensibility.MessageLocation.Of(method),
                     PostSharp.Extensibility.SeverityType.Error,
                     "Custom01",
-                    string.Format("The method {0} has no return type.", method.Name));
+                    $"The method {method.Name} has no return type.");
                 
                 return false;
             }
@@ -141,10 +141,10 @@ namespace PubComp.Caching.AopCaching
             if (returnType != dataIListType)
             {
                 PostSharp.Extensibility.Message.Write(
-                    PostSharp.MessageLocation.Of(method),
+                    PostSharp.Extensibility.MessageLocation.Of(method),
                     PostSharp.Extensibility.SeverityType.Error,
                     "Custom01",
-                    string.Format("The return type of method {0} != IList<TData>.", method.Name));
+                    $"The return type of method {method.Name} != IList<TData>.");
                 
                 return false;
             }
@@ -152,7 +152,7 @@ namespace PubComp.Caching.AopCaching
             return true;
         }
 
-        public override void CompileTimeInitialize(System.Reflection.MethodBase method, AspectInfo aspectInfo)
+        public override void CompileTimeInitialize(MethodBase method, AspectInfo aspectInfo)
         {
             var type = method.DeclaringType;
 
@@ -184,7 +184,7 @@ namespace PubComp.Caching.AopCaching
             TryGetKeyDataTypes(this.dataKeyConverterType, out this.keyType, out this.dataType);
 
             this.createDataKeyConverter = this.dataKeyConverterType.GetConstructor(new Type[0]);
-            this.convertDataToKey = this.dataKeyConverterType.GetMethod("GetKey", new Type[] { this.dataType });
+            this.convertDataToKey = this.dataKeyConverterType.GetMethod("GetKey", new [] { this.dataType });
 
             var keyListType = typeof(List<>).MakeGenericType(this.keyType);
             var dataListType = typeof(List<>).MakeGenericType(this.dataType);
@@ -222,21 +222,21 @@ namespace PubComp.Caching.AopCaching
             var resultList = this.createDataList.Invoke(new object[0]);
             var missingKeys = this.createKeyList.Invoke(new object[0]);
 
-            foreach (var k in allKeysCollection)
+            foreach (object k in allKeysCollection)
             {
                 var keyList = this.createKeyList.Invoke(new object[0]);
-                this.addKey.Invoke(keyList, new object[] { k });
+                this.addKey.Invoke(keyList, new [] { k });
                 parameterValues[this.keyParameterNumber] = keyList;
 
                 var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues).ToString();
                 object value;
-                if (cacheToUse.TryGet<object>(key, out value))
+                if (cacheToUse.TryGet(key, out value))
                 {
-                    addData.Invoke(resultList, new object[] { value });
+                    addData.Invoke(resultList, new [] { value });
                 }
                 else
                 {
-                    addKey.Invoke(missingKeys, new object[] { k });
+                    addKey.Invoke(missingKeys, new [] { k });
                 }
             }
 
@@ -249,7 +249,7 @@ namespace PubComp.Caching.AopCaching
             args.Arguments[this.keyParameterNumber] = missingKeys;
             base.OnInvoke(args);
             var resultsFromerInner = args.ReturnValue;
-            addDataRange.Invoke(resultList, new object [] { resultsFromerInner });
+            addDataRange.Invoke(resultList, new [] { resultsFromerInner });
 
             var converter = createDataKeyConverter.Invoke(new object[0]);
 
@@ -261,16 +261,16 @@ namespace PubComp.Caching.AopCaching
                 ? this.parameterTypeNames
                 : args.Method.GetParameters().Select(p => p.ParameterType.FullName).ToArray();
 
-            foreach (var result in resultsFromerInner as IEnumerable)
+            foreach (object result in resultsFromerInner as IEnumerable)
             {
-                var k = convertDataToKey.Invoke(converter, new object[] { result });
+                var k = convertDataToKey.Invoke(converter, new [] { result });
                 
                 var keyList = this.createKeyList.Invoke(new object[0]);
-                this.addKey.Invoke(keyList, new object[] { k });
+                this.addKey.Invoke(keyList, new [] { k });
                 parameterValues[this.keyParameterNumber] = keyList;
 
                 var key = new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues).ToString();
-                cacheToUse.Set<object>(key, result);
+                cacheToUse.Set(key, result);
             }
 
             args.ReturnValue = resultList;
