@@ -6,8 +6,8 @@ This project enables simple plug and play caching with various implementations a
 
 - [NuGets](#nugets)
 - [Basic Usage](#basic-usage)
-  - [Get](#get)
   - [TryGet](#tryget)
+  - [Get](#get)
   - [AOP Wrapper](#aop-wrapper)
   - [Clear Item](#clear-item)
   - [Clear All](#clear-all)
@@ -40,18 +40,7 @@ AOP (Aspect Oriented Programming) caching based on `PostSharp`:
 
 You can access the cache directly via its interface:
 
-### Get
-
-~~~csharp
-ICache cache = new InMemoryCache("myLocalCache", new InMemoryPolicy());
-MyData data = cache.Get("myKey", () => FallbackMethodToRun());
-~~~
-
-in the above usage, the method will be run only if the requested key is not in the cache (on cache miss).
-
 ### TryGet
-
-or 
 
 ~~~csharp
 ICache cache = new RedisCache("myRemoteCache", new RedisCachePolicy());
@@ -63,7 +52,16 @@ if (!cache.TryGet("myKey", out data))
 }
 ~~~
 
-the above lines of code are equivalent to using the .Get() API
+### Get
+
+or 
+
+~~~csharp
+MyData data = cache.Get("myKey", () => FallbackMethodToRun());
+~~~
+
+this single line of code above is equivalent to the mulitple lines of code in the above [TryGet](#tryget) example
+in the above usage, the method will be run only if the requested key is not in the cache (on cache miss).
 
 ### AOP Wrapper
 
@@ -148,6 +146,7 @@ or via config file:
         allowLocation="true"
         allowDefinition="Everywhere"
       />
+    </sectionGroup>
   </configSections>
   
   <PubComp>
