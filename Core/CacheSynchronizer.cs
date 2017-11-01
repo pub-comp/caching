@@ -12,12 +12,14 @@ namespace PubComp.Caching.Core
         {
             this.cache = cache;
             this.notifier = notifier;
-
-            this.notifier.Subscribe(CacheUpdated);
+            this.notifier.Subscribe(cache.Name, OnCacheUpdated);
         }
         
-        private bool CacheUpdated(CacheItemNotification notification)
+        private bool OnCacheUpdated(CacheItemNotification notification)
         {
+            if (notification.CacheName != this.cache.Name)
+                return false;
+
             System.Diagnostics.Debug.WriteLine("Incoming Notification::From:{0}, Cache:{1}, Key:{2}, Action:{3}",
                 notification.Sender,
                 notification.CacheName,
@@ -32,6 +34,7 @@ namespace PubComp.Caching.Core
             {
                 cache.Clear(notification.Key);
             }
+
             return true;
         }
 
@@ -40,12 +43,12 @@ namespace PubComp.Caching.Core
             if (string.IsNullOrEmpty(syncProviderName))
                 return null;
 
-            var notifications = CacheManager.GetNotifier(syncProviderName);
+            var notifier = CacheManager.GetNotifier(syncProviderName);
 
-            if (notifications == null)
+            if (notifier == null)
                 return null;
 
-            var synchronizer = new CacheSynchronizer(cache, notifications);
+            var synchronizer = new CacheSynchronizer(cache, notifier);
             return synchronizer;
         }
     }

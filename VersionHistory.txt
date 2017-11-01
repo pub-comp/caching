@@ -69,3 +69,9 @@
 
 2.0:
 	* Revamped configuration for connection strings & notifications / sychronization
+
+2.0.1:
+	* Fixed unique key issue with AOP on generic methods or classes
+
+2.0.2:
+	* Fixed synchonizer/notifier + added test that spawns a test process (make sure Firewall/enSilo doesn't block it when running test)

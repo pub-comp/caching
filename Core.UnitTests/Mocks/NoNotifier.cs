@@ -40,11 +40,11 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
 
         public string Name { get { return this.name; } }
         
-        public void Subscribe(Func<CacheItemNotification, bool> callback)
+        public void Subscribe(string cacheName, Func<CacheItemNotification, bool> callback)
         {
         }
 
-        public void UnSubscribe()
+        public void UnSubscribe(string cacheName)
         {
         }
 

@@ -96,6 +96,10 @@
       <Project>{57585b9a-7003-461a-b812-ca48603c839f}</Project>
       <Name>Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\DemoSynchronizedClient\DemoSynchronizedClient.csproj">
+      <Project>{204870fc-37cc-43c8-9798-98a2e243b2eb}</Project>
+      <Name>DemoSynchronizedClient</Name>
+    </ProjectReference>
     <ProjectReference Include="..\RedisCaching\RedisCaching.csproj">
       <Project>{222025fc-2d4c-4a4d-b4f9-b874cfe6507f}</Project>
       <Name>RedisCaching</Name>
