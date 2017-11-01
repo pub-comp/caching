@@ -29,7 +29,7 @@ namespace PubComp.Caching.AopCaching
             this.cacheName = cacheName;
         }
 
-        public override void CompileTimeInitialize(System.Reflection.MethodBase method, AspectInfo aspectInfo)
+        public sealed override void CompileTimeInitialize(System.Reflection.MethodBase method, AspectInfo aspectInfo)
         {
             var type = method.DeclaringType;
 
@@ -59,7 +59,7 @@ namespace PubComp.Caching.AopCaching
             this.indexesNotToCache = indexes.ToArray();
         }
 
-        public override void OnInvoke(MethodInterceptionArgs args)
+        public sealed override void OnInvoke(MethodInterceptionArgs args)
         {
             if (Interlocked.Read(ref initialized) == 0L)
             {

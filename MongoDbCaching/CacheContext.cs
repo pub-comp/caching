@@ -1,10 +1,8 @@
 ﻿using System;
-using PubComp.NoSql.Core;
-using PubComp.NoSql.MongoDbDriver;
 
 namespace PubComp.Caching.MongoDbCaching
 {
-    public class CacheContext : MongoDbContext, ICacheContext
+    public class CacheContext : NoSql.MongoDbDriver.MongoDbContext, ICacheContext
     {
         private readonly String connectionString;
 
@@ -13,10 +11,10 @@ namespace PubComp.Caching.MongoDbCaching
             this.connectionString = connectionString;
         }
 
-        public MongoDbContext.EntitySet<String, CacheItem> GetEntitySet(
+        public EntitySet<String, CacheItem> GetEntitySet(
             string cacheDbName, string cacheCollectionName, TimeSpan? timeToLive)
         {
-            var set = (MongoDbContext.EntitySet<String, CacheItem>)this.GetEntitySet<String, CacheItem>(
+            var set = (EntitySet<String, CacheItem>)this.GetEntitySet<String, CacheItem>(
                 cacheDbName, cacheCollectionName);
 
             if (timeToLive.HasValue)

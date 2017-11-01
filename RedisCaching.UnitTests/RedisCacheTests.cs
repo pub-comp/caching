@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.UnitTests;
+using PubComp.Caching.DemoSynchronizedClient;
 using PubComp.Caching.RedisCaching.UnitTests.Mocks;
 using PubComp.Caching.SystemRuntime;
 using PubComp.Testing.TestingUtils;
@@ -476,6 +478,70 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             Assert.AreEqual(typeof(string), field.FieldType);
 
             return field.GetValue(obj) as string;
+        }
+
+        [TestMethod]
+        public void TestRedisNotifier()
+        {
+            const string localCacheWithNotifier = "MyApp.LocalCacheWithNotifier";
+            const string localCacheWithNotifier2 = "MyApp.LocalCacheWithNotifier2";
+
+            var cache1 = CacheManager.GetCache(localCacheWithNotifier);
+            var cache2 = CacheManager.GetCache(localCacheWithNotifier2);
+
+            // Cache key1, key2 in cache1
+            cache1.Get("key1", () => { return "value1"; });
+            cache1.Get("key2", () => { return "value2"; });
+
+            // Cache key1, key2 in cache2
+            cache2.Get("key1", () => { return "value3"; });
+            cache2.Get("key2", () => { return "value4"; });
+
+            // key1, key2 should be in cache1, cache2
+            Assert.IsTrue(cache1.TryGet("key1", out string value111));
+            Assert.IsTrue(cache1.TryGet("key2", out string value121));
+            Assert.IsTrue(cache2.TryGet("key1", out string value211));
+            Assert.IsTrue(cache2.TryGet("key2", out string value221));
+
+            var secondProcess = Process.Start(
+                new ProcessStartInfo
+                {
+                    CreateNoWindow = false,
+                    FileName = typeof(DemoProgram).Assembly.Location,
+                    Arguments = "key1",
+                    WindowStyle = ProcessWindowStyle.Normal,
+                });
+            Assert.IsNotNull(secondProcess);
+            secondProcess.WaitForExit();
+
+            Thread.Sleep(100);
+
+            // key1 should have been cleared from cache1
+            Assert.IsFalse(cache1.TryGet("key1", out string value112));
+            Assert.IsTrue(cache1.TryGet("key2", out string value122));
+            Assert.IsTrue(cache2.TryGet("key1", out string value212));
+            Assert.IsTrue(cache2.TryGet("key2", out string value222));
+
+            // Cache key1 in cache1
+            cache1.Get("key1", () => { return "value1"; });
+
+            var secondProcess2 = Process.Start(
+                new ProcessStartInfo
+                {
+                    CreateNoWindow = false,
+                    FileName = typeof(DemoProgram).Assembly.Location,
+                    WindowStyle = ProcessWindowStyle.Normal,
+                });
+            Assert.IsNotNull(secondProcess2);
+            secondProcess2.WaitForExit();
+
+            Thread.Sleep(100);
+
+            // All keys should have been cleared from cache1
+            Assert.IsFalse(cache1.TryGet("key1", out string value113));
+            Assert.IsFalse(cache1.TryGet("key2", out string value123));
+            Assert.IsTrue(cache2.TryGet("key1", out string value213));
+            Assert.IsTrue(cache2.TryGet("key2", out string value223));
         }
     }
 }

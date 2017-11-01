@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PostSharpDisabledMessages>LA0156;PS0131</PostSharpDisabledMessages>
+  </PropertyGroup>
+</Project>

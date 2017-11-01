@@ -75,7 +75,7 @@ namespace PubComp.Caching.AopCaching
             return false;
         }
 
-        public override bool CompileTimeValidate(MethodBase method)
+        public sealed override bool CompileTimeValidate(MethodBase method)
         {
             Type keyType, dataType;
             if (!TryGetKeyDataTypes(this.dataKeyConverterType, out keyType, out dataType))
@@ -153,7 +153,7 @@ namespace PubComp.Caching.AopCaching
             return true;
         }
 
-        public override void CompileTimeInitialize(MethodBase method, AspectInfo aspectInfo)
+        public sealed override void CompileTimeInitialize(MethodBase method, AspectInfo aspectInfo)
         {
             var type = method.DeclaringType;
 
@@ -200,7 +200,7 @@ namespace PubComp.Caching.AopCaching
             this.keysCount = keyListType.GetProperty("Count").GetGetMethod();
         }
 
-        public override void OnInvoke(MethodInterceptionArgs args)
+        public sealed override void OnInvoke(MethodInterceptionArgs args)
         {
             if (Interlocked.Read(ref initialized) == 0L)
             {
