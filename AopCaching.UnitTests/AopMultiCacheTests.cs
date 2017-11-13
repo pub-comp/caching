@@ -69,6 +69,57 @@ namespace PubComp.Caching.AopCaching.UnitTests
         }
 
         [TestMethod]
+        public void TestKeyGeneration_CacheList()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new MultiService();
+            var results = service.GetItems(new[] { "k1", "k2", "k3" });
+
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(3, cache1.Misses);
+            LinqAssert.Count(results, 3);
+            LinqAssert.Any(results, r => r.Id == "k1");
+            LinqAssert.Any(results, r => r.Id == "k2");
+            LinqAssert.Any(results, r => r.Id == "k3");
+
+            results = service.GetItems(new[] { "k1", "k2", "k3" });
+
+            Assert.AreEqual(3, cache1.Hits);
+            Assert.AreEqual(3, cache1.Misses);
+            LinqAssert.Count(results, 3);
+            LinqAssert.Any(results, r => r.Id == "k1");
+            LinqAssert.Any(results, r => r.Id == "k2");
+            LinqAssert.Any(results, r => r.Id == "k3");
+
+            // Note: must use List<string>, not string[] here in order to get correct key
+            var key = CacheKey.GetKey(() => service.GetItems(new List<string> { "k2" }));
+            cache1.Clear(key);
+
+            results = service.GetItems(new[] { "k1" });
+            Assert.AreEqual(4, cache1.Hits);
+            Assert.AreEqual(3, cache1.Misses);
+            LinqAssert.Count(results, 1);
+            LinqAssert.Any(results, r => r.Id == "k1");
+
+            results = service.GetItems(new[] { "k2" });
+            Assert.AreEqual(4, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+            LinqAssert.Count(results, 1);
+            LinqAssert.Any(results, r => r.Id == "k2");
+
+            results = service.GetItems(new[] { "k1", "k2", "k3" });
+
+            Assert.AreEqual(7, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+            LinqAssert.Count(results, 3);
+            LinqAssert.Any(results, r => r.Id == "k1");
+            LinqAssert.Any(results, r => r.Id == "k2");
+            LinqAssert.Any(results, r => r.Id == "k3");
+        }
+
+        [TestMethod]
         public void TestMultiCacheWith3ItemsThen5()
         {
             Assert.AreEqual(0, cache1.Hits);
