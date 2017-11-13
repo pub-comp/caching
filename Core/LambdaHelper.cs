@@ -48,17 +48,28 @@ namespace PubComp.Caching.Core
         private static object GetValue(Expression exp)
         {
             // E.g. 2.0
-            var constantExpression = exp as ConstantExpression;
-            if (constantExpression != null)
+            if (exp is ConstantExpression constantExpression)
                 return constantExpression.Value;
 
-            var memberExpression = exp as MemberExpression;
-            if (memberExpression != null)
+            if (exp is NewArrayExpression arrayExpression)
+            {
+                var lambda = Expression.Lambda<Func<object>>(arrayExpression);
+                var value = lambda.Compile()();
+                return value;
+            }
+
+            if (exp is ListInitExpression listExpression)
+            {
+                var lambda = Expression.Lambda<Func<object>>(listExpression);
+                var value = lambda.Compile()();
+                return value;
+            }
+
+            if (exp is MemberExpression memberExpression)
             {
                 var memberInfo = memberExpression.Member;
 
-                var fieldInfo = memberInfo as FieldInfo;
-                if (fieldInfo != null)
+                if (memberInfo is FieldInfo fieldInfo)
                 {
                     if (fieldInfo.IsStatic)
                     {
@@ -71,8 +82,7 @@ namespace PubComp.Caching.Core
                     }
                 }
 
-                var propertyInfo = memberInfo as PropertyInfo;
-                if (propertyInfo != null)
+                if (memberInfo is PropertyInfo propertyInfo)
                 {
                     if (propertyInfo.GetMethod.IsStatic)
                     {

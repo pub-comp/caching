@@ -75,3 +75,8 @@
 
 2.0.2:
 	* Fixed synchonizer/notifier + added test that spawns a test process (make sure Firewall/enSilo doesn't block it when running test)
+
+2.0.3:
+	* In order to enable clearing specific key when using the aspect CacheListAttribute,
+	Fixed CacheKey class key generation for methods with array/list parameters
+	- see test TestKeyGeneration_CacheList

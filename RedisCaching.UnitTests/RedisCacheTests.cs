@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core;
@@ -514,8 +513,6 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             Assert.IsNotNull(secondProcess);
             secondProcess.WaitForExit();
 
-            Thread.Sleep(100);
-
             // key1 should have been cleared from cache1
             Assert.IsFalse(cache1.TryGet("key1", out string value112));
             Assert.IsTrue(cache1.TryGet("key2", out string value122));
@@ -534,8 +531,6 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 });
             Assert.IsNotNull(secondProcess2);
             secondProcess2.WaitForExit();
-
-            Thread.Sleep(100);
 
             // All keys should have been cleared from cache1
             Assert.IsFalse(cache1.TryGet("key1", out string value113));
