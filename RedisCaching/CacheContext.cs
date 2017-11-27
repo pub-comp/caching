@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using PubComp.Caching.RedisCaching.Converters;
 using StackExchange.Redis;
 
 namespace PubComp.Caching.RedisCaching

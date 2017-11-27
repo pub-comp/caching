@@ -80,3 +80,6 @@
 	* In order to enable clearing specific key when using the aspect CacheListAttribute,
 	Fixed CacheKey class key generation for methods with array/list parameters
 	- see test TestKeyGeneration_CacheList
+
+2.1.0:
+	* Added Converter options to RedisCache: json, bson, deflate, gzip
