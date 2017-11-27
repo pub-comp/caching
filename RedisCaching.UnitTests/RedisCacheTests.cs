@@ -54,7 +54,6 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             Assert.AreEqual("4", result);
         }
 
-
         [TestMethod]
         public void TestRedisCacheTwoCaches()
         {
@@ -537,6 +536,86 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             Assert.IsFalse(cache1.TryGet("key2", out string value123));
             Assert.IsTrue(cache2.TryGet("key1", out string value213));
             Assert.IsTrue(cache2.TryGet("key2", out string value223));
+        }
+
+        [TestMethod]
+        public void TestRedisCacheJson()
+        {
+            var cache1 = new RedisCache(
+                "cache1",
+                new RedisCachePolicy
+                {
+                    Converter = "json",
+                });
+
+            cache1.ClearAll();
+
+            var expected = new List<object> { false, 2L, 3.0, "four" };
+
+            cache1.Set("key1", expected);
+            var result = cache1.Get("key1", () => (List<object>)null);
+
+            CollectionAssert.AreEqual(expected, result);
+        }
+
+        [TestMethod]
+        public void TestRedisCacheBson()
+        {
+            var cache1 = new RedisCache(
+                "cache1",
+                new RedisCachePolicy
+                {
+                    Converter = "bson",
+                });
+
+            cache1.ClearAll();
+
+            var expected = new List<object> { false, 2L, 3.0, "four" };
+
+            cache1.Set("key1", expected);
+            var result = cache1.Get("key1", () => (List<object>)null);
+
+            CollectionAssert.AreEqual(expected, result);
+        }
+
+        [TestMethod]
+        public void TestRedisCacheDeflate()
+        {
+            var cache1 = new RedisCache(
+                "cache1",
+                new RedisCachePolicy
+                {
+                    Converter = "deflate",
+                });
+
+            cache1.ClearAll();
+
+            var expected = new List<object> { false, 2L, 3.0, "four" };
+
+            cache1.Set("key1", expected);
+            var result = cache1.Get("key1", () => (List<object>)null);
+
+            CollectionAssert.AreEqual(expected, result);
+        }
+
+        [TestMethod]
+        public void TestRedisCacheGzip()
+        {
+            var cache1 = new RedisCache(
+                "cache1",
+                new RedisCachePolicy
+                {
+                    Converter = "gzip",
+                });
+
+            cache1.ClearAll();
+
+            var expected = new List<object> { false, 2L, 3.0, "four" };
+
+            cache1.Set("key1", expected);
+            var result = cache1.Get("key1", () => (List<object>)null);
+
+            CollectionAssert.AreEqual(expected, result);
         }
     }
 }

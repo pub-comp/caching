@@ -13,22 +13,22 @@
         public string ConnectionName { get; set; }
 
         /// <summary>
-        /// Redic converter. Currently supports "json" (default) or "binary". 
+        /// Redic converter. Currently supports "json" (default), "bson", "deflate" or "gzip".
         /// </summary>
         public string Converter { get; set; }
 
         /// <summary>
-        /// Redis ClusterType. Currently supports "replica" (default) or "none" (and in the future "cluster"). 
+        /// Redis ClusterType. Currently supports "replica" (default) or "none" (and in the future "cluster").
         /// </summary>
         public string ClusterType { get; set; }
 
         /// <summary>
-        /// Redis sentinel monitoring port (default: 26379). 
+        /// Redis sentinel monitoring port (default: 26379).
         /// </summary>
         public int MonitorPort { get; set; }
 
         /// <summary>
-        /// The interval in milliseconds for monitoring the master-replica. 
+        /// The interval in milliseconds for monitoring the master-replica.
         /// </summary>
         public int MonitorIntervalMilliseconds { get; set; }
         

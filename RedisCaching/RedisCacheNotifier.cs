@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.Notifications;
+using PubComp.Caching.RedisCaching.Converters;
 using StackExchange.Redis;
 
 namespace PubComp.Caching.RedisCaching
