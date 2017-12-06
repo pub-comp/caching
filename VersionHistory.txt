@@ -83,3 +83,6 @@
 
 2.1.0:
 	* Added Converter options to RedisCache: json, bson, deflate, gzip
+
+2.2.0:
+	* Integration between WebAPI controller and Notifier to enable out of the box pub-sub

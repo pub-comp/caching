@@ -6,13 +6,11 @@ namespace PubComp.Caching.Core
     public class CacheSynchronizer
     {
         private readonly ICache cache;
-        private readonly ICacheNotifier notifier;
 
         public CacheSynchronizer(ICache cache, ICacheNotifier notifier)
         {
             this.cache = cache;
-            this.notifier = notifier;
-            this.notifier.Subscribe(cache.Name, OnCacheUpdated);
+            notifier.Subscribe(cache.Name, OnCacheUpdated);
         }
         
         private bool OnCacheUpdated(CacheItemNotification notification)
@@ -49,6 +47,9 @@ namespace PubComp.Caching.Core
                 return null;
 
             var synchronizer = new CacheSynchronizer(cache, notifier);
+
+            CacheManager.Associate(cache, notifier);
+
             return synchronizer;
         }
     }
