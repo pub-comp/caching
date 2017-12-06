@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
+using PubComp.Caching.Core.Notifications;
 
 namespace PubComp.Caching.Core
 {
@@ -51,6 +51,10 @@ namespace PubComp.Caching.Core
             }
 
             cache.ClearAll();
+
+            var notifier = CacheManager.GetAssociatedNotifier(cache);
+            if (notifier != null)
+                notifier.Publish(cacheName, null, CacheItemActionTypes.RemoveAll);
         }
 
         /// <summary>
@@ -78,6 +82,10 @@ namespace PubComp.Caching.Core
             }
 
             cache.Clear(itemKey);
+
+            var notifier = CacheManager.GetAssociatedNotifier(cache);
+            if (notifier != null)
+                notifier.Publish(cacheName, itemKey, CacheItemActionTypes.Removed);
         }
 
         /// <summary>
@@ -125,9 +133,7 @@ namespace PubComp.Caching.Core
                 throw new CacheException("Cache item not registered - received undefined getterExpression");
             }
 
-            MethodInfo method;
-            object[] arguments;
-            LambdaHelper.GetMethodInfoAndArguments(getterExpression, out method, out arguments);
+            LambdaHelper.GetMethodInfoAndArguments(getterExpression, out var method, out _);
 
             // CacheListAttribute is intentionally not supported, as cacheItemKey vary according to input
             // these should be dealt with by using a dedicated cache and clearing this entire dedicated cache
@@ -313,6 +319,11 @@ namespace PubComp.Caching.Core
             }
 
             cache.Set(itemKey, getter());
+
+            var notifier = CacheManager.GetAssociatedNotifier(cache);
+            if (notifier != null)
+                notifier.Publish(cacheName, itemKey, CacheItemActionTypes.Removed);
+
             return true;
         }
     }

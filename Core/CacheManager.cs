@@ -39,6 +39,10 @@ namespace PubComp.Caching.Core
         private static readonly ConcurrentDictionary<string, ICacheConnectionString> connectionStrings
             = new ConcurrentDictionary<string, ICacheConnectionString>();
 
+        // ReSharper disable once InconsistentNaming
+        private static readonly ConcurrentDictionary<string, string> cacheNofifierAssociations
+            = new ConcurrentDictionary<string, string>();
+
         static CacheManager()
         {
             InitializeFromConfig();
@@ -194,6 +198,25 @@ namespace PubComp.Caching.Core
             }
 
             return result;
+        }
+
+        /// <summary>Associates a cache with a notifier</summary>
+        /// <param name="cache"></param>
+        /// <param name="notifier"></param>
+        public static void Associate(ICache cache, ICacheNotifier notifier)
+        {
+            cacheNofifierAssociations.AddOrUpdate(
+                cache.Name, c => notifier.Name, (c, n) => notifier.Name);
+        }
+
+        /// <summary>Gets the notifier that was associated with a cahe</summary>
+        /// <param name="cache"></param>
+        /// <returns></returns>
+        public static ICacheNotifier GetAssociatedNotifier(ICache cache)
+        {
+            return cacheNofifierAssociations.TryGetValue(cache.Name, out string notifierName)
+                ? GetNotifier(notifierName)
+                : null;
         }
 
         #endregion
@@ -458,6 +481,8 @@ namespace PubComp.Caching.Core
 
         #endregion
 
+        #region Config Loading
+
         private static IList<ConfigNode> LoadConfig()
         {
             var config = ConfigurationManager.GetSection("PubComp/CacheConfig") as IList<ConfigNode>;
@@ -538,28 +563,6 @@ namespace PubComp.Caching.Core
                 SetCache(item.Name, item.CreateCache());
         }
 
-        //#region Nested types
-
-        //private class CacheComparer : IEqualityComparer<ICache>
-        //{
-        //    public bool Equals(ICache x, ICache y)
-        //    {
-        //        if (x == null || y == null)
-        //            return x == y;
-
-        //        return x.Name == y.Name;
-        //    }
-
-        //    public int GetHashCode(ICache obj)
-        //    {
-        //        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-        //        if (obj == null)
-        //            return 0;
-
-        //        return (obj.Name ?? string.Empty).GetHashCode();
-        //    }
-        //}
-
-        //#endregion
+        #endregion
     }
 }
