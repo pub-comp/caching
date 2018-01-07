@@ -86,3 +86,6 @@
 
 2.2.0:
 	* Integration between WebAPI controller and Notifier to enable out of the box pub-sub
+
+2.2.1:
+	* Fix for RedisCache debug logs
