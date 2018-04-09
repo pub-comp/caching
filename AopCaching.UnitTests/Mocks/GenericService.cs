@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using PubComp.Caching.Core.Attributes;
 
 namespace PubComp.Caching.AopCaching.UnitTests.Mocks
 {

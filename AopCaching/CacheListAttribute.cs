@@ -6,6 +6,7 @@ using System.Reflection;
 using PostSharp.Aspects;
 using PubComp.Caching.Core;
 using System.Collections;
+using PubComp.Caching.Core.Attributes;
 
 namespace PubComp.Caching.AopCaching
 {

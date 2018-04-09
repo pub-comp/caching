@@ -111,7 +111,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestDoNotIncludeInCacheKey()
+        public void TestDoNotIncludeInCacheKeyParameter()
         {
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(0, cache1.Misses);
@@ -135,6 +135,36 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual("222222", result);
 
             result = service.MethodToCache1(11, new MockObject(2222));
+            Assert.AreEqual(2, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+            Assert.AreEqual("111111", result);
+        }
+
+        [TestMethod]
+        public void TestDoNotIncludeInCacheKeyProperty()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new Service1();
+            string result;
+
+            result = service.MethodToCache1(new ClassA(11, "1111"));
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+            Assert.AreEqual("111111", result);
+
+            result = service.MethodToCache1(new ClassA(11, "2222"));
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+            Assert.AreEqual("111111", result);
+
+            result = service.MethodToCache1(new ClassA(22, "2222"));
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+            Assert.AreEqual("222222", result);
+
+            result = service.MethodToCache1(new ClassA(11, "2222"));
             Assert.AreEqual(2, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual("111111", result);
