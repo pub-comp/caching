@@ -16,6 +16,9 @@ namespace PubComp.Caching.RedisCaching.UnitTests
     [TestClass]
     public class RedisCacheTests
     {
+        //private readonly string connectionString = @"127.0.0.1:6379,serviceName=mymaster";
+        private readonly string connectionString = @"172.20.0.22:12296,password=123qwe!";
+
         [TestMethod]
         public void TestRedisCacheBasic()
         {
@@ -23,6 +26,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                 });
 
             cache1.ClearAll();
@@ -61,6 +65,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                 });
             cache1.ClearAll();
 
@@ -69,6 +74,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache2",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                 });
             cache2.ClearAll();
 
@@ -122,6 +128,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                 });
             cache.ClearAll();
 
@@ -147,6 +154,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                 });
             cache.ClearAll();
 
@@ -172,6 +180,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                 });
             cache.ClearAll();
 
@@ -197,6 +206,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                 });
             cache.ClearAll();
 
@@ -228,6 +238,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "insert-expire-cache",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                     ExpirationFromAdd = TimeSpan.FromSeconds(ttl),
                 });
             cache.ClearAll();
@@ -264,6 +275,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "sliding-expire-cache",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                     SlidingExpiration = TimeSpan.FromSeconds(ttl),
                 });
             cache.ClearAll();
@@ -304,6 +316,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "constant-expire",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                     AbsoluteExpiration = expireAt,
                 });
             cache.ClearAll();
@@ -334,6 +347,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                 });
             cache.ClearAll();
 
@@ -357,6 +371,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                 });
             cache.ClearAll();
 
@@ -545,6 +560,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                     Converter = "json",
                 });
 
@@ -565,6 +581,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                     Converter = "bson",
                 });
 
@@ -572,8 +589,8 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             var expected = new List<object> { false, 2L, 3.0, "four" };
 
-            cache1.Set("key1", expected);
-            var result = cache1.Get("key1", () => (List<object>)null);
+            cache1.Set("key1Bson", expected);
+            var result = cache1.Get("key1Bson", () => (List<object>)null);
 
             CollectionAssert.AreEqual(expected, result);
         }
@@ -585,6 +602,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                     Converter = "deflate",
                 });
 
@@ -592,8 +610,8 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             var expected = new List<object> { false, 2L, 3.0, "four" };
 
-            cache1.Set("key1", expected);
-            var result = cache1.Get("key1", () => (List<object>)null);
+            cache1.Set("key1Deflate", expected);
+            var result = cache1.Get("key1Deflate", () => (List<object>)null);
 
             CollectionAssert.AreEqual(expected, result);
         }
@@ -605,6 +623,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
+                    ConnectionString = connectionString,
                     Converter = "gzip",
                 });
 
@@ -612,8 +631,8 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             var expected = new List<object> { false, 2L, 3.0, "four" };
 
-            cache1.Set("key1", expected);
-            var result = cache1.Get("key1", () => (List<object>)null);
+            cache1.Set("key1Gzip", expected);
+            var result = cache1.Get("key1Gzip", () => (List<object>)null);
 
             CollectionAssert.AreEqual(expected, result);
         }

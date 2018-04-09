@@ -64,7 +64,7 @@ namespace PubComp.Caching.RedisCaching.Converters
             if (data == null)
                 return RedisValue.Null;
 
-            return Compress(RedisConverterBson.ToBson(data));
+            return Compress(RedisConverterJson.ToJsonBytes(data));
         }
 
         private TValue From<TValue>(RedisValue stringValue)
@@ -73,7 +73,7 @@ namespace PubComp.Caching.RedisCaching.Converters
                 return default(TValue);
 
             byte[] buffer = Decompress(stringValue);
-            return RedisConverterBson.FromBson<TValue>(buffer);
+            return RedisConverterJson.FromJsonBytes<TValue>(buffer);
         }
 
         public RedisValue ToRedis(CacheItemNotification notification)

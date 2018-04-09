@@ -4,6 +4,7 @@ This project enables simple plug and play caching with various implementations a
 
 ## Topics
 
+- [Version History](/HISTORY.md)
 - [NuGets](#nugets)
 - [Basic Usage](#basic-usage)
   - [TryGet](#tryget)
@@ -20,6 +21,7 @@ This project enables simple plug and play caching with various implementations a
   - [Ignoring Specific Parameters](#ignoring-specific-parameters)
 - [Extending With Your Own Classes](#extending-with-your-own-classes)
   - [Adding Your Own Cache Type](#adding-your-own-cache-type)
+
 ## NuGets
 
 (available at [nuget.org](http://nuget.org))
@@ -159,7 +161,7 @@ or via config file:
         policy="{'ExpirationFromAdd':'01:00:00'}" />
       <add name="localCacheLRU" assembly="PubComp.Caching.SystemRuntime" type="PubComp.Caching.SystemRuntime.InMemoryCache"
         policy="{'SlidingExpiration':'00:15:00'}" />
-	  <!-- policy="{&quot;ExpirationFromAdd&quot;:&quot;'01:00:00&quot;}" would work too -->
+      <!-- policy="{&quot;ExpirationFromAdd&quot;:&quot;'01:00:00&quot;}" would work too -->
     </CacheConfig>
   </PubComp>
 ~~~
@@ -250,10 +252,10 @@ Example:
 [CacheList(typeof(MockDataKeyConverter))]
 public IList<MockData> GetItems(IList<string> keys)
 {
-	using (var context = new MyDbContext())
-	{
-		return content.MyData.Where(d => keys.Contains(d.Id)).ToList();
-	}
+    using (var context = new MyDbContext())
+    {
+        return content.MyData.Where(d => keys.Contains(d.Id)).ToList();
+    }
 }
 
 // Example data type
@@ -279,10 +281,10 @@ If the keys are not the first parameter of the method, use `keyParameterNumber` 
 [CacheList(typeof(MockDataKeyConverter), keyParameterNumber = 1)]
 public IList<MockData> GetItems(string parameter0, IList<string> keys)
 {
-	using (var context = new MyDbContext())
-	{
-		return content.MyData.Where(d => keys.Contains(d.Id)).ToList();
-	}
+    using (var context = new MyDbContext())
+    {
+        return content.MyData.Where(d => keys.Contains(d.Id)).ToList();
+    }
 }
 ~~~
 
