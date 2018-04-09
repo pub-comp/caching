@@ -4,6 +4,7 @@ using System.Threading;
 using PostSharp.Aspects;
 using PubComp.Caching.Core;
 using System.Collections.Generic;
+using PubComp.Caching.Core.Attributes;
 
 namespace PubComp.Caching.AopCaching
 {

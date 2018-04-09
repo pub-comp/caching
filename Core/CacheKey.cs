@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using PubComp.Caching.Core.Attributes;
 
 namespace PubComp.Caching.Core
 {
@@ -113,7 +113,12 @@ namespace PubComp.Caching.Core
             var result = Newtonsoft.Json.JsonConvert.SerializeObject(
                 this,
                 Newtonsoft.Json.Formatting.None,
-                new Newtonsoft.Json.JsonSerializerSettings { TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto });
+                new Newtonsoft.Json.JsonSerializerSettings
+                {
+                    TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
+                    ContractResolver = new JsonIgnorePropertiesContractResolver(
+                        typeof(DoNotIncludeInCacheKeyAttribute))
+                });
 
             return result;
         }

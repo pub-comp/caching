@@ -48,7 +48,9 @@
     <Compile Include="..\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="Attributes\DoNotIncludeInCacheKeyAttribute.cs" />
     <Compile Include="Config\ConnectionStringConfig.cs" />
+    <Compile Include="JsonIgnorePropertiesContractResolver.cs" />
     <Compile Include="NoCacheConfig.cs" />
     <Compile Include="Notifications\CacheItemActionTypes.cs" />
     <Compile Include="Notifications\CacheItemNotification.cs" />
