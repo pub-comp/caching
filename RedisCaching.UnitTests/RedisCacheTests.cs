@@ -16,8 +16,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
     [TestClass]
     public class RedisCacheTests
     {
-        //private readonly string connectionString = @"127.0.0.1:6379,serviceName=mymaster";
-        private readonly string connectionString = @"172.20.0.22:12296,password=123qwe!";
+        private readonly string connectionString = @"127.0.0.1:6379,serviceName=mymaster";
 
         [TestMethod]
         public void TestRedisCacheBasic()
