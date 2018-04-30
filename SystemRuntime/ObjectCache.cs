@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using PubComp.Caching.Core;
 
 namespace PubComp.Caching.SystemRuntime
@@ -8,6 +10,7 @@ namespace PubComp.Caching.SystemRuntime
         private readonly String name;
         private System.Runtime.Caching.ObjectCache innerCache;
         private readonly Object sync = new Object();
+        private readonly SemaphoreSlim asyncSync = new SemaphoreSlim(1, 1);
         private readonly InMemoryPolicy policy;
         
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
@@ -35,6 +38,11 @@ namespace PubComp.Caching.SystemRuntime
         public bool TryGet<TValue>(string key, out TValue value)
         {
             return TryGetInner(key, out value);
+        }
+
+        public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        {
+            return new TryGetResult<TValue> {WasFound = TryGetInner<TValue>(key, out var value), Value = value};
         }
 
         public void Set<TValue>(string key, TValue value)
@@ -109,6 +117,28 @@ namespace PubComp.Caching.SystemRuntime
 
                 value = getter();
                 Add(key, value);
+            }
+
+            return value;
+        }
+
+        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        {
+            if (TryGetInner(key, out TValue value))
+                return value;
+
+            try
+            {
+                await asyncSync.WaitAsync();
+                if (TryGetInner(key, out value))
+                    return value;
+
+                value = await getter();
+                Add(key, value);
+            }
+            finally
+            {
+                asyncSync.Release();
             }
 
             return value;

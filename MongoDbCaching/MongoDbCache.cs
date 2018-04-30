@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using PubComp.Caching.Core;
 using PubComp.NoSql.MongoDbDriver;
 
@@ -153,6 +154,13 @@ namespace PubComp.Caching.MongoDbCaching
             return TryGetInner(key, out value);
         }
 
+        public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        {
+            // TODO: This should be made async -- requires updating MongoDbDriver
+            var result = TryGetInner(key, out TValue value);
+            return new TryGetResult<TValue>{WasFound = result, Value = value};
+        }
+
         public void Set<TValue>(string key, TValue value)
         {
             Add(key, value);
@@ -195,6 +203,20 @@ namespace PubComp.Caching.MongoDbCaching
             using (var context = GetContext())
             {
                 value = getter();
+                return GetOrAdd(context, key, value);
+            }
+        }
+
+        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        {
+            TValue value;
+            if (TryGetInner(key, out value))
+                return value;
+
+            using (var context = GetContext())
+            {
+                value = await getter();
+                // TODO: This should be made async -- requires updating MongoDbDriver
                 return GetOrAdd(context, key, value);
             }
         }

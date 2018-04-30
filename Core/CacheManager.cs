@@ -6,6 +6,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 using PubComp.Caching.Core.Config;
 using PubComp.Caching.Core.Notifications;
 
@@ -15,9 +16,13 @@ namespace PubComp.Caching.Core
     {
         private static Func<MethodBase> callingMethodGetter;
 
-        // ReSharper disable once InconsistentNaming
+        //ReSharper disable once InconsistentNaming
         private static readonly ReaderWriterLockSlim cachesSync
             = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+
+        //ReSharper disable once InconsistentNaming
+        private static readonly SemaphoreSlim cachesAsyncSync
+            = new SemaphoreSlim(1, 1);
 
         // ReSharper disable once InconsistentNaming
         private static readonly ConcurrentDictionary<CacheName, ICache> caches
@@ -100,6 +105,21 @@ namespace PubComp.Caching.Core
                 throw new ArgumentNullException(nameof(name));
 
             var cachesArray = GetCaches();
+            
+            var cachesSorted = cachesArray.OrderByDescending(c => c.Key.GetMatchLevel(name));
+            var cache = cachesSorted.FirstOrDefault();
+
+            return (cache.Key.Prefix != null && cache.Key.GetMatchLevel(name) >= cache.Key.Prefix.Length) ? cache.Value : null;
+        }
+
+        /// <summary>Gets a cache by name</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public static async Task<ICache> GetCacheAsync(string name)
+        {
+            if (name == null)
+                throw new ArgumentNullException(nameof(name));
+
+            var cachesArray = await GetCachesAsync();
             
             var cachesSorted = cachesArray.OrderByDescending(c => c.Key.GetMatchLevel(name));
             var cache = cachesSorted.FirstOrDefault();
@@ -233,6 +253,23 @@ namespace PubComp.Caching.Core
             finally
             {
                 cachesSync.ExitReadLock();
+            }
+
+            return cachesArray;
+        }
+
+        private static async Task<KeyValuePair<CacheName, ICache>[]> GetCachesAsync()
+        {
+            KeyValuePair<CacheName, ICache>[] cachesArray;
+
+            try
+            {
+                await cachesAsyncSync.WaitAsync();
+                cachesArray = caches.ToArray();
+            }
+            finally
+            {
+                cachesAsyncSync.Release();
             }
 
             return cachesArray;

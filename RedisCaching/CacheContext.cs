@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading.Tasks;
 using PubComp.Caching.RedisCaching.Converters;
 using StackExchange.Redis;
 
@@ -23,6 +24,13 @@ namespace PubComp.Caching.RedisCaching
             return convert.FromRedis<TValue>(cacheItemString);
         }
 
+        internal async Task<CacheItem<TValue>> GetItemAsync<TValue>(String cacheName, String key)
+        {
+            var id = CacheItem<TValue>.GetId(cacheName, key);
+            var cacheItemString = await client.Database.StringGetAsync(id).ConfigureAwait(false);
+            return convert.FromRedis<TValue>(cacheItemString);
+        }
+
         internal void SetItem<TValue>(CacheItem<TValue> cacheItem)
         {
             TimeSpan? expiry = null;
@@ -32,6 +40,17 @@ namespace PubComp.Caching.RedisCaching
             client.Database.StringSet(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always, CommandFlags.FireAndForget);
         }
 
+        internal async Task SetItemAsync<TValue>(CacheItem<TValue> cacheItem)
+        {
+            TimeSpan? expiry = null;
+            if (cacheItem.ExpireIn.HasValue)
+                expiry = cacheItem.ExpireIn;
+
+            await client.Database
+                .StringSetAsync(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always,
+                    CommandFlags.FireAndForget).ConfigureAwait(false);
+        }
+
         internal bool SetIfNotExists<TValue>(CacheItem<TValue> cacheItem)
         {
             if (Contains(cacheItem.Id))
@@ -39,6 +58,16 @@ namespace PubComp.Caching.RedisCaching
                 return false;
             }
             SetItem(cacheItem);
+            return true;
+        }
+
+        internal async Task<bool> SetIfNotExistsAsync<TValue>(CacheItem<TValue> cacheItem)
+        {
+            if (Contains(cacheItem.Id))
+            {
+                return false;
+            }
+            await SetItemAsync(cacheItem);
             return true;
         }
 

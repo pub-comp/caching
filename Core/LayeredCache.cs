@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace PubComp.Caching.Core
 {
@@ -10,7 +11,6 @@ namespace PubComp.Caching.Core
         private readonly String name;
         private ICache level1;
         private ICache level2;
-        private readonly Object sync = new Object();
         private readonly LayeredCachePolicy policy;
         private readonly CacheSynchronizer synchronizer;
 
@@ -96,6 +96,11 @@ namespace PubComp.Caching.Core
         {
             return this.level2.Get(key, getter);
         }
+
+        private async Task<TValue> GetterWrapperAsync<TValue>(String key, Func<Task<TValue>> getter)
+        {
+            return await this.level2.GetAsync(key, getter);
+        }
         
         public bool TryGet<TValue>(string key, out TValue value)
         {
@@ -112,6 +117,22 @@ namespace PubComp.Caching.Core
             return false;
         }
 
+        public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        {
+            var level1Result = await this.level1.TryGetAsync<TValue>(key);
+            if (level1Result.WasFound)
+                return level1Result;
+
+            var level2Result = await this.level2.TryGetAsync<TValue>(key);
+            if (level2Result.WasFound)
+            {
+                this.level1.Set(key, level2Result.Value);
+                return level2Result;
+            }
+
+            return new TryGetResult<TValue> {WasFound = false};
+        }
+
         public void Set<TValue>(String key, TValue value)
         {
             this.level2.Set(key, value);
@@ -121,6 +142,11 @@ namespace PubComp.Caching.Core
         public TValue Get<TValue>(String key, Func<TValue> getter)
         {
             return this.level1.Get(key, () => GetterWrapper(key, getter));
+        }
+
+        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        {
+            return await this.level1.GetAsync(key, () => GetterWrapperAsync(key, getter));
         }
 
         public void Clear(String key)

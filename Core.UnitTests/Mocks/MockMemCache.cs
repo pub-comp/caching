@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using PubComp.Caching.SystemRuntime;
 
 namespace PubComp.Caching.Core.UnitTests.Mocks
@@ -23,6 +24,11 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
             return this.innerCache.TryGet(key, out value);
         }
 
+        public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        {
+            return await this.innerCache.TryGetAsync<TValue>(key);
+        }
+
         public void Set<TValue>(string key, TValue value)
         {
             this.innerCache.Set(key, value);
@@ -31,6 +37,11 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
         public TValue Get<TValue>(string key, Func<TValue> getter)
         {
             return this.innerCache.Get(key, getter);
+        }
+
+        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        {
+            return await this.innerCache.GetAsync(key, getter);
         }
 
         public void Clear(string key)
