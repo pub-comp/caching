@@ -154,16 +154,23 @@ namespace PubComp.Caching.MongoDbCaching
             return TryGetInner(key, out value);
         }
 
-        public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        public Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
         {
             // TODO: This should be made async -- requires updating MongoDbDriver
             var result = TryGetInner(key, out TValue value);
-            return new TryGetResult<TValue>{WasFound = result, Value = value};
+            return Task.FromResult(new TryGetResult<TValue>{WasFound = result, Value = value});
         }
 
         public void Set<TValue>(string key, TValue value)
         {
             Add(key, value);
+        }
+
+        public Task SetAsync<TValue>(string key, TValue value)
+        {
+            // TODO: This should be made async -- requires updating MongoDbDriver
+            Set(key, value);
+            return Task.FromResult<object>(null);
         }
 
         protected virtual bool TryGetInner<TValue>(String key, out TValue value)
@@ -207,18 +214,10 @@ namespace PubComp.Caching.MongoDbCaching
             }
         }
 
-        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        public Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
-            TValue value;
-            if (TryGetInner(key, out value))
-                return value;
-
-            using (var context = GetContext())
-            {
-                value = await getter();
-                // TODO: This should be made async -- requires updating MongoDbDriver
-                return GetOrAdd(context, key, value);
-            }
+            // TODO: This should be made async -- requires updating MongoDbDriver
+            return Task.FromResult(Get(key, () => getter().Result));
         }
 
         public void Clear(string key)
@@ -230,6 +229,13 @@ namespace PubComp.Caching.MongoDbCaching
             }
         }
 
+        public Task ClearAsync(string key)
+        {
+            // TODO: This should be made async -- requires updating MongoDbDriver
+            Clear(key);
+            return Task.FromResult<object>(null);
+        }
+
         public void ClearAll()
         {
             using (var context = GetContext())
@@ -237,6 +243,13 @@ namespace PubComp.Caching.MongoDbCaching
                 var set = GetEntitySet(context);
                 set.Delete(i => true);
             }
+        }
+
+        public Task ClearAllAsync()
+        {
+            // TODO: This should be made async -- requires updating MongoDbDriver
+            ClearAll();
+            return Task.FromResult<object>(null);
         }
     }
 }

@@ -102,6 +102,7 @@ namespace PubComp.Caching.AopCaching
             }
 
             var keyIListType = typeof(IList<>).MakeGenericType(keyType);
+            var asyncKeyIListType = typeof(IList<>).MakeGenericType(keyType);
             var dataIListType = typeof(IList<>).MakeGenericType(dataType);
 
             if (method.GetParameters().Length <= this.keyParameterNumber)

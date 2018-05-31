@@ -39,22 +39,37 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
         {
         }
 
+        public Task SetAsync<TValue>(string key, TValue value)
+        {
+            return Task.FromResult<object>(null);
+        }
+
         public TValue Get<TValue>(string key, Func<TValue> getter)
         {
             return getter();
         }
 
-        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        public Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
-            return await getter();
+            return getter();
         }
 
         public void Clear(string key)
         {
         }
 
+        public Task ClearAsync(string key)
+        {
+            return Task.FromResult<object>(null);
+        }
+
         public void ClearAll()
         {
+        }
+
+        public Task ClearAllAsync()
+        {
+            return Task.FromResult<object>(null);
         }
     }
 }

@@ -40,12 +40,21 @@ namespace PubComp.Caching.SystemRuntime
             return TryGetInner(key, out value);
         }
 
-        public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        public Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
         {
-            return new TryGetResult<TValue> {WasFound = TryGetInner<TValue>(key, out var value), Value = value};
+            return Task.FromResult(new TryGetResult<TValue>
+            {
+                WasFound = TryGetInner<TValue>(key, out var value),
+                Value = value
+            });
         }
 
         public void Set<TValue>(string key, TValue value)
+        {
+            Add(key, value);
+        }
+
+        public async Task SetAsync<TValue>(string key, TValue value)
         {
             Add(key, value);
         }
@@ -149,7 +158,17 @@ namespace PubComp.Caching.SystemRuntime
             innerCache.Remove(key, null);
         }
 
+        public async Task ClearAsync(string key)
+        {
+            innerCache.Remove(key, null);
+        }
+
         public void ClearAll()
+        {
+            innerCache = new System.Runtime.Caching.MemoryCache(this.name);
+        }
+
+        public async Task ClearAllAsync()
         {
             innerCache = new System.Runtime.Caching.MemoryCache(this.name);
         }

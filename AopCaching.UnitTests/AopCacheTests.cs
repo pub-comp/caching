@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core;
 using PubComp.Caching.AopCaching.UnitTests.Mocks;
@@ -65,6 +66,19 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             var service = new Service2();
             var result = service.MethodToCache1();
+
+            Assert.AreEqual(0, cache2.Hits);
+            Assert.AreEqual(2, cache2.Misses);
+        }
+
+        [TestMethod]
+        public async Task TestNamedCache1Async()
+        {
+            Assert.AreEqual(0, cache2.Hits);
+            Assert.AreEqual(0, cache2.Misses);
+
+            var service = new Service2();
+            var result = await service.MethodToCache1Async();
 
             Assert.AreEqual(0, cache2.Hits);
             Assert.AreEqual(2, cache2.Misses);
@@ -141,6 +155,36 @@ namespace PubComp.Caching.AopCaching.UnitTests
         }
 
         [TestMethod]
+        public async Task TestDoNotIncludeInCacheKeyParameterAsync()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new Service1();
+            string result;
+
+            result = await service.MethodToCache1Async(11, new MockObject(1111));
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+            Assert.AreEqual("111111", result);
+
+            result = await service.MethodToCache1Async(11, new MockObject(2222));
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+            Assert.AreEqual("111111", result);
+
+            result = await service.MethodToCache1Async(22, new MockObject(2222));
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+            Assert.AreEqual("222222", result);
+
+            result = await service.MethodToCache1Async(11, new MockObject(2222));
+            Assert.AreEqual(2, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+            Assert.AreEqual("111111", result);
+        }
+
+        [TestMethod]
         public void TestDoNotIncludeInCacheKeyProperty()
         {
             Assert.AreEqual(0, cache1.Hits);
@@ -165,6 +209,36 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual("222222", result);
 
             result = service.MethodToCache1(new ClassA(11, "2222"));
+            Assert.AreEqual(2, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+            Assert.AreEqual("111111", result);
+        }
+
+        [TestMethod]
+        public async Task TestDoNotIncludeInCacheKeyPropertyAsync()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new Service1();
+            string result;
+
+            result = await service.MethodToCache1Async(new ClassA(11, "1111"));
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+            Assert.AreEqual("111111", result);
+
+            result = await service.MethodToCache1Async(new ClassA(11, "2222"));
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(2, cache1.Misses);
+            Assert.AreEqual("111111", result);
+
+            result = await service.MethodToCache1Async(new ClassA(22, "2222"));
+            Assert.AreEqual(1, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+            Assert.AreEqual("222222", result);
+
+            result = await service.MethodToCache1Async(new ClassA(11, "2222"));
             Assert.AreEqual(2, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual("111111", result);
@@ -214,6 +288,25 @@ namespace PubComp.Caching.AopCaching.UnitTests
         }
 
         [TestMethod]
+        public async Task TestCacheWithGenericAsyncClass()
+        {
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(0, cache3.Misses);
+
+            var result1 = await new GenericService<int>().MethodToCache1Async("5");
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            var result2 = await new GenericService<int>().MethodToCache1Async("5");
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            var result3 = await new GenericService<byte>().MethodToCache1Async("5");
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(4, cache3.Misses);
+        }
+
+        [TestMethod]
         public void TestCacheWithGenericClassAndGenericKey()
         {
             Assert.AreEqual(0, cache3.Hits);
@@ -228,6 +321,25 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual(2, cache3.Misses);
 
             var result3 = new GenericService<int>().MethodToCache2<int>(5);
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(4, cache3.Misses);
+        }
+
+        [TestMethod]
+        public async Task TestCacheWithGenericClassAndGenericKeyAsync()
+        {
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(0, cache3.Misses);
+
+            var result1 = await new GenericService<int>().MethodToCache2Async<string>("5");
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            var result2 = await new GenericService<int>().MethodToCache2Async<string>("5");
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            var result3 = await new GenericService<int>().MethodToCache2Async<int>(5);
             Assert.AreEqual(1, cache3.Hits);
             Assert.AreEqual(4, cache3.Misses);
         }

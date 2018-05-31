@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Testing.TestingUtils;
 using PubComp.Caching.Core.UnitTests;
@@ -46,6 +47,26 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             Assert.AreEqual("1", result);
 
             result = cache.Get("key", getter);
+            Assert.AreEqual(1, hits);
+            Assert.AreEqual("1", result);
+        }
+
+        [TestMethod]
+        public async Task TestInMemoryCacheObjectAsync()
+        {
+            var cache = new InMemoryCache("cache1", new TimeSpan(0, 2, 0));
+
+            int hits = 0;
+
+            Func<Task<string>> getter = async () => { hits++; return hits.ToString(); };
+
+            string result;
+
+            result = await cache.GetAsync("key", getter);
+            Assert.AreEqual(1, hits);
+            Assert.AreEqual("1", result);
+
+            result = await cache.GetAsync("key", getter);
             Assert.AreEqual(1, hits);
             Assert.AreEqual("1", result);
         }

@@ -139,6 +139,12 @@ namespace PubComp.Caching.Core
             this.level1.Set(key, value);
         }
 
+        public async Task SetAsync<TValue>(string key, TValue value)
+        {
+            await this.level2.SetAsync(key, value);
+            await this.level1.SetAsync(key, value);
+        }
+
         public TValue Get<TValue>(String key, Func<TValue> getter)
         {
             return this.level1.Get(key, () => GetterWrapper(key, getter));
@@ -155,10 +161,22 @@ namespace PubComp.Caching.Core
             this.level1.Clear(key);
         }
 
+        public async Task ClearAsync(string key)
+        {
+            await this.level2.ClearAsync(key);
+            await this.level1.ClearAsync(key);
+        }
+
         public void ClearAll()
         {
             this.level2.ClearAll();
             this.level1.ClearAll();
+        }
+
+        public async Task ClearAllAsync()
+        {
+            await this.level2.ClearAllAsync();
+            await this.level1.ClearAllAsync();
         }
     }
 }

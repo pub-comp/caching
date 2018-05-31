@@ -24,9 +24,9 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
             return this.innerCache.TryGet(key, out value);
         }
 
-        public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        public Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
         {
-            return await this.innerCache.TryGetAsync<TValue>(key);
+            return this.innerCache.TryGetAsync<TValue>(key);
         }
 
         public void Set<TValue>(string key, TValue value)
@@ -34,14 +34,19 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
             this.innerCache.Set(key, value);
         }
 
+        public Task SetAsync<TValue>(string key, TValue value)
+        {
+            return this.innerCache.SetAsync(key, value);
+        }
+
         public TValue Get<TValue>(string key, Func<TValue> getter)
         {
             return this.innerCache.Get(key, getter);
         }
 
-        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        public Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
-            return await this.innerCache.GetAsync(key, getter);
+            return this.innerCache.GetAsync(key, getter);
         }
 
         public void Clear(string key)
@@ -49,10 +54,20 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
             this.innerCache.Clear(key);
         }
 
+        public async Task ClearAsync(string key)
+        {
+            throw new NotImplementedException();
+        }
+
         public void ClearAll()
         {
             this.innerCache.ClearAll();
             this.innerCache.ResetCounters();
+        }
+
+        public async Task ClearAllAsync()
+        {
+            throw new NotImplementedException();
         }
 
         public void ClearAll(bool doResetCounters)
