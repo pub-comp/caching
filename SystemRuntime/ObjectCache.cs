@@ -9,8 +9,7 @@ namespace PubComp.Caching.SystemRuntime
     {
         private readonly String name;
         private System.Runtime.Caching.ObjectCache innerCache;
-        private readonly Object sync = new Object();
-        private readonly SemaphoreSlim asyncSync = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim sync = new SemaphoreSlim(1, 1);
         private readonly InMemoryPolicy policy;
         
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
@@ -119,13 +118,18 @@ namespace PubComp.Caching.SystemRuntime
             if (TryGetInner(key, out value))
                 return value;
 
-            lock (sync)
+            try
             {
+                sync.Wait();
                 if (TryGetInner(key, out value))
                     return value;
 
                 value = getter();
                 Add(key, value);
+            }
+            finally
+            {
+                sync.Release();
             }
 
             return value;
@@ -138,7 +142,7 @@ namespace PubComp.Caching.SystemRuntime
 
             try
             {
-                await asyncSync.WaitAsync(); //This will deadlock if reentered recursively -- should not happen
+                await sync.WaitAsync(); //This will deadlock if reentered recursively -- should not happen
                 if (TryGetInner(key, out value))
                     return value;
 
@@ -147,7 +151,7 @@ namespace PubComp.Caching.SystemRuntime
             }
             finally
             {
-                asyncSync.Release();
+                sync.Release();
             }
 
             return value;
