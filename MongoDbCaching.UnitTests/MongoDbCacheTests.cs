@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Testing.TestingUtils;
 using PubComp.Caching.Core.UnitTests;
@@ -121,6 +122,30 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
             Assert.AreEqual("1", result);
 
             result = cache.Get("key", getter);
+            Assert.AreEqual(1, misses);
+            Assert.AreEqual("1", result);
+        }
+
+        [TestMethod]
+        public async Task TestMongoDbCacheObjectAsync()
+        {
+            var cache = new MongoDbCache(
+                "cache1",
+                new MongoDbCachePolicy
+                {
+                    DatabaseName = "TestCacheDb",
+                });
+            await cache.ClearAllAsync();
+
+            int misses = 0;
+
+            Func<Task<string>> getter = () => Task.Run(() => { misses++; return misses.ToString(); });
+
+            var result = await cache.GetAsync("key", getter);
+            Assert.AreEqual(1, misses);
+            Assert.AreEqual("1", result);
+
+            result = await cache.GetAsync("key", getter);
             Assert.AreEqual(1, misses);
             Assert.AreEqual("1", result);
         }

@@ -40,15 +40,15 @@ namespace PubComp.Caching.RedisCaching
             client.Database.StringSet(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always, CommandFlags.FireAndForget);
         }
 
-        internal async Task SetItemAsync<TValue>(CacheItem<TValue> cacheItem)
+        internal Task SetItemAsync<TValue>(CacheItem<TValue> cacheItem)
         {
             TimeSpan? expiry = null;
             if (cacheItem.ExpireIn.HasValue)
                 expiry = cacheItem.ExpireIn;
 
-            await client.Database
+            return client.Database
                 .StringSetAsync(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always,
-                    CommandFlags.FireAndForget).ConfigureAwait(false);
+                    CommandFlags.FireAndForget);
         }
 
         internal bool SetIfNotExists<TValue>(CacheItem<TValue> cacheItem)
@@ -99,10 +99,10 @@ namespace PubComp.Caching.RedisCaching
             client.Database.KeyDelete(id, CommandFlags.FireAndForget);
         }
 
-        internal async Task RemoveItemAsync(String cacheName, String key)
+        internal Task RemoveItemAsync(String cacheName, String key)
         {
             var id = CacheItem<object>.GetId(cacheName, key);
-            await client.Database.KeyDeleteAsync(id, CommandFlags.FireAndForget).ConfigureAwait(false);
+            return client.Database.KeyDeleteAsync(id, CommandFlags.FireAndForget);
         }
 
         internal void ClearItems(String cacheName)
@@ -112,11 +112,11 @@ namespace PubComp.Caching.RedisCaching
             client.Database.KeyDelete(keys, CommandFlags.FireAndForget);
         }
 
-        internal async Task ClearItemsAsync(String cacheName)
+        internal Task ClearItemsAsync(String cacheName)
         {
             var keyPrefix = CacheItem<object>.GetId(cacheName, string.Empty);
             var keys = client.MasterServer.Keys(0, string.Format("*{0}*", keyPrefix), 1000, CommandFlags.None).ToArray();
-            await client.Database.KeyDeleteAsync(keys, CommandFlags.FireAndForget).ConfigureAwait(false);
+            return client.Database.KeyDeleteAsync(keys, CommandFlags.FireAndForget);
         }
 
         public void Dispose()

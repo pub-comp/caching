@@ -97,9 +97,9 @@ namespace PubComp.Caching.Core
             return this.level2.Get(key, getter);
         }
 
-        private async Task<TValue> GetterWrapperAsync<TValue>(String key, Func<Task<TValue>> getter)
+        private Task<TValue> GetterWrapperAsync<TValue>(String key, Func<Task<TValue>> getter)
         {
-            return await this.level2.GetAsync(key, getter);
+            return this.level2.GetAsync(key, getter);
         }
         
         public bool TryGet<TValue>(string key, out TValue value)
@@ -150,9 +150,9 @@ namespace PubComp.Caching.Core
             return this.level1.Get(key, () => GetterWrapper(key, getter));
         }
 
-        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        public Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
-            return await this.level1.GetAsync(key, () => GetterWrapperAsync(key, getter));
+            return this.level1.GetAsync(key, () => GetterWrapperAsync(key, getter));
         }
 
         public void Clear(String key)

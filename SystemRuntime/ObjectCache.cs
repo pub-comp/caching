@@ -138,7 +138,7 @@ namespace PubComp.Caching.SystemRuntime
 
             try
             {
-                await asyncSync.WaitAsync();
+                await asyncSync.WaitAsync(); //This will deadlock if reentered recursively -- should not happen
                 if (TryGetInner(key, out value))
                     return value;
 

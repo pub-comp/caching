@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using PubComp.Caching.Core.Attributes;
 
 namespace PubComp.Caching.AopCaching.UnitTests.Mocks
@@ -16,6 +17,20 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
         public IList<MockData> GetItems(IList<string> keys, [DoNotIncludeInCacheKey]object obj)
         {
             return keys.Select(k => new MockData { Id = k, Value = k + (obj != null ? obj.GetHashCode() : 0).ToString() }).ToList();
+        }
+
+        [CacheList(typeof(MockDataKeyConverter))]
+        public Task<IList<MockData>> GetItemsAsync(IList<string> keys)
+        {
+            return Task.Run<IList<MockData>>(() => keys.Select(k => new MockData {Id = k}).ToList());
+        }
+
+        [CacheList(typeof(MockDataKeyConverter))]
+        public Task<IList<MockData>> GetItemsAsync(IList<string> keys, [DoNotIncludeInCacheKey]object obj)
+        {
+            return Task.Run<IList<MockData>>(() =>
+                keys.Select(k => new MockData {Id = k, Value = k + (obj != null ? obj.GetHashCode() : 0).ToString()})
+                    .ToList());
         }
     }
 

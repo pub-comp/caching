@@ -17,11 +17,7 @@ namespace PubComp.Caching.Core
         private static Func<MethodBase> callingMethodGetter;
 
         //ReSharper disable once InconsistentNaming
-        private static readonly ReaderWriterLockSlim cachesSync
-            = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
-
-        //ReSharper disable once InconsistentNaming
-        private static readonly SemaphoreSlim cachesAsyncSync
+        private static readonly SemaphoreSlim cachesSync
             = new SemaphoreSlim(1, 1);
 
         // ReSharper disable once InconsistentNaming
@@ -84,14 +80,14 @@ namespace PubComp.Caching.Core
         {
             string[] names;
 
-            cachesSync.EnterReadLock();
+            cachesSync.Wait();
             try
             {
                 names = caches.Values.Select(v => v.Name).ToArray();
             }
             finally
             {
-                cachesSync.ExitReadLock();
+                cachesSync.Release();
             }
 
             return names;
@@ -245,14 +241,14 @@ namespace PubComp.Caching.Core
         {
             KeyValuePair<CacheName, ICache>[] cachesArray;
 
-            cachesSync.EnterReadLock();
+            cachesSync.Wait();
             try
             {
                 cachesArray = caches.ToArray();
             }
             finally
             {
-                cachesSync.ExitReadLock();
+                cachesSync.Release();
             }
 
             return cachesArray;
@@ -264,12 +260,12 @@ namespace PubComp.Caching.Core
 
             try
             {
-                await cachesAsyncSync.WaitAsync();
+                await cachesSync.WaitAsync();
                 cachesArray = caches.ToArray();
             }
             finally
             {
-                cachesAsyncSync.Release();
+                cachesSync.Release();
             }
 
             return cachesArray;
@@ -277,14 +273,27 @@ namespace PubComp.Caching.Core
 
         private static void SyncSet(ReaderWriterLockSlim syncObj, Action action)
         {
-            cachesSync.EnterWriteLock();
+            syncObj.EnterWriteLock();
             try
             {
                 action();
             }
             finally
             {
-                cachesSync.ExitWriteLock();
+                syncObj.ExitWriteLock();
+            }
+        }
+
+        private static void SyncSet(SemaphoreSlim syncObj, Action action)
+        {
+            syncObj.Wait();
+            try
+            {
+                action();
+            }
+            finally
+            {
+                syncObj.Release();
             }
         }
 

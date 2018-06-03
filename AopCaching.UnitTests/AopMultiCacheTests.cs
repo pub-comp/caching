@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core;
 using PubComp.Caching.AopCaching.UnitTests.Mocks;
@@ -59,6 +60,46 @@ namespace PubComp.Caching.AopCaching.UnitTests
             LinqAssert.Any(results, r => r.Id == "k3");
 
             results = service.GetItems(new[] { "k1", "k2", "k3" });
+
+            Assert.AreEqual(3, cache1.Hits);
+            Assert.AreEqual(3, cache1.Misses);
+            LinqAssert.Count(results, 3);
+            LinqAssert.Any(results, r => r.Id == "k1");
+            LinqAssert.Any(results, r => r.Id == "k2");
+            LinqAssert.Any(results, r => r.Id == "k3");
+        }
+
+        [TestMethod]
+        public async Task TestMultiCacheWith1ItemsAsync()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new MultiService();
+            var results = await service.GetItemsAsync(new[] { "k1" });
+
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(1, cache1.Misses);
+            LinqAssert.Count(results, 1);
+        }
+
+        [TestMethod]
+        public async Task TestMultiCacheWith3ItemsAsync()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new MultiService();
+            var results = await service.GetItemsAsync(new[] { "k1", "k2", "k3" });
+
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(3, cache1.Misses);
+            LinqAssert.Count(results, 3);
+            LinqAssert.Any(results, r => r.Id == "k1");
+            LinqAssert.Any(results, r => r.Id == "k2");
+            LinqAssert.Any(results, r => r.Id == "k3");
+
+            results = await service.GetItemsAsync(new[] { "k1", "k2", "k3" });
 
             Assert.AreEqual(3, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
@@ -136,6 +177,34 @@ namespace PubComp.Caching.AopCaching.UnitTests
             LinqAssert.Any(results1, r => r.Id == "k3");
 
             var results2 = service.GetItems(new[] { "k5", "k2", "k1", "k4", "k3" });
+
+            Assert.AreEqual(3, cache1.Hits);
+            Assert.AreEqual(5, cache1.Misses);
+            LinqAssert.Count(results2, 5);
+            LinqAssert.Any(results2, r => r.Id == "k1");
+            LinqAssert.Any(results2, r => r.Id == "k2");
+            LinqAssert.Any(results2, r => r.Id == "k3");
+            LinqAssert.Any(results2, r => r.Id == "k4");
+            LinqAssert.Any(results2, r => r.Id == "k5");
+        }
+
+        [TestMethod]
+        public async Task TestMultiCacheWith3ItemsThen5Async()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new MultiService();
+            var results1 = await service.GetItemsAsync(new[] { "k1", "k2", "k3" });
+
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(3, cache1.Misses);
+            LinqAssert.Count(results1, 3);
+            LinqAssert.Any(results1, r => r.Id == "k1");
+            LinqAssert.Any(results1, r => r.Id == "k2");
+            LinqAssert.Any(results1, r => r.Id == "k3");
+
+            var results2 = await service.GetItemsAsync(new[] { "k5", "k2", "k1", "k4", "k3" });
 
             Assert.AreEqual(3, cache1.Hits);
             Assert.AreEqual(5, cache1.Misses);
@@ -242,6 +311,38 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual("c1111", results[2].Value);
 
             results = service.GetItems(new[] { "a", "b", "d" }, new MockObject(2222));
+            Assert.AreEqual(2, cache1.Hits);
+            Assert.AreEqual(4, cache1.Misses);
+            Assert.AreEqual(3, results.Count);
+            Assert.AreEqual("a", results[0].Id);
+            Assert.AreEqual("a1111", results[0].Value);
+            Assert.AreEqual("b", results[1].Id);
+            Assert.AreEqual("b1111", results[1].Value);
+            Assert.AreEqual("d", results[2].Id);
+            Assert.AreEqual("d2222", results[2].Value);
+        }
+
+        [TestMethod]
+        public async Task TestDoNotIncludeInCacheKeyAsync()
+        {
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(0, cache1.Misses);
+
+            var service = new MultiService();
+            IList<MockData> results;
+
+            results = await service.GetItemsAsync(new[] { "a", "b", "c" }, new MockObject(1111));
+            Assert.AreEqual(0, cache1.Hits);
+            Assert.AreEqual(3, cache1.Misses);
+            Assert.AreEqual(3, results.Count);
+            Assert.AreEqual("a", results[0].Id);
+            Assert.AreEqual("a1111", results[0].Value);
+            Assert.AreEqual("b", results[1].Id);
+            Assert.AreEqual("b1111", results[1].Value);
+            Assert.AreEqual("c", results[2].Id);
+            Assert.AreEqual("c1111", results[2].Value);
+
+            results = await service.GetItemsAsync(new[] { "a", "b", "d" }, new MockObject(2222));
             Assert.AreEqual(2, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual(3, results.Count);

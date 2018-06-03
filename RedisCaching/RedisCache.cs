@@ -189,9 +189,9 @@ namespace PubComp.Caching.RedisCaching
             Add(key, value);
         }
 
-        public async Task SetAsync<TValue>(string key, TValue value)
+        public Task SetAsync<TValue>(string key, TValue value)
         {
-            await AddAsync(key, value);
+            return AddAsync(key, value);
         }
 
         protected virtual bool TryGetInner<TValue>(String key, out TValue value)
@@ -214,9 +214,9 @@ namespace PubComp.Caching.RedisCaching
             GetOrAdd(InnerCache, key, value, true);
         }
 
-        protected virtual async Task AddAsync<TValue>(String key, TValue value)
+        protected virtual Task AddAsync<TValue>(String key, TValue value)
         {
-            await GetOrAddAsync(InnerCache, key, value, true);
+            return GetOrAddAsync(InnerCache, key, value, true);
         }
 
         public TValue Get<TValue>(string key, Func<TValue> getter)
@@ -246,9 +246,9 @@ namespace PubComp.Caching.RedisCaching
             InnerCache.RemoveItem(this.Name, key);
         }
 
-        public async Task ClearAsync(string key)
+        public Task ClearAsync(string key)
         {
-            await InnerCache.RemoveItemAsync(this.Name, key);
+            return InnerCache.RemoveItemAsync(this.Name, key);
         }
 
         public void ClearAll()
@@ -256,9 +256,9 @@ namespace PubComp.Caching.RedisCaching
             InnerCache.ClearItems(this.Name);
         }
 
-        public async Task ClearAllAsync()
+        public Task ClearAllAsync()
         {
-            await InnerCache.ClearItemsAsync(this.Name);
+            return InnerCache.ClearItemsAsync(this.Name);
         }
     }
 }
