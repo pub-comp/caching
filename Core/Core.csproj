@@ -74,6 +74,7 @@
     <Compile Include="ICache.cs" />
     <Compile Include="NoCache.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TryGetResult.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

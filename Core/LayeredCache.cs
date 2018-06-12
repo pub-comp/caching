@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace PubComp.Caching.Core
 {
@@ -10,7 +11,6 @@ namespace PubComp.Caching.Core
         private readonly String name;
         private ICache level1;
         private ICache level2;
-        private readonly Object sync = new Object();
         private readonly LayeredCachePolicy policy;
         private readonly CacheSynchronizer synchronizer;
 
@@ -96,6 +96,11 @@ namespace PubComp.Caching.Core
         {
             return this.level2.Get(key, getter);
         }
+
+        private Task<TValue> GetterWrapperAsync<TValue>(String key, Func<Task<TValue>> getter)
+        {
+            return this.level2.GetAsync(key, getter);
+        }
         
         public bool TryGet<TValue>(string key, out TValue value)
         {
@@ -112,15 +117,42 @@ namespace PubComp.Caching.Core
             return false;
         }
 
+        public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        {
+            var level1Result = await this.level1.TryGetAsync<TValue>(key);
+            if (level1Result.WasFound)
+                return level1Result;
+
+            var level2Result = await this.level2.TryGetAsync<TValue>(key);
+            if (level2Result.WasFound)
+            {
+                this.level1.Set(key, level2Result.Value);
+                return level2Result;
+            }
+
+            return new TryGetResult<TValue> {WasFound = false};
+        }
+
         public void Set<TValue>(String key, TValue value)
         {
             this.level2.Set(key, value);
             this.level1.Set(key, value);
         }
 
+        public async Task SetAsync<TValue>(string key, TValue value)
+        {
+            await this.level2.SetAsync(key, value);
+            await this.level1.SetAsync(key, value);
+        }
+
         public TValue Get<TValue>(String key, Func<TValue> getter)
         {
             return this.level1.Get(key, () => GetterWrapper(key, getter));
+        }
+
+        public Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        {
+            return this.level1.GetAsync(key, () => GetterWrapperAsync(key, getter));
         }
 
         public void Clear(String key)
@@ -129,10 +161,22 @@ namespace PubComp.Caching.Core
             this.level1.Clear(key);
         }
 
+        public async Task ClearAsync(string key)
+        {
+            await this.level2.ClearAsync(key);
+            await this.level1.ClearAsync(key);
+        }
+
         public void ClearAll()
         {
             this.level2.ClearAll();
             this.level1.ClearAll();
+        }
+
+        public async Task ClearAllAsync()
+        {
+            await this.level2.ClearAllAsync();
+            await this.level1.ClearAllAsync();
         }
     }
 }

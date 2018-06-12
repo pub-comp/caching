@@ -58,6 +58,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching.UnitTests", "R
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoSynchronizedClient", "DemoSynchronizedClient\DemoSynchronizedClient.csproj", "{204870FC-37CC-43C8-9798-98A2E243B2EB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestHost.WebApi", "WebApi\TestHost.WebApi.csproj", "{241B561D-5A4F-49B4-ADF7-2E2C0FCEC631}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -136,6 +138,10 @@ Global
 		{204870FC-37CC-43C8-9798-98A2E243B2EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{204870FC-37CC-43C8-9798-98A2E243B2EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{204870FC-37CC-43C8-9798-98A2E243B2EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{241B561D-5A4F-49B4-ADF7-2E2C0FCEC631}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{241B561D-5A4F-49B4-ADF7-2E2C0FCEC631}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{241B561D-5A4F-49B4-ADF7-2E2C0FCEC631}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{241B561D-5A4F-49B4-ADF7-2E2C0FCEC631}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

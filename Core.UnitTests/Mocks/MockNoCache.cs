@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace PubComp.Caching.Core.UnitTests.Mocks
 {
@@ -29,11 +30,26 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
             return false;
         }
 
+        public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        {
+            return new TryGetResult<TValue> {WasFound = false, Value = default(TValue)};
+        }
+
         public void Set<TValue>(string key, TValue value)
         {
         }
 
+        public Task SetAsync<TValue>(string key, TValue value)
+        {
+            return Task.FromResult<object>(null);
+        }
+
         public TValue Get<TValue>(string key, Func<TValue> getter)
+        {
+            return getter();
+        }
+
+        public Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
             return getter();
         }
@@ -42,8 +58,18 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
         {
         }
 
+        public Task ClearAsync(string key)
+        {
+            return Task.FromResult<object>(null);
+        }
+
         public void ClearAll()
         {
+        }
+
+        public Task ClearAllAsync()
+        {
+            return Task.FromResult<object>(null);
         }
     }
 }
