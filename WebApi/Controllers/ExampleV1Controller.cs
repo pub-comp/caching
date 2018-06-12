@@ -49,7 +49,7 @@ namespace TestHost.WebApi.Controllers
         [Route("async/{id}")]
         public async Task<IHttpActionResult> GetAsync(int id)
         {
-            var result = await exampleService.GetAsync(id);
+            var result = await exampleService.GetAsync(id).ConfigureAwait(false);
             if(result!=null)
                 return Ok(result);
             return NotFound();

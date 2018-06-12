@@ -26,7 +26,7 @@ namespace TestHost.WebApi.Service
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, DefaultBufferSize, DefaultOptions))
             using (var reader = new StreamReader(stream, Encoding.UTF8))
             {
-                return await reader.ReadLineAsync();
+                return await reader.ReadLineAsync().ConfigureAwait(false);
             }
         }
     }

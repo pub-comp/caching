@@ -115,7 +115,7 @@ namespace PubComp.Caching.Core
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
 
-            var cachesArray = await GetCachesAsync();
+            var cachesArray = await GetCachesAsync().ConfigureAwait(false);
             
             var cachesSorted = cachesArray.OrderByDescending(c => c.Key.GetMatchLevel(name));
             var cache = cachesSorted.FirstOrDefault();
@@ -258,9 +258,9 @@ namespace PubComp.Caching.Core
         {
             KeyValuePair<CacheName, ICache>[] cachesArray;
 
+            await cachesSync.WaitAsync().ConfigureAwait(false);
             try
             {
-                await cachesSync.WaitAsync();
                 cachesArray = caches.ToArray();
             }
             finally

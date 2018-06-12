@@ -269,7 +269,7 @@ namespace PubComp.Caching.AopCaching
         {
             if (Interlocked.Read(ref initialized) == 0L)
             {
-                this.cache = await CacheManager.GetCacheAsync(this.cacheName);
+                this.cache = await CacheManager.GetCacheAsync(this.cacheName).ConfigureAwait(false);
                 Interlocked.Exchange(ref initialized, 1L);
             }
 
@@ -277,7 +277,7 @@ namespace PubComp.Caching.AopCaching
 
             if (cacheToUse == null)
             {
-                await base.OnInvokeAsync(args);
+                await base.OnInvokeAsync(args).ConfigureAwait(false);
                 return;
             }
 
@@ -296,7 +296,7 @@ namespace PubComp.Caching.AopCaching
                 parameterValues[this.keyParameterNumber] = keyList;
 
                 var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues).ToString();
-                var result = await cacheToUse.TryGetAsync<object>(key);
+                var result = await cacheToUse.TryGetAsync<object>(key).ConfigureAwait(false);
                 if (result.WasFound)
                 {
                     addData.Invoke(resultList, new [] { result.Value });
@@ -314,14 +314,14 @@ namespace PubComp.Caching.AopCaching
             }
 
             args.Arguments[this.keyParameterNumber] = missingKeys;
-            await base.OnInvokeAsync(args);
+            await base.OnInvokeAsync(args).ConfigureAwait(false);
             var resultsFromerInner = args.ReturnValue;
             addDataRange.Invoke(resultList, new [] { resultsFromerInner });
 
             var values = GetKeyValues(args, resultsFromerInner, parameterValues);
 
-            var tasks = values.Select(async x => await cacheToUse.SetAsync(x.Key, x.Value));
-            await Task.WhenAll(tasks);
+            var tasks = values.Select(async x => await cacheToUse.SetAsync(x.Key, x.Value).ConfigureAwait(false));
+            await Task.WhenAll(tasks).ConfigureAwait(false);
 
             args.ReturnValue = resultList;
         }

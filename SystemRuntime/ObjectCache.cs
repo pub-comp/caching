@@ -53,9 +53,10 @@ namespace PubComp.Caching.SystemRuntime
             Add(key, value);
         }
 
-        public async Task SetAsync<TValue>(string key, TValue value)
+        public Task SetAsync<TValue>(string key, TValue value)
         {
             Add(key, value);
+            return Task.FromResult<object>(null);
         }
 
         protected virtual bool TryGetInner<TValue>(String key, out TValue value)
@@ -118,9 +119,9 @@ namespace PubComp.Caching.SystemRuntime
             if (TryGetInner(key, out value))
                 return value;
 
+            sync.Wait();
             try
             {
-                sync.Wait();
                 if (TryGetInner(key, out value))
                     return value;
 
@@ -140,13 +141,13 @@ namespace PubComp.Caching.SystemRuntime
             if (TryGetInner(key, out TValue value))
                 return value;
 
+            await sync.WaitAsync().ConfigureAwait(false); //This will deadlock if reentered recursively -- should not happen
             try
             {
-                await sync.WaitAsync(); //This will deadlock if reentered recursively -- should not happen
                 if (TryGetInner(key, out value))
                     return value;
 
-                value = await getter();
+                value = await getter().ConfigureAwait(false);
                 Add(key, value);
             }
             finally
@@ -162,9 +163,10 @@ namespace PubComp.Caching.SystemRuntime
             innerCache.Remove(key, null);
         }
 
-        public async Task ClearAsync(string key)
+        public Task ClearAsync(string key)
         {
             innerCache.Remove(key, null);
+            return Task.FromResult<object>(null);
         }
 
         public void ClearAll()
@@ -172,9 +174,10 @@ namespace PubComp.Caching.SystemRuntime
             innerCache = new System.Runtime.Caching.MemoryCache(this.name);
         }
 
-        public async Task ClearAllAsync()
+        public Task ClearAllAsync()
         {
             innerCache = new System.Runtime.Caching.MemoryCache(this.name);
+            return Task.FromResult<object>(null);
         }
     }
 }
