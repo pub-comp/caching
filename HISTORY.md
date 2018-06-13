@@ -98,6 +98,8 @@
 	* Updated Newtonsoft.Json (Json.net) from v6 to v11
 	* All other packages have not been changed
 
-
 ### 3.1.0:
 	* Added async support for ICache and all implementations
+
+### 3.1.1:
+	* Fixed performance issue in CacheKey serialization
