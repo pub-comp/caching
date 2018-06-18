@@ -105,6 +105,7 @@ namespace PubComp.Caching.RedisCaching
                 options.EndPoints.Add(ipAddress, port);
             }
 
+            options.AbortOnConnectFail = false;
             var connection = ConnectionMultiplexer.Connect(options, Console.Out);
             return connection;
         }
