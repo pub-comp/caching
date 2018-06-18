@@ -1,8 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Newtonsoft.Json;
+using PubComp.Caching.Core.Attributes;
 
 namespace PubComp.Caching.Core
 {
@@ -12,6 +13,14 @@ namespace PubComp.Caching.Core
         private readonly string methodName;
         private readonly string[] parameterTypeNames;
         private readonly object[] parmaterValues;
+
+        private static readonly JsonSerializerSettings JsonSerializerSettings =
+            new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto,
+                ContractResolver = new JsonIgnorePropertiesContractResolver(
+                    typeof(DoNotIncludeInCacheKeyAttribute))
+            };
 
         public CacheKey(string className, string methodName, string[] parameterTypeNames, object[] parmaterValues)
         {
@@ -110,10 +119,10 @@ namespace PubComp.Caching.Core
 
         public override string ToString()
         {
-            var result = Newtonsoft.Json.JsonConvert.SerializeObject(
+            var result = JsonConvert.SerializeObject(
                 this,
-                Newtonsoft.Json.Formatting.None,
-                new Newtonsoft.Json.JsonSerializerSettings { TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto });
+                Formatting.None,
+                JsonSerializerSettings);
 
             return result;
         }

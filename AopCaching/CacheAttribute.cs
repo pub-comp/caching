@@ -4,6 +4,8 @@ using System.Threading;
 using PostSharp.Aspects;
 using PubComp.Caching.Core;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using PubComp.Caching.Core.Attributes;
 
 namespace PubComp.Caching.AopCaching
 {
@@ -75,6 +77,34 @@ namespace PubComp.Caching.AopCaching
                 return;
             }
 
+            var key = GetCacheKey(args);
+            args.ReturnValue = cacheToUse.Get<object>(key, () => { base.OnInvoke(args); return args.ReturnValue; });
+        }
+
+        /// <inheritdoc />
+        public sealed override async Task OnInvokeAsync(MethodInterceptionArgs args)
+        {
+            if (Interlocked.Read(ref initialized) == 0L)
+            {
+                this.cache = await CacheManager.GetCacheAsync(this.cacheName);
+                Interlocked.Exchange(ref initialized, 1L);
+            }
+
+            var cacheToUse = this.cache;
+
+            if (cacheToUse == null)
+            {
+                await base.OnInvokeAsync(args);
+            }
+            else
+            {
+                var key = GetCacheKey(args);
+                args.ReturnValue = await cacheToUse.GetAsync(key, async () => { await base.OnInvokeAsync(args); return args.ReturnValue; });
+            }
+        }
+
+        private string GetCacheKey(MethodInterceptionArgs args)
+        {
             var classNameNonGeneric = !this.isClassGeneric
                 ? this.className
                 : args.Method.DeclaringType.FullName;
@@ -85,9 +115,9 @@ namespace PubComp.Caching.AopCaching
 
             var parameterValues = args.Arguments.Where((arg, index) => !this.indexesNotToCache.Contains(index)).ToArray();
 
-            var key = new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues).ToString();
-
-            args.ReturnValue = cacheToUse.Get<object>(key, () => { base.OnInvoke(args); return args.ReturnValue; });
+            var key =
+                new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues).ToString();
+            return key;
         }
     }
 }

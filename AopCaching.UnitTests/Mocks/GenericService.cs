@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using PubComp.Caching.Core.Attributes;
 
 namespace PubComp.Caching.AopCaching.UnitTests.Mocks
 {
@@ -35,12 +37,30 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
         }
 
         [Cache]
+        public async Task<IEnumerable<string>> MethodToCache1Async(object obj)
+        {
+            Func<object, string> f = o => (o ?? "null").ToString();
+            var st = f(obj);
+
+            return await Task.FromResult(new[] { st, st, st });
+        }
+
+        [Cache]
         public IEnumerable<string> MethodToCache2<TObject>(TObject obj)
         {
             Func<object, string> f = o => (o ?? "null").ToString();
             var st = f(obj);
 
             return new[] { st, st, st };
+        }
+
+        [Cache]
+        public async Task<IEnumerable<string>> MethodToCache2Async<TObject>(TObject obj)
+        {
+            Func<object, string> f = o => (o ?? "null").ToString();
+            var st = f(obj);
+
+            return await Task.FromResult(new[] { st, st, st });
         }
 
         [Cache]

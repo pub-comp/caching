@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PubComp.Caching.AopCaching.UnitTests.Mocks
 {
@@ -9,6 +10,12 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
         public IEnumerable<string> MethodToCache1()
         {
             return new string[] { "1", "2", "3", "4", "5" };
+        }
+
+        [Cache("localCache")]
+        public async Task<IEnumerable<string>> MethodToCache1Async()
+        {
+            return await Task.FromResult(new string[] { "1", "2", "3", "4", "5" });
         }
 
         [Cache("localCache")]

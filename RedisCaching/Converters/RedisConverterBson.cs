@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.IO;
-using System.Runtime.Serialization.Formatters;
 using PubComp.Caching.Core.Notifications;
 using StackExchange.Redis;
 
@@ -34,14 +33,14 @@ namespace PubComp.Caching.RedisCaching.Converters
 
             using (MemoryStream ms = new MemoryStream())
             {
-                using (var writer = new Newtonsoft.Json.Bson.BsonWriter(ms))
+                using (var writer = new Newtonsoft.Json.Bson.BsonDataWriter(ms))
                 {
                     var serializer = new Newtonsoft.Json.JsonSerializer
                     {
                         Formatting = Newtonsoft.Json.Formatting.None,
                         Culture = CultureInfo.InvariantCulture,
                         TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
-                        TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple,
+                        TypeNameAssemblyFormatHandling = Newtonsoft.Json.TypeNameAssemblyFormatHandling.Simple,
                     };
                     serializer.Serialize(writer, value);
                 }
@@ -58,14 +57,14 @@ namespace PubComp.Caching.RedisCaching.Converters
 
             using (MemoryStream ms = new MemoryStream(buffer))
             {
-                using (var reader = new Newtonsoft.Json.Bson.BsonReader(ms))
+                using (var reader = new Newtonsoft.Json.Bson.BsonDataReader(ms))
                 {
                     var serializer = new Newtonsoft.Json.JsonSerializer
                     {
                         Formatting = Newtonsoft.Json.Formatting.None,
                         Culture = CultureInfo.InvariantCulture,
                         TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
-                        TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple,
+                        TypeNameAssemblyFormatHandling = Newtonsoft.Json.TypeNameAssemblyFormatHandling.Simple,
                     };
                     value = serializer.Deserialize<TValue>(reader);
                 }

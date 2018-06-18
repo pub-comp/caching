@@ -6,6 +6,8 @@ using System.Reflection;
 using PostSharp.Aspects;
 using PubComp.Caching.Core;
 using System.Collections;
+using System.Threading.Tasks;
+using PubComp.Caching.Core.Attributes;
 
 namespace PubComp.Caching.AopCaching
 {
@@ -139,13 +141,13 @@ namespace PubComp.Caching.AopCaching
             }
 
             var returnType = methodInfo.ReturnType;
-            if (returnType != dataIListType)
+            if (returnType != dataIListType && returnType != typeof(Task<>).MakeGenericType(dataIListType))
             {
                 PostSharp.Extensibility.Message.Write(
                     PostSharp.Extensibility.MessageLocation.Of(method),
                     PostSharp.Extensibility.SeverityType.Error,
                     "Custom01",
-                    $"The return type of method {method.Name} != IList<TData>.");
+                    $"The return type of method {method.Name} != IList<TData> or Task<IList<TData>>.");
                 
                 return false;
             }
@@ -253,6 +255,79 @@ namespace PubComp.Caching.AopCaching
             var resultsFromerInner = args.ReturnValue;
             addDataRange.Invoke(resultList, new [] { resultsFromerInner });
 
+            var values = GetKeyValues(args, resultsFromerInner, parameterValues);
+
+            foreach (var value in values)
+            {
+                cacheToUse.Set(value.Key, value.Value);
+            }
+
+            args.ReturnValue = resultList;
+        }
+
+        public sealed override async Task OnInvokeAsync(MethodInterceptionArgs args)
+        {
+            if (Interlocked.Read(ref initialized) == 0L)
+            {
+                this.cache = await CacheManager.GetCacheAsync(this.cacheName).ConfigureAwait(false);
+                Interlocked.Exchange(ref initialized, 1L);
+            }
+
+            var cacheToUse = this.cache;
+
+            if (cacheToUse == null)
+            {
+                await base.OnInvokeAsync(args).ConfigureAwait(false);
+                return;
+            }
+
+            var parameterValues = args.Arguments.Where((arg, index) => !this.indexesNotToCache.Contains(index)).ToArray();
+
+            var allKeys = parameterValues[this.keyParameterNumber];
+            var allKeysCollection = allKeys as IEnumerable;
+
+            var resultList = this.createDataList.Invoke(new object[0]);
+            var missingKeys = this.createKeyList.Invoke(new object[0]);
+
+            foreach (object k in allKeysCollection)
+            {
+                var keyList = this.createKeyList.Invoke(new object[0]);
+                this.addKey.Invoke(keyList, new [] { k });
+                parameterValues[this.keyParameterNumber] = keyList;
+
+                var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues).ToString();
+                var result = await cacheToUse.TryGetAsync<object>(key).ConfigureAwait(false);
+                if (result.WasFound)
+                {
+                    addData.Invoke(resultList, new [] { result.Value });
+                }
+                else
+                {
+                    addKey.Invoke(missingKeys, new [] { k });
+                }
+            }
+
+            if (missingKeys == null || 0 == (int)keysCount.Invoke(missingKeys, new object[0]))
+            {
+                args.ReturnValue = resultList;
+                return;
+            }
+
+            args.Arguments[this.keyParameterNumber] = missingKeys;
+            await base.OnInvokeAsync(args).ConfigureAwait(false);
+            var resultsFromerInner = args.ReturnValue;
+            addDataRange.Invoke(resultList, new [] { resultsFromerInner });
+
+            var values = GetKeyValues(args, resultsFromerInner, parameterValues);
+
+            var tasks = values.Select(async x => await cacheToUse.SetAsync(x.Key, x.Value).ConfigureAwait(false));
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+
+            args.ReturnValue = resultList;
+        }
+
+        private Dictionary<string, object> GetKeyValues(MethodInterceptionArgs args, object resultsFromerInner, object[] parameterValues)
+        {
             var converter = createDataKeyConverter.Invoke(new object[0]);
 
             var classNameNonGeneric = !this.isClassGeneric
@@ -263,19 +338,21 @@ namespace PubComp.Caching.AopCaching
                 ? this.parameterTypeNames
                 : args.Method.GetParameters().Select(p => p.ParameterType.FullName).ToArray();
 
+            Dictionary<string, object> values = new Dictionary<string, object>();
             foreach (object result in resultsFromerInner as IEnumerable)
             {
-                var k = convertDataToKey.Invoke(converter, new [] { result });
-                
+                var k = convertDataToKey.Invoke(converter, new[] {result});
+
                 var keyList = this.createKeyList.Invoke(new object[0]);
-                this.addKey.Invoke(keyList, new [] { k });
+                this.addKey.Invoke(keyList, new[] {k});
                 parameterValues[this.keyParameterNumber] = keyList;
 
-                var key = new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues).ToString();
-                cacheToUse.Set(key, result);
+                var key = new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues)
+                    .ToString();
+                values[key] = result;
             }
 
-            args.ReturnValue = resultList;
+            return values;
         }
     }
 }

@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Runtime.Serialization.Formatters;
 using PubComp.Caching.Core.Notifications;
 using StackExchange.Redis;
 
@@ -29,17 +28,37 @@ namespace PubComp.Caching.RedisCaching.Converters
             if (data == null)
                 return RedisValue.Null;
 
-            var cacheItemString = Newtonsoft.Json.JsonConvert.SerializeObject(
+            return ToJson(data);
+        }
+
+        private static string ToJson<TValue>(TValue data)
+        {
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(
                 data,
                 new Newtonsoft.Json.JsonSerializerSettings
                 {
                     Formatting = Newtonsoft.Json.Formatting.None,
                     Culture = CultureInfo.InvariantCulture,
                     TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
-                    TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple,
+                    TypeNameAssemblyFormatHandling = Newtonsoft.Json.TypeNameAssemblyFormatHandling.Simple,
                 });
 
-            return cacheItemString;
+            return json;
+        }
+
+        private static TValue FromJson<TValue>(string json)
+        {
+            var cacheItem = Newtonsoft.Json.JsonConvert.DeserializeObject<TValue>(
+                json,
+                new Newtonsoft.Json.JsonSerializerSettings
+                {
+                    Formatting = Newtonsoft.Json.Formatting.None,
+                    Culture = CultureInfo.InvariantCulture,
+                    TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
+                    TypeNameAssemblyFormatHandling = Newtonsoft.Json.TypeNameAssemblyFormatHandling.Simple,
+                });
+
+            return cacheItem;
         }
 
         public CacheItem<TValue> FromRedis<TValue>(RedisValue cacheItemString)
@@ -60,17 +79,21 @@ namespace PubComp.Caching.RedisCaching.Converters
 
         public TValue From<TValue>(RedisValue stringValue)
         {
-            var cacheItem = Newtonsoft.Json.JsonConvert.DeserializeObject<TValue>(
-                stringValue,
-                new Newtonsoft.Json.JsonSerializerSettings
-                {
-                    Formatting = Newtonsoft.Json.Formatting.None,
-                    Culture = CultureInfo.InvariantCulture,
-                    TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto,
-                    TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple,
-                });
+            return FromJson<TValue>(stringValue.ToString());
+        }
 
-            return cacheItem;
+        internal static byte[] ToJsonBytes<TValue>(TValue value)
+        {
+            var json = ToJson(value);
+            var buffer = System.Text.Encoding.Unicode.GetBytes(json);
+            return buffer;
+        }
+
+        internal static TValue FromJsonBytes<TValue>(byte[] buffer)
+        {
+            var json = System.Text.Encoding.Unicode.GetString(buffer);
+            var value = FromJson<TValue>(json);
+            return value;
         }
     }
 }

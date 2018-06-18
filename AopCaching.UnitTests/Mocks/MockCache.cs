@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using PubComp.Caching.Core;
 using PubComp.Caching.SystemRuntime;
 
@@ -24,9 +25,20 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
             return this.innerCache.TryGet(key, out value);
         }
 
+        public Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        {
+            return this.innerCache.TryGetAsync<TValue>(key);
+        }
+
         public void Set<TValue>(string key, TValue value)
         {
             this.innerCache.Set(key, value);
+        }
+
+        /// <inheritdoc />
+        public Task SetAsync<TValue>(string key, TValue value)
+        {
+            return this.innerCache.SetAsync(key, value);
         }
 
         public TValue Get<TValue>(string key, Func<TValue> getter)
@@ -34,14 +46,32 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
             return this.innerCache.Get(key, getter);
         }
 
+        public Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        {
+            return this.innerCache.GetAsync(key, getter);
+        }
+
         public void Clear(string key)
         {
             this.innerCache.Clear(key);
         }
 
+        /// <inheritdoc />
+        public Task ClearAsync(string key)
+        {
+            return this.innerCache.ClearAsync(key);
+        }
+
         public void ClearAll()
         {
             this.innerCache.ClearAll();
+            this.innerCache.ResetCounters();
+        }
+
+        /// <inheritdoc />
+        public async Task ClearAllAsync()
+        {
+            await this.innerCache.ClearAllAsync();
             this.innerCache.ResetCounters();
         }
 

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using PubComp.Caching.Core;
 
 namespace PubComp.Caching.SystemRuntime
@@ -7,7 +9,7 @@ namespace PubComp.Caching.SystemRuntime
     {
         private readonly String name;
         private System.Runtime.Caching.ObjectCache innerCache;
-        private readonly Object sync = new Object();
+        private readonly SemaphoreSlim sync = new SemaphoreSlim(1, 1);
         private readonly InMemoryPolicy policy;
         
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
@@ -37,9 +39,24 @@ namespace PubComp.Caching.SystemRuntime
             return TryGetInner(key, out value);
         }
 
+        public Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        {
+            return Task.FromResult(new TryGetResult<TValue>
+            {
+                WasFound = TryGetInner<TValue>(key, out var value),
+                Value = value
+            });
+        }
+
         public void Set<TValue>(string key, TValue value)
         {
             Add(key, value);
+        }
+
+        public Task SetAsync<TValue>(string key, TValue value)
+        {
+            Add(key, value);
+            return Task.FromResult<object>(null);
         }
 
         protected virtual bool TryGetInner<TValue>(String key, out TValue value)
@@ -102,13 +119,40 @@ namespace PubComp.Caching.SystemRuntime
             if (TryGetInner(key, out value))
                 return value;
 
-            lock (sync)
+            sync.Wait();
+            try
             {
                 if (TryGetInner(key, out value))
                     return value;
 
                 value = getter();
                 Add(key, value);
+            }
+            finally
+            {
+                sync.Release();
+            }
+
+            return value;
+        }
+
+        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        {
+            if (TryGetInner(key, out TValue value))
+                return value;
+
+            await sync.WaitAsync().ConfigureAwait(false); //This will deadlock if reentered recursively -- should not happen
+            try
+            {
+                if (TryGetInner(key, out value))
+                    return value;
+
+                value = await getter().ConfigureAwait(false);
+                Add(key, value);
+            }
+            finally
+            {
+                sync.Release();
             }
 
             return value;
@@ -119,9 +163,21 @@ namespace PubComp.Caching.SystemRuntime
             innerCache.Remove(key, null);
         }
 
+        public Task ClearAsync(string key)
+        {
+            innerCache.Remove(key, null);
+            return Task.FromResult<object>(null);
+        }
+
         public void ClearAll()
         {
             innerCache = new System.Runtime.Caching.MemoryCache(this.name);
+        }
+
+        public Task ClearAllAsync()
+        {
+            innerCache = new System.Runtime.Caching.MemoryCache(this.name);
+            return Task.FromResult<object>(null);
         }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using PubComp.Caching.Core.Attributes;
 
 namespace PubComp.Caching.AopCaching.UnitTests.Mocks
 {
@@ -49,6 +51,37 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
             return id.ToString() + (obj != null ? obj.GetHashCode() : 0).ToString();
         }
 
+        [Cache]
+        public Task<string> MethodToCache1Async(int id, [DoNotIncludeInCacheKey]object obj)
+        {
+            return Task.FromResult(id.ToString() + (obj != null ? obj.GetHashCode() : 0).ToString());
+        }
+
+        [Cache]
+        public string MethodToCache1(ClassA a)
+        {
+            return a.Id + a.Value;
+        }
+
+        [Cache]
+        public Task<string> MethodToCache1Async(ClassA a)
+        {
+            return Task.FromResult(a.Id + a.Value);
+        }
+
         public readonly double ConstValue = 4.0;
+    }
+
+    public class ClassA
+    {
+        public int Id { get; set; }
+        [DoNotIncludeInCacheKey]
+        public string Value { get; set; }
+
+        public ClassA(int id, string value)
+        {
+            Id = id;
+            Value = value;
+        }
     }
 }

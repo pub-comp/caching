@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace PubComp.Caching.Core
 {
@@ -15,7 +16,10 @@ namespace PubComp.Caching.Core
         {
         }
 
-        public string Name { get { return name; } }
+        public string Name
+        {
+            get { return name; }
+        }
 
         public bool TryGet<TValue>(string key, out TValue value)
         {
@@ -23,11 +27,26 @@ namespace PubComp.Caching.Core
             return false;
         }
 
+        public Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        {
+            return Task.FromResult(new TryGetResult<TValue> {WasFound = false});
+        }
+
         public void Set<TValue>(string key, TValue value)
         {
         }
 
+        public Task SetAsync<TValue>(string key, TValue value)
+        {
+            return Task.FromResult<object>(null);
+        }
+
         public TValue Get<TValue>(String key, Func<TValue> getter)
+        {
+            return getter();
+        }
+
+        public Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
             return getter();
         }
@@ -36,8 +55,18 @@ namespace PubComp.Caching.Core
         {
         }
 
+        public Task ClearAsync(string key)
+        {
+            return Task.FromResult<object>(null);
+        }
+
         public void ClearAll()
         {
+        }
+
+        public Task ClearAllAsync()
+        {
+            return Task.FromResult<object>(null);
         }
     }
 }

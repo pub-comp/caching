@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using PubComp.Caching.Core;
 
 namespace PubComp.Caching.RedisCaching
@@ -118,6 +119,25 @@ namespace PubComp.Caching.RedisCaching
             return newValue;
         }
 
+        private async Task<TValue> GetOrAddAsync<TValue>(
+            CacheContext context, string key, TValue newValue, bool doForceOverride = false)
+        {
+            var newItem = CreateCacheItem(key, newValue);
+
+            if (await context.SetIfNotExistsAsync(newItem))
+            {
+                return newValue;
+            }
+
+            var prevValue = GetCacheItem<TValue>(context, key);
+            if (!doForceOverride && prevValue != null && prevValue.Value is TValue)
+                return prevValue.Value;
+            
+            await context.SetItemAsync(newItem);
+
+            return newValue;
+        }
+
         private CacheItem<TValue> CreateCacheItem<TValue>(string key, TValue value)
         {
             CacheItem<TValue> newItem;
@@ -138,6 +158,12 @@ namespace PubComp.Caching.RedisCaching
             return cacheItem;
         }
 
+        private async Task<CacheItem<TValue>> GetCacheItemAsync<TValue>(CacheContext context, string key)
+        {
+            var cacheItem = await context.GetItemAsync<TValue>(this.Name, key);
+            return cacheItem;
+        }
+
         private void ResetExpirationTime<TValue>(CacheContext context, CacheItem<TValue> cacheItem)
         {
             if (expireWithin.HasValue && useSlidingExpiration)
@@ -153,9 +179,19 @@ namespace PubComp.Caching.RedisCaching
             return TryGetInner(key, out value);
         }
 
+        public Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        {
+            throw new NotImplementedException();
+        }
+
         public void Set<TValue>(string key, TValue value)
         {
             Add(key, value);
+        }
+
+        public Task SetAsync<TValue>(string key, TValue value)
+        {
+            return AddAsync(key, value);
         }
 
         protected virtual bool TryGetInner<TValue>(String key, out TValue value)
@@ -178,6 +214,11 @@ namespace PubComp.Caching.RedisCaching
             GetOrAdd(InnerCache, key, value, true);
         }
 
+        protected virtual Task AddAsync<TValue>(String key, TValue value)
+        {
+            return GetOrAddAsync(InnerCache, key, value, true);
+        }
+
         public TValue Get<TValue>(string key, Func<TValue> getter)
         {
             // ReSharper disable once InlineOutVariableDeclaration
@@ -189,14 +230,35 @@ namespace PubComp.Caching.RedisCaching
             return GetOrAdd(InnerCache, key, value);
         }
 
+        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        {
+            // ReSharper disable once InlineOutVariableDeclaration
+            TValue value;
+            if (TryGetInner(key, out value))
+                return value;
+
+            value = await getter();
+            return GetOrAdd(InnerCache, key, value);
+        }
+
         public void Clear(String key)
         {
             InnerCache.RemoveItem(this.Name, key);
         }
 
+        public Task ClearAsync(string key)
+        {
+            return InnerCache.RemoveItemAsync(this.Name, key);
+        }
+
         public void ClearAll()
         {
             InnerCache.ClearItems(this.Name);
+        }
+
+        public Task ClearAllAsync()
+        {
+            return InnerCache.ClearItemsAsync(this.Name);
         }
     }
 }
