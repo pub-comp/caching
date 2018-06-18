@@ -86,10 +86,16 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AopCaching\AopCaching.csproj">
+      <Project>{e0dd5e37-1a57-4ea3-a45e-ec9f27f6e519}</Project>
+      <Name>AopCaching</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Core.UnitTests\Core.UnitTests.csproj">
       <Project>{37a614f4-eea4-4643-9b33-21a1776366e8}</Project>
       <Name>Core.UnitTests</Name>

@@ -59,6 +59,7 @@
     <Compile Include="CacheAttribute.cs" />
     <Compile Include="IDataKeyConverter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SafeCasting.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
