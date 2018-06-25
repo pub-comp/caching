@@ -72,8 +72,7 @@ namespace PubComp.Caching.RedisCaching
                 IServer master;
                 if (redisMonitor != null)
                 {
-                    string serverEndpoint = $"{redisMonitor.MasterEndpoint.Address}:6379";
-                    master = innerContext.GetServer(serverEndpoint);
+                    master = innerContext.GetServer(redisMonitor.MasterEndpoint, 6379);
                 }
                 else
                 {
@@ -89,7 +88,7 @@ namespace PubComp.Caching.RedisCaching
                     throw new ApplicationException("GetMasterServer cannot detect master");
                 }
 
-                log.Debug("GetMasterServer {0}", ((IPEndPoint)master.EndPoint).Address);
+                log.Debug("GetMasterServer {0}", master.EndPoint);
                 return master;
             }
         }
