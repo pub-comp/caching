@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using PubComp.Caching.AopCaching;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.UnitTests;
 using PubComp.Caching.DemoSynchronizedClient;
@@ -17,7 +18,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
     public class RedisCacheTests
     {
         private readonly string connectionString = @"127.0.0.1:6379,serviceName=mymaster";
-
+        
         [TestMethod]
         public void TestRedisCacheBasic()
         {
@@ -635,5 +636,135 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             CollectionAssert.AreEqual(expected, result);
         }
+
+        [TestMethod]
+        public void TestRedisCacheWithAOP_Int32()
+        {
+            var redisCacheForAop = new RedisCache(
+                "redisCache",
+                new RedisCachePolicy
+                {
+                    ConnectionString = connectionString,
+                });
+
+            redisCacheForAop.ClearAll();
+
+            var expected = GetInt32Value(5);
+            var fromCache = GetInt32Value(5);
+
+            Assert.AreEqual(expected, fromCache);
+        }
+
+        [TestMethod]
+        public void TestRedisCacheWithAOP_Int64()
+        {
+            var redisCacheForAop = new RedisCache(
+                "redisCache",
+                new RedisCachePolicy
+                {
+                    ConnectionString = connectionString,
+                });
+
+            redisCacheForAop.ClearAll();
+
+            var expected = GetInt64Value(5);
+            var fromCache = GetInt64Value(5);
+
+            Assert.AreEqual(expected, fromCache);
+        }
+
+        [TestMethod]
+        public void TestRedisCacheWithAOP_Enum()
+        {
+            var redisCacheForAop = new RedisCache(
+                "redisCache",
+                new RedisCachePolicy
+                {
+                    ConnectionString = connectionString,
+                });
+
+            redisCacheForAop.ClearAll();
+
+            var expected = GetEnumValue(5);
+            var fromCache = GetEnumValue(5);
+
+            Assert.AreEqual(expected, fromCache);
+        }
+
+        [TestMethod]
+        public void TestRedisCacheWithAOP_Struct()
+        {
+            var redisCacheForAop = new RedisCache(
+                "redisCache",
+                new RedisCachePolicy
+                {
+                    ConnectionString = connectionString,
+                });
+                
+            redisCacheForAop.ClearAll();
+
+            var expected = GeStructValue(5);
+            var fromCache = GeStructValue(5);
+
+            Assert.AreEqual(expected, fromCache);
+        }
+
+        #region Methods with AOP redis caching
+
+        [Cache("redisCache")]
+        public int GetInt32Value(int value)
+        {
+            return value;
+        }
+
+        [Cache("redisCache")]
+        public long GetInt64Value(int value)
+        {
+            return value;
+        }
+
+        [Cache("redisCache")]
+        public MyEnum GetEnumValue(int value)
+        {
+            return (MyEnum)value;
+        }
+
+        [Cache("redisCache")]
+        public MyStruct GeStructValue(int value)
+        {
+            return value;
+        }
+
+        public enum MyEnum : long
+        {
+            A, B, C, D
+        }
+
+        public struct MyStruct
+        {
+            public long Value;
+
+            public MyStruct(long value)
+            {
+                Value = value;
+            }
+
+            public static implicit operator long(MyStruct x)
+            {
+                return x.Value;
+            }
+
+            public static implicit operator MyStruct(long x)
+            {
+                return new MyStruct(x);
+            }
+
+            public override string ToString()
+            {
+                return Value.ToString();
+            }
+        }
+
+        #endregion
     }
 }

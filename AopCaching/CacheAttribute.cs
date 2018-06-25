@@ -4,6 +4,7 @@ using System.Threading;
 using PostSharp.Aspects;
 using PubComp.Caching.Core;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using PubComp.Caching.Core.Attributes;
 
@@ -21,6 +22,7 @@ namespace PubComp.Caching.AopCaching
         private int[] indexesNotToCache;
         private bool isClassGeneric;
         private bool isMethodGeneric;
+        private Type returnType;
 
         public CacheAttribute()
         {
@@ -43,6 +45,7 @@ namespace PubComp.Caching.AopCaching
 
             this.className = type.FullName;
             this.methodName = method.Name;
+            this.returnType = GetReturnType(method);
             var parameters = method.GetParameters();
             this.parameterTypeNames = parameters.Select(p => p.ParameterType.FullName).ToArray();
 
@@ -78,7 +81,8 @@ namespace PubComp.Caching.AopCaching
             }
 
             var key = GetCacheKey(args);
-            args.ReturnValue = cacheToUse.Get<object>(key, () => { base.OnInvoke(args); return args.ReturnValue; });
+            var result = cacheToUse.Get<object>(key, () => { base.OnInvoke(args); return args.ReturnValue; });
+            args.ReturnValue = SafeCasting.CastTo(this.returnType, result);
         }
 
         /// <inheritdoc />
@@ -99,7 +103,8 @@ namespace PubComp.Caching.AopCaching
             else
             {
                 var key = GetCacheKey(args);
-                args.ReturnValue = await cacheToUse.GetAsync(key, async () => { await base.OnInvokeAsync(args); return args.ReturnValue; });
+                var result = await cacheToUse.GetAsync(key, async () => { await base.OnInvokeAsync(args); return args.ReturnValue; });
+                args.ReturnValue = SafeCasting.CastTo(this.returnType, result);
             }
         }
 
@@ -118,6 +123,19 @@ namespace PubComp.Caching.AopCaching
             var key =
                 new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues).ToString();
             return key;
+        }
+
+        private static Type GetReturnType(MethodBase method)
+        {
+            var returnType = (method as MethodInfo)?.ReturnType;
+
+            if (returnType != null && 
+                returnType.IsGenericType &&
+                returnType.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                return returnType.GetGenericArguments()[0];
+            }
+            return returnType;
         }
     }
 }

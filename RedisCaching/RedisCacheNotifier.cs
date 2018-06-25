@@ -119,6 +119,8 @@ namespace PubComp.Caching.RedisCaching
             if (this.cacheCallbacks.TryGetValue(
                 notification.CacheName, out Func<CacheItemNotification, bool> callback))
             {
+                log.Debug($"Received {nameof(CacheItemNotification)} for cache={notification.CacheName}, key={notification.Key}");
+
                 // CacheSynchronizer callback
                 callback(notification);
             }

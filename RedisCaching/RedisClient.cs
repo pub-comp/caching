@@ -35,6 +35,7 @@ namespace PubComp.Caching.RedisCaching
             finally
             {
                 log.Debug("Redis Reconnect: {0}", config.ToString(false));
+                config.AbortOnConnectFail = false;
                 this.innerContext = ConnectionMultiplexer.Connect(config);
             }
         }
