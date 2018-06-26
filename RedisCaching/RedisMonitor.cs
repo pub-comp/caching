@@ -26,16 +26,22 @@ namespace PubComp.Caching.RedisCaching
     
     internal interface IRedisMonitor
     {
-        void StartMonitor(ConfigurationOptions config, int monitorPort, int monitorIntervalMilliseconds,Func<IPEndPoint, bool> masterChanged);
+        void StartMonitor(
+            ConfigurationOptions config,
+            int monitorPort,
+            int monitorIntervalMilliseconds,
+            Func<EndPoint, bool> masterChanged);
+
         void StopMonitor();
-        IPEndPoint MasterEndpoint { get; }
+
+       EndPoint MasterEndpoint { get; }
     }
 
     internal class RedisReplicaMonitor : IRedisMonitor
     {
         private IConnectionMultiplexer innerConnection;
-        private IPEndPoint master;
-        private Func<IPEndPoint, bool> onMasterChanged;
+        private EndPoint master;
+        private Func<EndPoint, bool> onMasterChanged;
         private int port = 26379;
         private string serviceName = "mymaster";
         private readonly NLog.ILogger log;
@@ -47,7 +53,7 @@ namespace PubComp.Caching.RedisCaching
 
         private bool Monitoring { get; set; }
 
-        public IPEndPoint MasterEndpoint
+        public EndPoint MasterEndpoint
         {
             get
             {
@@ -56,7 +62,7 @@ namespace PubComp.Caching.RedisCaching
         }
 
         public void StartMonitor(ConfigurationOptions config, int monitorPort, int monitorIntervalMilliseconds,
-            Func<IPEndPoint, bool> masterChanged)
+            Func<EndPoint, bool> masterChanged)
         {
             try
             {
@@ -99,10 +105,10 @@ namespace PubComp.Caching.RedisCaching
                 SyncTimeout = 5000
             };
 
-            IEnumerable<IPAddress> sentinels = config.EndPoints.Select(ep => (ep as IPEndPoint).Address).ToList();
-            foreach (var ipAddress in sentinels)
+            IEnumerable<EndPoint> sentinels = config.EndPoints.ToList();
+            foreach (var address in sentinels)
             {
-                options.EndPoints.Add(ipAddress, port);
+                options.EndPoints.Add(address);
             }
 
             options.AbortOnConnectFail = false;
@@ -145,18 +151,18 @@ namespace PubComp.Caching.RedisCaching
             {
                 if (sentinel.IsConnected)
                 {
-                    var masterEndpoint = (IPEndPoint) sentinel.SentinelGetMasterAddressByName(serviceName, CommandFlags.None);
-                    var sentinelEndpoint = (IPEndPoint) sentinel.EndPoint;
-                    log.Debug("Monitor Master: Sentinel:{0}, Report Master:{1}", sentinelEndpoint.Address, masterEndpoint.Address);
+                    var masterEndpoint = sentinel.SentinelGetMasterAddressByName(serviceName, CommandFlags.None);
+                    var sentinelEndpoint = sentinel.EndPoint;
+                    log.Debug($"Monitor Master: Sentinel:{sentinelEndpoint}, Report Master:{masterEndpoint}");
                     if (master == null)
                     {
                         master = masterEndpoint;
-                        log.Debug("Init Master: {0}", master.Address);
+                        log.Debug($"Initialize Master: {master}");
                     }
-                    else if (!masterEndpoint.Address.ToString().Equals(master.Address.ToString()))
+                    else if (!masterEndpoint.ToString().Equals(master.ToString()))
                     {
                         master = masterEndpoint;
-                        log.Debug("Master Changed: {0}", master.Address);
+                        log.Debug("Master Changed: {0}", master);
                         onMasterChanged(masterEndpoint);
                         break;
                     }

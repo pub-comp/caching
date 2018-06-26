@@ -49,7 +49,7 @@ namespace PubComp.Caching.RedisCaching
             redisMonitor.StartMonitor(config, monitorPort, monitorIntervalMilliseconds, MasterChanged);
         }
 
-        private bool MasterChanged(IPEndPoint endpoint)
+        private bool MasterChanged(EndPoint endpoint)
         {
             RedisConnect();
             return true;
@@ -72,14 +72,14 @@ namespace PubComp.Caching.RedisCaching
                 IServer master;
                 if (redisMonitor != null)
                 {
-                    master = innerContext.GetServer(redisMonitor.MasterEndpoint, 6379);
+                    master = innerContext.GetServer(redisMonitor.MasterEndpoint);
                 }
                 else
                 {
                     var servers = innerContext.GetEndPoints(false)
-                    .Select(ep => innerContext.GetServer(ep)).ToList();
-                    master = servers.FirstOrDefault(s => !s.IsSlave);
+                        .Select(ep => innerContext.GetServer(ep)).ToList();
 
+                    master = servers.FirstOrDefault(s => !s.IsSlave);
                 }
 
                 if (master == null)
@@ -88,7 +88,7 @@ namespace PubComp.Caching.RedisCaching
                     throw new ApplicationException("GetMasterServer cannot detect master");
                 }
 
-                log.Debug("GetMasterServer {0}", master.EndPoint);
+                log.Debug($"GetMasterServer {master.EndPoint}");
                 return master;
             }
         }
