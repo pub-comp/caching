@@ -478,7 +478,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             return GetFieldValue(obj.GetType(), obj, fieldName);
         }
 
-        private static string GetFieldValue(Type type, object obj, string fieldName = "connectionString")
+        private static string GetFieldValue(Type type, object obj, string fieldName)
         {
             var field = type.GetField(
                 fieldName,
