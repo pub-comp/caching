@@ -103,3 +103,9 @@
 
 ### 3.1.1:
 	* Fixed performance issue in CacheKey serialization
+
+### 3.1.2:
+	* Fixed deserialization issue when using RedisCache and AOP with various primitive types e.g. Int32
+
+### 3.1.3:
+	* Fixed connection issue when using RedisCache with a DNS
