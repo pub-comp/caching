@@ -22,7 +22,6 @@ namespace PubComp.Caching.AopCaching
         private int[] indexesNotToCache;
         private bool isClassGeneric;
         private bool isMethodGeneric;
-        private Type returnType;
 
         public CacheAttribute()
         {
@@ -45,7 +44,6 @@ namespace PubComp.Caching.AopCaching
 
             this.className = type.FullName;
             this.methodName = method.Name;
-            this.returnType = GetReturnType(method);
             var parameters = method.GetParameters();
             this.parameterTypeNames = parameters.Select(p => p.ParameterType.FullName).ToArray();
 
@@ -82,7 +80,8 @@ namespace PubComp.Caching.AopCaching
 
             var key = GetCacheKey(args);
             var result = cacheToUse.Get<object>(key, () => { base.OnInvoke(args); return args.ReturnValue; });
-            args.ReturnValue = SafeCasting.CastTo(this.returnType, result);
+            var returnType = GetReturnType(args.Method);
+            args.ReturnValue = SafeCasting.CastTo(returnType, result);
         }
 
         /// <inheritdoc />
@@ -104,7 +103,8 @@ namespace PubComp.Caching.AopCaching
             {
                 var key = GetCacheKey(args);
                 var result = await cacheToUse.GetAsync(key, async () => { await base.OnInvokeAsync(args); return args.ReturnValue; });
-                args.ReturnValue = SafeCasting.CastTo(this.returnType, result);
+                var returnType = GetReturnType(args.Method);
+                args.ReturnValue = SafeCasting.CastTo(returnType, result);
             }
         }
 
@@ -129,7 +129,7 @@ namespace PubComp.Caching.AopCaching
         {
             var returnType = (method as MethodInfo)?.ReturnType;
 
-            if (returnType != null && 
+            if (returnType != null &&
                 returnType.IsGenericType &&
                 returnType.GetGenericTypeDefinition() == typeof(Task<>))
             {

@@ -3,10 +3,10 @@ using System.Reflection;
 [assembly: AssemblyCompany("Public Components by Danny Varod")]
 [assembly: AssemblyTrademark("https://github.com/pub-comp/caching")]
 
-[assembly: AssemblyFileVersion("3.1.3")]
+[assembly: AssemblyFileVersion("3.1.4")]
 
 #if DEBUG
-    [assembly: AssemblyInformationalVersion("3.1.3-PreRelease0")]
+    [assembly: AssemblyInformationalVersion("3.1.4-PreRelease0")]
 #else
-    [assembly: AssemblyInformationalVersion("3.1.3")]
+    [assembly: AssemblyInformationalVersion("3.1.4")]
 #endif
