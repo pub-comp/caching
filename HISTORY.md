@@ -109,3 +109,6 @@
 
 ### 3.1.3:
 	* Fixed connection issue when using RedisCache with a DNS
+	
+### 3.1.4:
+	* Move the the logic of AOP safe casting to runtime (instead of compile time) to avoid a breaking change
