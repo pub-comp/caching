@@ -90,7 +90,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             var service = new Service2();
             var result = service.MethodToCache1(2);
 
-            LinqAssert.AreSame(new [] { "1", "2" }, result);
+            LinqAssert.AreSame(new[] { "1", "2" }, result);
             LinqAssert.AreSame(new[] { "1", "2" }, result);
         }
 
@@ -102,7 +102,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             var service = new Service2();
             IEnumerable<string> result;
-            
+
             result = service.MethodToCache1(2.0);
             Assert.AreEqual(0, cache2.Hits);
             Assert.AreEqual(2, cache2.Misses);
@@ -133,22 +133,22 @@ namespace PubComp.Caching.AopCaching.UnitTests
             var service = new Service1();
             string result;
 
-            result = service.MethodToCache1(11, new MockObject(1111));
+            result = service.MethodToCache1(11, new MockObject { Data = 1111 });
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(2, cache1.Misses);
             Assert.AreEqual("111111", result);
 
-            result = service.MethodToCache1(11, new MockObject(2222));
+            result = service.MethodToCache1(11, new MockObject { Data = 2222 });
             Assert.AreEqual(1, cache1.Hits);
             Assert.AreEqual(2, cache1.Misses);
             Assert.AreEqual("111111", result);
 
-            result = service.MethodToCache1(22, new MockObject(2222));
+            result = service.MethodToCache1(22, new MockObject { Data = 2222 });
             Assert.AreEqual(1, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual("222222", result);
 
-            result = service.MethodToCache1(11, new MockObject(2222));
+            result = service.MethodToCache1(11, new MockObject { Data = 2222 });
             Assert.AreEqual(2, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual("111111", result);
@@ -163,22 +163,22 @@ namespace PubComp.Caching.AopCaching.UnitTests
             var service = new Service1();
             string result;
 
-            result = await service.MethodToCache1Async(11, new MockObject(1111));
+            result = await service.MethodToCache1Async(11, new MockObject { Data = 1111 });
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(2, cache1.Misses);
             Assert.AreEqual("111111", result);
 
-            result = await service.MethodToCache1Async(11, new MockObject(2222));
+            result = await service.MethodToCache1Async(11, new MockObject { Data = 2222 });
             Assert.AreEqual(1, cache1.Hits);
             Assert.AreEqual(2, cache1.Misses);
             Assert.AreEqual("111111", result);
 
-            result = await service.MethodToCache1Async(22, new MockObject(2222));
+            result = await service.MethodToCache1Async(22, new MockObject { Data = 2222 });
             Assert.AreEqual(1, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual("222222", result);
 
-            result = await service.MethodToCache1Async(11, new MockObject(2222));
+            result = await service.MethodToCache1Async(11, new MockObject { Data = 2222 });
             Assert.AreEqual(2, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual("111111", result);
@@ -353,7 +353,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             var methodInfo = typeof(Service1).GetMethod(nameof(Service1.MethodToCache1), new[] { typeof(double) });
 
             var service = new Service1();
-            
+
             service.MethodToCache1(5.0);
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(2, cache1.Misses);
