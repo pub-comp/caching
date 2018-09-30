@@ -176,7 +176,7 @@ namespace PubComp.Caching.AopCaching
             {
                 var doNotIncludeInCacheKey =
                     parameters[cnt].CustomAttributes
-                        .Any(a => a.GetType() == typeof(DoNotIncludeInCacheKeyAttribute));
+                        .Any(a => a.AttributeType == typeof(DoNotIncludeInCacheKeyAttribute));
 
                 if (doNotIncludeInCacheKey)
                     indexes.Add(cnt);
