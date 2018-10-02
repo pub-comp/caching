@@ -54,7 +54,7 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
         [Cache]
         public Task<string> MethodToCache1Async(int id, [DoNotIncludeInCacheKey] object obj)
         {
-            return Task.FromResult(id.ToString() + (obj != null ? obj.GetHashCode() : 0));
+            return Task.FromResult(id.ToString() + ((obj as MockObject)?.Data ?? 0));
         }
 
         [Cache]

@@ -115,3 +115,7 @@
 
 ### 3.1.5:
 	* Fix DoNotIncludeInCacheKeyAttribute not effecting parameters
+
+### 3.1.6:
+	* Fix DoNotIncludeInCacheKeyAttribute in CacheListAttribute not working
+
