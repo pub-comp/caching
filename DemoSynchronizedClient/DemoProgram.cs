@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using NLog;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.Notifications;
 
@@ -12,6 +13,19 @@ namespace PubComp.Caching.DemoSynchronizedClient
         const string LocalCacheWithNotifier = "MyApp.LocalCacheWithNotifier";
 
         static void Main(string[] args)
+        {
+            try
+            {
+                Run(args);
+            }
+            catch (Exception ex)
+            {
+                LogManager.GetLogger(typeof(DemoProgram).FullName).Error(ex);
+                throw;
+            }
+        }
+
+        static void Run(string[] args)
         {
             Console.WriteLine($"{nameof(DemoProgram)} has started...");
 
