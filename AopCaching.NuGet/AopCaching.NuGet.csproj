@@ -40,7 +40,6 @@
     <SkipPostSharp>True</SkipPostSharp>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="NuGetPack.config" />
     <None Include="internalPackages.config" />
     <None Include="packages.config" />
   </ItemGroup>
