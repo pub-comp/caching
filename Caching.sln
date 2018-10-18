@@ -46,9 +46,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExtended", "WebApiExt
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExtended.NuGet", "WebApiExtended.NuGet\WebApiExtended.NuGet.csproj", "{F1AF6540-8BA2-41E1-90B9-9691E0838EE8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching", "RedisCaching\RedisCaching.csproj", "{222025FC-2D4C-4A4D-B4F9-B874CFE6507F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching.NuGet", "RedisCaching.NuGet\RedisCaching.NuGet.csproj", "{66171FCC-70F4-4313-BACD-61802466FAF0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisCaching", "RedisCaching\RedisCaching.csproj", "{222025FC-2D4C-4A4D-B4F9-B874CFE6507F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCaching.UnitTests", "RedisCaching.UnitTests\RedisCaching.UnitTests.csproj", "{F269276A-2B35-44C3-8F7A-2F414DA67F92}"
 EndProject
@@ -114,10 +112,6 @@ Global
 		{222025FC-2D4C-4A4D-B4F9-B874CFE6507F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{222025FC-2D4C-4A4D-B4F9-B874CFE6507F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{222025FC-2D4C-4A4D-B4F9-B874CFE6507F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{66171FCC-70F4-4313-BACD-61802466FAF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{66171FCC-70F4-4313-BACD-61802466FAF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{66171FCC-70F4-4313-BACD-61802466FAF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{66171FCC-70F4-4313-BACD-61802466FAF0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F269276A-2B35-44C3-8F7A-2F414DA67F92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F269276A-2B35-44C3-8F7A-2F414DA67F92}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F269276A-2B35-44C3-8F7A-2F414DA67F92}.Release|Any CPU.ActiveCfg = Release|Any CPU
