@@ -34,8 +34,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".NuGetPack", ".NuGetPack", 
 		.NuGetPack\NuGetPack.exe = .NuGetPack\NuGetPack.exe
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemRuntime.NuGet", "SystemRuntime.NuGet\SystemRuntime.NuGet.csproj", "{C90A075A-F097-4C54-A239-67D8F9718CE0}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbCaching", "MongoDbCaching\MongoDbCaching.csproj", "{7443DBD0-65DB-4BBE-A1E7-D8BC0C55F2F5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbCaching.UnitTests", "MongoDbCaching.UnitTests\MongoDbCaching.UnitTests.csproj", "{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}"
@@ -84,10 +82,6 @@ Global
 		{B13C47F2-BAC2-4682-A6F8-0999B7E5212C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B13C47F2-BAC2-4682-A6F8-0999B7E5212C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B13C47F2-BAC2-4682-A6F8-0999B7E5212C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C90A075A-F097-4C54-A239-67D8F9718CE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C90A075A-F097-4C54-A239-67D8F9718CE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C90A075A-F097-4C54-A239-67D8F9718CE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C90A075A-F097-4C54-A239-67D8F9718CE0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7443DBD0-65DB-4BBE-A1E7-D8BC0C55F2F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7443DBD0-65DB-4BBE-A1E7-D8BC0C55F2F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7443DBD0-65DB-4BBE-A1E7-D8BC0C55F2F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
