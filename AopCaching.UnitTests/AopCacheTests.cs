@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core;
 using PubComp.Caching.AopCaching.UnitTests.Mocks;
-using PubComp.Testing.TestingUtils;
 
 namespace PubComp.Caching.AopCaching.UnitTests
 {
@@ -90,8 +90,8 @@ namespace PubComp.Caching.AopCaching.UnitTests
             var service = new Service2();
             var result = service.MethodToCache1(2);
 
-            LinqAssert.AreSame(new[] { "1", "2" }, result);
-            LinqAssert.AreSame(new[] { "1", "2" }, result);
+           CollectionAssert.AreEqual(new[] { "1", "2" }, result.ToArray());
+           CollectionAssert.AreEqual(new[] { "1", "2" }, result.ToArray());
         }
 
         [TestMethod]
@@ -106,22 +106,22 @@ namespace PubComp.Caching.AopCaching.UnitTests
             result = service.MethodToCache1(2.0);
             Assert.AreEqual(0, cache2.Hits);
             Assert.AreEqual(2, cache2.Misses);
-            LinqAssert.AreSame(new[] { "0.9", "1.9" }, result);
+           CollectionAssert.AreEqual(new[] { "0.9", "1.9" }, result.ToArray());
 
             result = service.MethodToCache1(2.0);
             Assert.AreEqual(1, cache2.Hits);
             Assert.AreEqual(2, cache2.Misses);
-            LinqAssert.AreSame(new[] { "0.9", "1.9" }, result);
+           CollectionAssert.AreEqual(new[] { "0.9", "1.9" }, result.ToArray());
 
             result = service.MethodToCache1(2);
             Assert.AreEqual(1, cache2.Hits);
             Assert.AreEqual(4, cache2.Misses);
-            LinqAssert.AreSame(new[] { "1", "2" }, result);
+           CollectionAssert.AreEqual(new[] { "1", "2" }, result.ToArray());
 
             result = service.MethodToCache1(2);
             Assert.AreEqual(2, cache2.Hits);
             Assert.AreEqual(4, cache2.Misses);
-            LinqAssert.AreSame(new[] { "1", "2" }, result);
+           CollectionAssert.AreEqual(new[] { "1", "2" }, result.ToArray());
         }
 
         [TestMethod]
