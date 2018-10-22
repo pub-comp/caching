@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core", "Core\Core.csproj", "{57585B9A-7003-461A-B812-CA48603C839F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemRuntime", "SystemRuntime\SystemRuntime.csproj", "{F9ED87DD-4AC8-48D7-BAF0-EDB8992EC937}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SystemRuntime", "SystemRuntime\SystemRuntime.csproj", "{F9ED87DD-4AC8-48D7-BAF0-EDB8992EC937}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AopCaching", "AopCaching\AopCaching.csproj", "{E0DD5E37-1A57-4EA3-A45E-EC9F27F6E519}"
 EndProject
@@ -38,11 +38,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbCaching", "MongoDbCa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbCaching.UnitTests", "MongoDbCaching.UnitTests\MongoDbCaching.UnitTests.csproj", "{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbCaching.NuGet", "MongoDbCaching.NuGet\MongoDbCaching.NuGet.csproj", "{0E13EAB4-0860-4BF9-AA88-08E7C4D18DDD}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExtended", "WebApiExtended\WebApiExtended.csproj", "{71227AFD-AD23-41F4-A888-795563F58B82}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExtended.NuGet", "WebApiExtended.NuGet\WebApiExtended.NuGet.csproj", "{F1AF6540-8BA2-41E1-90B9-9691E0838EE8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisCaching", "RedisCaching\RedisCaching.csproj", "{222025FC-2D4C-4A4D-B4F9-B874CFE6507F}"
 EndProject
@@ -90,18 +86,10 @@ Global
 		{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0E13EAB4-0860-4BF9-AA88-08E7C4D18DDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0E13EAB4-0860-4BF9-AA88-08E7C4D18DDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0E13EAB4-0860-4BF9-AA88-08E7C4D18DDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0E13EAB4-0860-4BF9-AA88-08E7C4D18DDD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{71227AFD-AD23-41F4-A888-795563F58B82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{71227AFD-AD23-41F4-A888-795563F58B82}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{71227AFD-AD23-41F4-A888-795563F58B82}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{71227AFD-AD23-41F4-A888-795563F58B82}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F1AF6540-8BA2-41E1-90B9-9691E0838EE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F1AF6540-8BA2-41E1-90B9-9691E0838EE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F1AF6540-8BA2-41E1-90B9-9691E0838EE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F1AF6540-8BA2-41E1-90B9-9691E0838EE8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{222025FC-2D4C-4A4D-B4F9-B874CFE6507F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{222025FC-2D4C-4A4D-B4F9-B874CFE6507F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{222025FC-2D4C-4A4D-B4F9-B874CFE6507F}.Release|Any CPU.ActiveCfg = Release|Any CPU
