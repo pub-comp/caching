@@ -40,13 +40,13 @@ namespace PubComp.Caching.RedisCaching
             client.Database.StringSet(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always, CommandFlags.FireAndForget);
         }
 
-        internal Task SetItemAsync<TValue>(CacheItem<TValue> cacheItem)
+        internal async Task SetItemAsync<TValue>(CacheItem<TValue> cacheItem)
         {
             TimeSpan? expiry = null;
             if (cacheItem.ExpireIn.HasValue)
                 expiry = cacheItem.ExpireIn;
 
-            return client.Database
+            await client.Database
                 .StringSetAsync(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always,
                     CommandFlags.FireAndForget);
         }
@@ -82,6 +82,12 @@ namespace PubComp.Caching.RedisCaching
                 ExpireById(cacheItem.Id, cacheItem.ExpireIn.Value);
         }
 
+        internal async Task SetExpirationTimeAsync<TValue>(CacheItem<TValue> cacheItem)
+        {
+            if (cacheItem.ExpireIn.HasValue)
+                await ExpireByIdAsync(cacheItem.Id, cacheItem.ExpireIn.Value);
+        }
+
         internal void ExpireItemIn<TValue>(String cacheName, String key, TimeSpan timeSpan)
         {
             var id = CacheItem<TValue>.GetId(cacheName, key);
@@ -93,16 +99,21 @@ namespace PubComp.Caching.RedisCaching
             client.Database.KeyExpire(id, timeSpan, CommandFlags.FireAndForget);
         }
 
+        private async Task ExpireByIdAsync(string id, TimeSpan timeSpan)
+        {
+            await client.Database.KeyExpireAsync(id, timeSpan, CommandFlags.FireAndForget);
+        }
+
         internal void RemoveItem(String cacheName, String key)
         {
             var id = CacheItem<object>.GetId(cacheName, key);
             client.Database.KeyDelete(id, CommandFlags.FireAndForget);
         }
 
-        internal Task RemoveItemAsync(String cacheName, String key)
+        internal async Task RemoveItemAsync(String cacheName, String key)
         {
             var id = CacheItem<object>.GetId(cacheName, key);
-            return client.Database.KeyDeleteAsync(id, CommandFlags.FireAndForget);
+            await client.Database.KeyDeleteAsync(id, CommandFlags.FireAndForget);
         }
 
         internal void ClearItems(String cacheName)
@@ -112,11 +123,11 @@ namespace PubComp.Caching.RedisCaching
             client.Database.KeyDelete(keys, CommandFlags.FireAndForget);
         }
 
-        internal Task ClearItemsAsync(String cacheName)
+        internal async Task ClearItemsAsync(String cacheName)
         {
             var keyPrefix = CacheItem<object>.GetId(cacheName, string.Empty);
             var keys = client.MasterServer.Keys(0, string.Format("*{0}*", keyPrefix), 1000, CommandFlags.None).ToArray();
-            return client.Database.KeyDeleteAsync(keys, CommandFlags.FireAndForget);
+            await client.Database.KeyDeleteAsync(keys, CommandFlags.FireAndForget);
         }
 
         public void Dispose()

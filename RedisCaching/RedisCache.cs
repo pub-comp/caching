@@ -129,7 +129,7 @@ namespace PubComp.Caching.RedisCaching
                 return newValue;
             }
 
-            var prevValue = GetCacheItem<TValue>(context, key);
+            var prevValue = await GetCacheItemAsync<TValue>(context, key);
             if (!doForceOverride && prevValue != null && prevValue.Value is TValue)
                 return prevValue.Value;
             
@@ -174,14 +174,40 @@ namespace PubComp.Caching.RedisCaching
             }
         }
 
+        private async Task ResetExpirationTimeAsync<TValue>(CacheContext context, CacheItem<TValue> cacheItem)
+        {
+            if (expireWithin.HasValue && useSlidingExpiration)
+            {
+                await context.SetIfNotExistsAsync(cacheItem);
+                cacheItem.ExpireIn = expireWithin.Value;
+                await context.SetExpirationTimeAsync(cacheItem);
+            }
+        }
+
         public bool TryGet<TValue>(string key, out TValue value)
         {
             return TryGetInner(key, out value);
         }
 
-        public Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
+        public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
         {
-            throw new NotImplementedException();
+            var cacheItem = await GetCacheItemAsync<TValue>(InnerCache, key);
+
+            if (cacheItem != null)
+            {
+                await ResetExpirationTimeAsync(InnerCache, cacheItem);
+                return new TryGetResult<TValue>
+                {
+                    Value = cacheItem.Value,
+                    WasFound = true
+                };
+            }
+
+            return new TryGetResult<TValue>
+            {
+                Value = default(TValue),
+                WasFound = false
+            };
         }
 
         public void Set<TValue>(string key, TValue value)
@@ -232,13 +258,12 @@ namespace PubComp.Caching.RedisCaching
 
         public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
-            // ReSharper disable once InlineOutVariableDeclaration
-            TValue value;
-            if (TryGetInner(key, out value))
-                return value;
+            var result = await TryGetAsync<TValue>(key);
+            if (result.WasFound)
+                return result.Value;
 
-            value = await getter();
-            return GetOrAdd(InnerCache, key, value);
+            result.Value = await getter();
+            return await GetOrAddAsync(InnerCache, key, result.Value);
         }
 
         public void Clear(String key)
@@ -246,9 +271,9 @@ namespace PubComp.Caching.RedisCaching
             InnerCache.RemoveItem(this.Name, key);
         }
 
-        public Task ClearAsync(string key)
+        public async Task ClearAsync(string key)
         {
-            return InnerCache.RemoveItemAsync(this.Name, key);
+            await InnerCache.RemoveItemAsync(this.Name, key);
         }
 
         public void ClearAll()
@@ -256,9 +281,9 @@ namespace PubComp.Caching.RedisCaching
             InnerCache.ClearItems(this.Name);
         }
 
-        public Task ClearAllAsync()
+        public async Task ClearAllAsync()
         {
-            return InnerCache.ClearItemsAsync(this.Name);
+            await InnerCache.ClearItemsAsync(this.Name);
         }
     }
 }
