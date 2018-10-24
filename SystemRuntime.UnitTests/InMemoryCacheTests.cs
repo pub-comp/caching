@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PubComp.Testing.TestingUtils;
 using PubComp.Caching.Core.UnitTests;
 
 namespace PubComp.Caching.SystemRuntime.UnitTests
@@ -103,12 +103,12 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             IEnumerable<object> result;
 
             result = cache.Get("key", getter);
-            LinqAssert.AreSame(new object[] { "1" }, result);
+            CollectionAssert.AreEqual(new object[] { "1" }, result.ToArray());
 
             value.Add("2");
 
             result = cache.Get("key", getter);
-            LinqAssert.AreSame(new object[] { "1", "2" }, result);
+            CollectionAssert.AreEqual(new object[] { "1", "2" }, result.ToArray());
         }
 
         [TestMethod]
