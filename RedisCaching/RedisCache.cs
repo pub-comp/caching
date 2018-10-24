@@ -133,7 +133,7 @@ namespace PubComp.Caching.RedisCaching
             if (!doForceOverride && prevValue != null && prevValue.Value is TValue)
                 return prevValue.Value;
             
-            await context.SetItemAsync(newItem);
+            await context.SetItemAsync(newItem).ConfigureAwait(false);
 
             return newValue;
         }

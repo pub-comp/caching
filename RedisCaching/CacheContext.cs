@@ -62,17 +62,22 @@ namespace PubComp.Caching.RedisCaching
 
         internal async Task<bool> SetIfNotExistsAsync<TValue>(CacheItem<TValue> cacheItem)
         {
-            if (Contains(cacheItem.Id))
+            if (await ContainsAsync(cacheItem.Id).ConfigureAwait(false))
             {
                 return false;
             }
-            await SetItemAsync(cacheItem);
+            await SetItemAsync(cacheItem).ConfigureAwait(false);
             return true;
         }
 
         private bool Contains(string key)
         {
             return client.Database.KeyExists(key);
+        }
+
+        private Task<bool> ContainsAsync(string key)
+        {
+            return client.Database.KeyExistsAsync(key);
         }
 
         internal void SetExpirationTime<TValue>(CacheItem<TValue> cacheItem)
@@ -84,7 +89,7 @@ namespace PubComp.Caching.RedisCaching
         internal async Task SetExpirationTimeAsync<TValue>(CacheItem<TValue> cacheItem)
         {
             if (cacheItem.ExpireIn.HasValue)
-                await ExpireByIdAsync(cacheItem.Id, cacheItem.ExpireIn.Value);
+                await ExpireByIdAsync(cacheItem.Id, cacheItem.ExpireIn.Value).ConfigureAwait(false);
         }
 
         internal void ExpireItemIn<TValue>(String cacheName, String key, TimeSpan timeSpan)
