@@ -18,7 +18,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
     public class RedisCacheTests
     {
         private readonly string connectionString = @"127.0.0.1:6379,serviceName=mymaster";
-        
+
         [TestMethod]
         public void TestRedisCacheBasic()
         {
@@ -707,6 +707,40 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             var fromCache = GeStructValue(5);
 
             Assert.AreEqual(expected, fromCache);
+        }
+
+        [TestMethod]
+        public async Task TestRedisCacheTryGetAsync()
+        {
+            var cache = new RedisCache(
+                "cache1",
+                new RedisCachePolicy
+                {
+                    ConnectionString = connectionString,
+                });
+            cache.ClearAll();
+            cache.Set("key", "1");
+
+            var result = await cache.TryGetAsync<string>("key");
+            Assert.AreEqual("1", result.Value);
+            Assert.IsTrue(result.WasFound);
+        }
+
+        [TestMethod]
+        public async Task TestRedisCacheTryGetAsync_NotFound()
+        {
+            var cache = new RedisCache(
+                "cache1",
+                new RedisCachePolicy
+                {
+                    ConnectionString = connectionString,
+                });
+            cache.ClearAll();
+            cache.Set("key", "1");
+
+            var result = await cache.TryGetAsync<string>("wrongKey");
+            Assert.AreEqual(null, result.Value);
+            Assert.IsFalse(result.WasFound);
         }
 
         #region Methods with AOP redis caching
