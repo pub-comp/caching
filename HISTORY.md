@@ -122,3 +122,6 @@
 ### 4.0.0:
 	* Update RedisCaching to StackExchange.Redis v2
 	* Change minimum .NET Framework version from 4.5 to 4.6.1 in all projects
+
+### 4.0.1
+	* Added TryGetAsync implementation to RedisCache and made CacheContext async.
