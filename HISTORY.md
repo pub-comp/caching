@@ -112,3 +112,6 @@
 	
 ### 3.1.4:
 	* Move the the logic of AOP safe casting to runtime (instead of compile time) to avoid a breaking change
+
+### 3.1.5:
+	* Added TryGetAsync implementation to RedisCache and made CacheContext async.
