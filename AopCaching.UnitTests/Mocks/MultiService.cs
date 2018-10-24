@@ -16,7 +16,7 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
         [CacheList(typeof(MockDataKeyConverter))]
         public IList<MockData> GetItems(IList<string> keys, [DoNotIncludeInCacheKey]object obj)
         {
-            return keys.Select(k => new MockData { Id = k, Value = k + (obj != null ? obj.GetHashCode() : 0).ToString() }).ToList();
+            return keys.Select(k => new MockData { Id = k, Value = k + ((obj as MockObject)?.Data ?? 0).ToString() }).ToList();
         }
 
         [CacheList(typeof(MockDataKeyConverter))]
@@ -29,7 +29,7 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
         public Task<IList<MockData>> GetItemsAsync(IList<string> keys, [DoNotIncludeInCacheKey]object obj)
         {
             return Task.Run<IList<MockData>>(() =>
-                keys.Select(k => new MockData {Id = k, Value = k + (obj != null ? obj.GetHashCode() : 0).ToString()})
+                keys.Select(k => new MockData {Id = k, Value = k + ((obj as MockObject)?.Data ?? 0).ToString()})
                     .ToList());
         }
     }

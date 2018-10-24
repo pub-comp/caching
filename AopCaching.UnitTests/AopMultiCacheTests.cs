@@ -299,7 +299,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             var service = new MultiService();
             IList<MockData> results;
 
-            results = service.GetItems(new[] { "a", "b", "c" }, new MockObject(1111));
+            results = service.GetItems(new[] { "a", "b", "c" }, new MockObject { Data = 1111 });
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
             Assert.AreEqual(3, results.Count);
@@ -310,7 +310,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual("c", results[2].Id);
             Assert.AreEqual("c1111", results[2].Value);
 
-            results = service.GetItems(new[] { "a", "b", "d" }, new MockObject(2222));
+            results = service.GetItems(new[] { "a", "b", "d" }, new MockObject { Data = 2222 });
             Assert.AreEqual(2, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual(3, results.Count);
@@ -331,7 +331,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             var service = new MultiService();
             IList<MockData> results;
 
-            results = await service.GetItemsAsync(new[] { "a", "b", "c" }, new MockObject(1111));
+            results = await service.GetItemsAsync(new[] { "a", "b", "c" }, new MockObject { Data = 1111 });
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
             Assert.AreEqual(3, results.Count);
@@ -342,7 +342,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual("c", results[2].Id);
             Assert.AreEqual("c1111", results[2].Value);
 
-            results = await service.GetItemsAsync(new[] { "a", "b", "d" }, new MockObject(2222));
+            results = await service.GetItemsAsync(new[] { "a", "b", "d" }, new MockObject { Data = 2222 });
             Assert.AreEqual(2, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual(3, results.Count);
