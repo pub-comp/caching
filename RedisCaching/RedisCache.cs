@@ -160,7 +160,7 @@ namespace PubComp.Caching.RedisCaching
 
         private async Task<CacheItem<TValue>> GetCacheItemAsync<TValue>(CacheContext context, string key)
         {
-            var cacheItem = await context.GetItemAsync<TValue>(this.Name, key);
+            var cacheItem = await context.GetItemAsync<TValue>(Name, key);
             return cacheItem;
         }
 
@@ -268,22 +268,22 @@ namespace PubComp.Caching.RedisCaching
 
         public void Clear(String key)
         {
-            InnerCache.RemoveItem(this.Name, key);
+            InnerCache.RemoveItem(Name, key);
         }
 
-        public async Task ClearAsync(string key)
+        public Task ClearAsync(string key)
         {
-            await InnerCache.RemoveItemAsync(this.Name, key);
+            return InnerCache.RemoveItemAsync(Name, key);
         }
 
         public void ClearAll()
         {
-            InnerCache.ClearItems(this.Name);
+            InnerCache.ClearItems(Name);
         }
 
-        public async Task ClearAllAsync()
+        public Task ClearAllAsync()
         {
-            await InnerCache.ClearItemsAsync(this.Name);
+            return InnerCache.ClearItemsAsync(Name);
         }
     }
 }
