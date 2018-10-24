@@ -48,7 +48,7 @@ namespace PubComp.Caching.RedisCaching
 
             await client.Database
                 .StringSetAsync(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always,
-                    CommandFlags.FireAndForget);
+                    CommandFlags.FireAndForget).ConfigureAwait(false);
         }
 
         internal bool SetIfNotExists<TValue>(CacheItem<TValue> cacheItem)
@@ -101,7 +101,7 @@ namespace PubComp.Caching.RedisCaching
 
         private async Task ExpireByIdAsync(string id, TimeSpan timeSpan)
         {
-            await client.Database.KeyExpireAsync(id, timeSpan, CommandFlags.FireAndForget);
+            await client.Database.KeyExpireAsync(id, timeSpan, CommandFlags.FireAndForget).ConfigureAwait(false);
         }
 
         internal void RemoveItem(String cacheName, String key)
@@ -113,7 +113,7 @@ namespace PubComp.Caching.RedisCaching
         internal async Task RemoveItemAsync(String cacheName, String key)
         {
             var id = CacheItem<object>.GetId(cacheName, key);
-            await client.Database.KeyDeleteAsync(id, CommandFlags.FireAndForget);
+            await client.Database.KeyDeleteAsync(id, CommandFlags.FireAndForget).ConfigureAwait(false);
         }
 
         internal void ClearItems(String cacheName)
@@ -127,7 +127,7 @@ namespace PubComp.Caching.RedisCaching
         {
             var keyPrefix = CacheItem<object>.GetId(cacheName, string.Empty);
             var keys = client.MasterServer.Keys(0, string.Format("*{0}*", keyPrefix), 1000, CommandFlags.None).ToArray();
-            await client.Database.KeyDeleteAsync(keys, CommandFlags.FireAndForget);
+            await client.Database.KeyDeleteAsync(keys, CommandFlags.FireAndForget).ConfigureAwait(false);
         }
 
         public void Dispose()
