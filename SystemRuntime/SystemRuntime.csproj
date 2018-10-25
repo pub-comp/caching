@@ -9,8 +9,8 @@
     <FileVersion>4.1.0.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" version="11.0.2" />
-    <PackageReference Include="System.Runtime.Caching" version="4.5.0" />
+    <!--<PackageReference Include="Newtonsoft.Json" version="11.0.2" />-->
+  <PackageReference Include="System.Runtime.Caching" version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />

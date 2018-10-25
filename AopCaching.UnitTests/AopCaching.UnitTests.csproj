@@ -9,8 +9,6 @@
     <PackageReference Include="MSTest.TestFramework" Version="1.2.0" />
     <PackageReference Include="PostSharp" version="6.0.28" />
     <PackageReference Include="PostSharp.Redist" version="6.0.28" />
-    <PackageReference Include="PubComp.Testing.TestingUtils" version="1.0.0" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" version="4.5.0" />
     <PackageReference Include="System.Runtime.Caching" version="4.5.0" />
   </ItemGroup>
   <ItemGroup>

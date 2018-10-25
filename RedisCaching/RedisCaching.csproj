@@ -9,11 +9,14 @@
     <FileVersion>4.1.0.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" version="11.0.2" />
+    <PackageReference Include="Newtonsoft.Json.Bson" version="1.0.1" />
+    <PackageReference Include="NLog" version="4.5.10" />
+    <PackageReference Include="StackExchange.Redis" version="2.0.505" />
+    <!--<PackageReference Include="Newtonsoft.Json" version="11.0.2" />
     <PackageReference Include="Newtonsoft.Json.Bson" version="1.0.1" />
     <PackageReference Include="NLog" version="4.5.10" />
     <PackageReference Include="Pipelines.Sockets.Unofficial" version="1.0.0" />
-    <PackageReference Include="StackExchange.Redis" version="2.0.505" />
+    
     <PackageReference Include="System.Buffers" version="4.5.0" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" version="4.5.0" />
     <PackageReference Include="System.IO.Pipelines" version="4.5.0" />
@@ -21,7 +24,7 @@
     <PackageReference Include="System.Numerics.Vectors" version="4.4.0" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" version="4.5.0" />
     <PackageReference Include="System.Threading.Channels" version="4.5.0" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" version="4.5.0" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" version="4.5.0" />-->
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
