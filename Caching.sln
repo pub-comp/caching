@@ -13,14 +13,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AopCaching.UnitTests", "Aop
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core.UnitTests", "Core.UnitTests\Core.UnitTests.csproj", "{37A614F4-EEA4-4643-9B33-21A1776366E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemRuntime.UnitTests", "SystemRuntime.UnitTests\SystemRuntime.UnitTests.csproj", "{B13C47F2-BAC2-4682-A6F8-0999B7E5212C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SystemRuntime.UnitTests", "SystemRuntime.UnitTests\SystemRuntime.UnitTests.csproj", "{B13C47F2-BAC2-4682-A6F8-0999B7E5212C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8C86540A-D5BD-4123-B01A-CFE26213261C}"
 	ProjectSection(SolutionItems) = preProject
 		HISTORY.md = HISTORY.md
 		License.txt = License.txt
 		README.md = README.md
-		VersionInfo.cs = VersionInfo.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{52259F7C-C90E-47A1-89C9-699F5E86D211}"
@@ -36,7 +35,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".NuGetPack", ".NuGetPack", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoDbCaching", "MongoDbCaching\MongoDbCaching.csproj", "{7443DBD0-65DB-4BBE-A1E7-D8BC0C55F2F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbCaching.UnitTests", "MongoDbCaching.UnitTests\MongoDbCaching.UnitTests.csproj", "{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoDbCaching.UnitTests", "MongoDbCaching.UnitTests\MongoDbCaching.UnitTests.csproj", "{3B3122D1-615A-4CFD-903A-5A89C8ACBAFC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiExtended", "WebApiExtended\WebApiExtended.csproj", "{71227AFD-AD23-41F4-A888-795563F58B82}"
 EndProject
@@ -44,11 +43,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisCaching", "RedisCachin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisCaching.UnitTests", "RedisCaching.UnitTests\RedisCaching.UnitTests.csproj", "{F269276A-2B35-44C3-8F7A-2F414DA67F92}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoSynchronizedClient", "DemoSynchronizedClient\DemoSynchronizedClient.csproj", "{204870FC-37CC-43C8-9798-98A2E243B2EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemoSynchronizedClient", "DemoSynchronizedClient\DemoSynchronizedClient.csproj", "{204870FC-37CC-43C8-9798-98A2E243B2EB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestHost.WebApi", "WebApi\TestHost.WebApi.csproj", "{241B561D-5A4F-49B4-ADF7-2E2C0FCEC631}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExtended.NETCore", "WebApiExtended.NETCore\WebApiExtended.NETCore.csproj", "{FAF640A8-7284-4587-8908-560E3BBFB56F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiExtended.NETCore", "WebApiExtended.NETCore\WebApiExtended.NETCore.csproj", "{FAF640A8-7284-4587-8908-560E3BBFB56F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

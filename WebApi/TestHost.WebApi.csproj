@@ -194,9 +194,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\VersionInfo.cs">
-      <Link>Properties\VersionInfo.cs</Link>
-    </Compile>
     <Compile Include="App_start\SwaggerConfig.cs" />
     <Compile Include="App_start\WebApiConfig.cs" />
     <Compile Include="Controllers\ExampleV1Controller.cs" />
