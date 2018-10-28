@@ -128,4 +128,4 @@
 
 ### 4.1.0:
 	* Migrate NuGet projects to .Net standard
-  * Migrate all projects to new csproj
+	* Migrate all projects to new csproj
