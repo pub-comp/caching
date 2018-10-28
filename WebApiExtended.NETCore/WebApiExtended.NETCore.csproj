@@ -2,7 +2,6 @@
   <PropertyGroup>
     <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
     <AssemblyName>PubComp.Caching.WebApiExtended.NETCore</AssemblyName>
-    <Version>4.1.0</Version>
     <RootNamespace>PubComp.Caching.WebApiExtended.NETCore</RootNamespace>
     <AssemblyVersion>4.1.0.0</AssemblyVersion>
     <FileVersion>4.1.0.0</FileVersion>

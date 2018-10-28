@@ -2,7 +2,6 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2</TargetFrameworks>
     <AssemblyName>PubComp.Caching.Core</AssemblyName>
-    <Version>4.1.0</Version>
     <RootNamespace>PubComp.Caching.Core</RootNamespace>
     <AssemblyVersion>4.1.0.0</AssemblyVersion>
     <FileVersion>4.1.0.0</FileVersion>
