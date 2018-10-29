@@ -7,10 +7,10 @@
   <ItemGroup>
     <PackageReference Include="MSTest.TestAdapter" Version="1.2.0" />
     <PackageReference Include="MSTest.TestFramework" Version="1.2.0" />
-    <PackageReference Include="Newtonsoft.Json" version="11.0.2" />
-    <PackageReference Include="NLog" version="4.5.10" />
-    <PackageReference Include="PostSharp" version="6.0.28" />
-    <PackageReference Include="System.Runtime.Caching" version="4.5.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="NLog" Version="4.5.10" />
+    <PackageReference Include="PostSharp" Version="6.0.28" />
+    <PackageReference Include="System.Runtime.Caching" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />

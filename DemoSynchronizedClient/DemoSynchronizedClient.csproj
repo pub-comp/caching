@@ -6,7 +6,7 @@
     <RootNamespace>PubComp.Caching.DemoSynchronizedClient</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <packageReference Include="NLog" version="4.5.10" />
+    <packageReference Include="NLog" Version="4.5.10" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />

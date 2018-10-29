@@ -7,9 +7,9 @@
     <FileVersion>4.1.0.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json.Bson" version="1.0.1" />
-    <PackageReference Include="NLog" version="4.5.10" />
-    <PackageReference Include="StackExchange.Redis" version="2.0.505" />
+    <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.1" />
+    <PackageReference Include="NLog" Version="4.5.10" />
+    <PackageReference Include="StackExchange.Redis" Version="2.0.505" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />

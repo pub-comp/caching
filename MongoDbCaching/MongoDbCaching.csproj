@@ -7,7 +7,7 @@
     <FileVersion>4.1.0.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="PubComp.NoSql.MongoDbDriver" version="4.1.0" />
+    <PackageReference Include="PubComp.NoSql.MongoDbDriver" Version="4.1.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />

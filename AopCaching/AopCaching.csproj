@@ -7,7 +7,7 @@
     <FileVersion>4.1.0.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="PostSharp" version="6.0.28" />
+    <PackageReference Include="PostSharp" Version="6.0.28" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
