@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core;
 using PubComp.Caching.AopCaching.UnitTests.Mocks;
-using PubComp.Testing.TestingUtils;
 
 namespace PubComp.Caching.AopCaching.UnitTests
 {
@@ -40,7 +40,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(1, cache1.Misses);
-            LinqAssert.Count(results, 1);
+            Assert.AreEqual(results.Count, 1);
         }
 
         [TestMethod]
@@ -50,23 +50,23 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual(0, cache1.Misses);
 
             var service = new MultiService();
-            var results = service.GetItems(new [] { "k1", "k2", "k3" });
+            var results = service.GetItems(new[] { "k1", "k2", "k3" });
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results, 3);
-            LinqAssert.Any(results, r => r.Id == "k1");
-            LinqAssert.Any(results, r => r.Id == "k2");
-            LinqAssert.Any(results, r => r.Id == "k3");
+            Assert.AreEqual(results.Count, 3);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k3");
 
             results = service.GetItems(new[] { "k1", "k2", "k3" });
 
             Assert.AreEqual(3, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results, 3);
-            LinqAssert.Any(results, r => r.Id == "k1");
-            LinqAssert.Any(results, r => r.Id == "k2");
-            LinqAssert.Any(results, r => r.Id == "k3");
+            Assert.AreEqual(results.Count, 3);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k3");
         }
 
         [TestMethod]
@@ -80,7 +80,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(1, cache1.Misses);
-            LinqAssert.Count(results, 1);
+            Assert.AreEqual(results.Count, 1);
         }
 
         [TestMethod]
@@ -94,19 +94,19 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results, 3);
-            LinqAssert.Any(results, r => r.Id == "k1");
-            LinqAssert.Any(results, r => r.Id == "k2");
-            LinqAssert.Any(results, r => r.Id == "k3");
+            Assert.AreEqual(results.Count, 3);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k3");
 
             results = await service.GetItemsAsync(new[] { "k1", "k2", "k3" });
 
             Assert.AreEqual(3, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results, 3);
-            LinqAssert.Any(results, r => r.Id == "k1");
-            LinqAssert.Any(results, r => r.Id == "k2");
-            LinqAssert.Any(results, r => r.Id == "k3");
+            Assert.AreEqual(results.Count, 3);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k3");
         }
 
         [TestMethod]
@@ -120,19 +120,19 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results, 3);
-            LinqAssert.Any(results, r => r.Id == "k1");
-            LinqAssert.Any(results, r => r.Id == "k2");
-            LinqAssert.Any(results, r => r.Id == "k3");
+            Assert.AreEqual(results.Count, 3);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k3");
 
             results = service.GetItems(new[] { "k1", "k2", "k3" });
 
             Assert.AreEqual(3, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results, 3);
-            LinqAssert.Any(results, r => r.Id == "k1");
-            LinqAssert.Any(results, r => r.Id == "k2");
-            LinqAssert.Any(results, r => r.Id == "k3");
+            Assert.AreEqual(results.Count, 3);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k3");
 
             // Note: must use List<string>, not string[] here in order to get correct key
             var key = CacheKey.GetKey(() => service.GetItems(new List<string> { "k2" }));
@@ -141,23 +141,23 @@ namespace PubComp.Caching.AopCaching.UnitTests
             results = service.GetItems(new[] { "k1" });
             Assert.AreEqual(4, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results, 1);
-            LinqAssert.Any(results, r => r.Id == "k1");
+            Assert.AreEqual(results.Count, 1);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k1");
 
             results = service.GetItems(new[] { "k2" });
             Assert.AreEqual(4, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
-            LinqAssert.Count(results, 1);
-            LinqAssert.Any(results, r => r.Id == "k2");
+            Assert.AreEqual(results.Count, 1);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k2");
 
             results = service.GetItems(new[] { "k1", "k2", "k3" });
 
             Assert.AreEqual(7, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
-            LinqAssert.Count(results, 3);
-            LinqAssert.Any(results, r => r.Id == "k1");
-            LinqAssert.Any(results, r => r.Id == "k2");
-            LinqAssert.Any(results, r => r.Id == "k3");
+            Assert.AreEqual(results.Count, 3);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k3");
         }
 
         [TestMethod]
@@ -171,21 +171,21 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results1, 3);
-            LinqAssert.Any(results1, r => r.Id == "k1");
-            LinqAssert.Any(results1, r => r.Id == "k2");
-            LinqAssert.Any(results1, r => r.Id == "k3");
+            Assert.AreEqual(results1.Count, 3);
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k3");
 
             var results2 = service.GetItems(new[] { "k5", "k2", "k1", "k4", "k3" });
 
             Assert.AreEqual(3, cache1.Hits);
             Assert.AreEqual(5, cache1.Misses);
-            LinqAssert.Count(results2, 5);
-            LinqAssert.Any(results2, r => r.Id == "k1");
-            LinqAssert.Any(results2, r => r.Id == "k2");
-            LinqAssert.Any(results2, r => r.Id == "k3");
-            LinqAssert.Any(results2, r => r.Id == "k4");
-            LinqAssert.Any(results2, r => r.Id == "k5");
+            Assert.AreEqual(results2.Count, 5);
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k3");
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k4");
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k5");
         }
 
         [TestMethod]
@@ -199,21 +199,21 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results1, 3);
-            LinqAssert.Any(results1, r => r.Id == "k1");
-            LinqAssert.Any(results1, r => r.Id == "k2");
-            LinqAssert.Any(results1, r => r.Id == "k3");
+            Assert.AreEqual(results1.Count, 3);
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k3");
 
             var results2 = await service.GetItemsAsync(new[] { "k5", "k2", "k1", "k4", "k3" });
 
             Assert.AreEqual(3, cache1.Hits);
             Assert.AreEqual(5, cache1.Misses);
-            LinqAssert.Count(results2, 5);
-            LinqAssert.Any(results2, r => r.Id == "k1");
-            LinqAssert.Any(results2, r => r.Id == "k2");
-            LinqAssert.Any(results2, r => r.Id == "k3");
-            LinqAssert.Any(results2, r => r.Id == "k4");
-            LinqAssert.Any(results2, r => r.Id == "k5");
+            Assert.AreEqual(results2.Count, 5);
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k3");
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k4");
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k5");
         }
 
         [TestMethod]
@@ -227,18 +227,18 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results1, 3);
-            LinqAssert.Any(results1, r => r.Id == "k1");
-            LinqAssert.Any(results1, r => r.Id == "k2");
-            LinqAssert.Any(results1, r => r.Id == "k3");
+            Assert.AreEqual(results1.Count, 3);
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k3");
 
             var results2 = service.GetItems(new[] { "k3", "k4" });
 
             Assert.AreEqual(1, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
-            LinqAssert.Count(results2, 2);
-            LinqAssert.Any(results2, r => r.Id == "k3");
-            LinqAssert.Any(results2, r => r.Id == "k4");
+            Assert.AreEqual(results2.Count, 2);
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k3");
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k4");
         }
 
         [TestMethod]
@@ -252,17 +252,17 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results1, 3);
-            LinqAssert.Any(results1, r => r.Id == "k1");
-            LinqAssert.Any(results1, r => r.Id == "k2");
-            LinqAssert.Any(results1, r => r.Id == "k3");
+            Assert.AreEqual(results1.Count, 3);
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k3");
 
             var results2 = service.GetItems(new[] { "k1" });
 
             Assert.AreEqual(1, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results2, 1);
-            LinqAssert.Any(results2, r => r.Id == "k1");
+            Assert.AreEqual(results2.Count, 1);
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k1");
         }
 
         [TestMethod]
@@ -276,18 +276,18 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results1, 3);
-            LinqAssert.Any(results1, r => r.Id == "k1");
-            LinqAssert.Any(results1, r => r.Id == "k2");
-            LinqAssert.Any(results1, r => r.Id == "k3");
+            Assert.AreEqual(results1.Count, 3);
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k1");
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k2");
+            CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k3");
 
             var results2 = service.GetItems(new[] { "k4", "k5" });
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(5, cache1.Misses);
-            LinqAssert.Count(results2, 2);
-            LinqAssert.Any(results2, r => r.Id == "k4");
-            LinqAssert.Any(results2, r => r.Id == "k5");
+            Assert.AreEqual(results2.Count, 2);
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k4");
+            CollectionAssert.Contains(results2.Select(x => x.Id).ToArray(), "k5");
         }
 
         [TestMethod]
@@ -369,19 +369,19 @@ namespace PubComp.Caching.AopCaching.UnitTests
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results, 3);
-            LinqAssert.Any(results, r => r.Id == id1);
-            LinqAssert.Any(results, r => r.Id == id2);
-            LinqAssert.Any(results, r => r.Id == id3);
+            Assert.AreEqual(results.Count, 3);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), id1);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), id2);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), id3);
 
             results = service.GetItems(new[] { id1, id2, id3 });
 
             Assert.AreEqual(3, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
-            LinqAssert.Count(results, 3);
-            LinqAssert.Any(results, r => r.Id == id1);
-            LinqAssert.Any(results, r => r.Id == id2);
-            LinqAssert.Any(results, r => r.Id == id3);
+            Assert.AreEqual(results.Count, 3);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), id1);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), id2);
+            CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), id3);
         }
     }
 }

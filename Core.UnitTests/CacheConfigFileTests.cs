@@ -6,7 +6,6 @@ using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core.Config;
 using PubComp.Caching.Core.UnitTests.Mocks;
-using PubComp.Testing.TestingUtils;
 
 namespace PubComp.Caching.Core.UnitTests
 {
@@ -27,22 +26,22 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.IsNotNull(config);
 
             Assert.AreEqual(15, config.Count);
-            LinqAssert.Count(config.OfType<CacheConfig>(), 4);
-            LinqAssert.Count(config.OfType<RemoveConfig>(), 5);
-            LinqAssert.Count(config.OfType<ConnectionStringConfig>(), 4);
-            LinqAssert.Count(config.OfType<NotifierConfig>(), 2);
+            Assert.AreEqual(config.OfType<CacheConfig>().Count(), 4);
+            Assert.AreEqual(config.OfType<RemoveConfig>().Count(), 5);
+            Assert.AreEqual(config.OfType<ConnectionStringConfig>().Count(), 4);
+            Assert.AreEqual(config.OfType<NotifierConfig>().Count(), 2);
 
-            LinqAssert.Any(config, c =>
+            Assert.IsTrue(config.Any(c =>
                 c.Action == ConfigAction.Add
                 && c.Name == "cacheFromConfig1"
-                && c is CacheConfig);
+                && c is CacheConfig));
 
-            LinqAssert.Any(config, c =>
+            Assert.IsTrue(config.Any(c =>
                 c.Action == ConfigAction.Add
                 && c.Name == "cacheFromConfig2"
-                && c is NoCacheConfig);
+                && c is NoCacheConfig));
 
-            LinqAssert.Any(config, c =>
+            Assert.IsTrue(config.Any(c =>
                 c.Action == ConfigAction.Add
                 && c.Name == "cacheFromConfig2"
                 && c is MockNoCacheConfig
@@ -50,28 +49,28 @@ namespace PubComp.Caching.Core.UnitTests
                 && ((MockNoCacheConfig)c).Policy.SlidingExpiration.HasValue
                 && ((MockNoCacheConfig)c).Policy.SlidingExpiration?.Minutes == 15
                 && ((MockNoCacheConfig)c).Policy.AbsoluteExpiration.HasValue == false
-                && ((MockNoCacheConfig)c).Policy.ExpirationFromAdd.HasValue == false);
+                && ((MockNoCacheConfig)c).Policy.ExpirationFromAdd.HasValue == false));
 
-            LinqAssert.Any(config, c =>
+            Assert.IsTrue(config.Any(c =>
                 c.Action == ConfigAction.Remove
                 && c.Name == "cacheFromConfig2"
-                && c is RemoveConfig);
+                && c is RemoveConfig));
 
-            LinqAssert.Any(config, c =>
+            Assert.IsTrue(config.Any(c =>
                 c.Action == ConfigAction.Add
                 && c.Name == "cacheFromConfig3"
                 && c is CacheConfig
-                && ((CacheConfig)c).CreateCache() is NoCache);
+                && ((CacheConfig)c).CreateCache() is NoCache));
 
-            LinqAssert.Any(config, c =>
+            Assert.IsTrue(config.Any(c =>
                 c.Action == ConfigAction.Remove
                 && c.Name == "cacheFromConfig3"
-                && c is RemoveConfig);
+                && c is RemoveConfig));
 
-            LinqAssert.Any(config, c =>
+            Assert.IsTrue(config.Any(c =>
                 c.Action == ConfigAction.Remove
                 && c.Name == "cacheFromConfig4"
-                && c is RemoveConfig);
+                && c is RemoveConfig));
         }
 
         [TestMethod]
