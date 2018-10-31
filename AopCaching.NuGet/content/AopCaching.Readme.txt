@@ -1,2 +1,0 @@
-﻿PubComp.Caching.AopCaching depends on PostSharp.
-A license for PostSharp can be obtained from http://www.postsharp.net/

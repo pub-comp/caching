@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -10,7 +11,6 @@ using PubComp.Caching.Core.UnitTests;
 using PubComp.Caching.DemoSynchronizedClient;
 using PubComp.Caching.RedisCaching.UnitTests.Mocks;
 using PubComp.Caching.SystemRuntime;
-using PubComp.Testing.TestingUtils;
 
 namespace PubComp.Caching.RedisCaching.UnitTests
 {
@@ -18,7 +18,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
     public class RedisCacheTests
     {
         private readonly string connectionString = @"127.0.0.1:6379,serviceName=mymaster";
-        
+
         [TestMethod]
         public void TestRedisCacheBasic()
         {
@@ -217,12 +217,12 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             IEnumerable<object> result;
 
             result = cache.Get("key", getter);
-            LinqAssert.AreSame(new object[] { "1" }, result);
+            CollectionAssert.AreEqual(new object[] { "1" }, result.ToArray());
 
             value.Add("2");
 
             result = cache.Get("key", getter);
-            LinqAssert.AreSame(new object[] { "1" }, result);
+            CollectionAssert.AreEqual(new object[] { "1" }, result.ToArray());
         }
 
         [TestMethod]
@@ -707,6 +707,40 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             var fromCache = GeStructValue(5);
 
             Assert.AreEqual(expected, fromCache);
+        }
+
+        [TestMethod]
+        public async Task TestRedisCacheTryGetAsync()
+        {
+            var cache = new RedisCache(
+                "cache1",
+                new RedisCachePolicy
+                {
+                    ConnectionString = connectionString,
+                });
+            cache.ClearAll();
+            cache.Set("key", "1");
+
+            var result = await cache.TryGetAsync<string>("key");
+            Assert.AreEqual("1", result.Value);
+            Assert.IsTrue(result.WasFound);
+        }
+
+        [TestMethod]
+        public async Task TestRedisCacheTryGetAsync_NotFound()
+        {
+            var cache = new RedisCache(
+                "cache1",
+                new RedisCachePolicy
+                {
+                    ConnectionString = connectionString,
+                });
+            cache.ClearAll();
+            cache.Set("key", "1");
+
+            var result = await cache.TryGetAsync<string>("wrongKey");
+            Assert.AreEqual(null, result.Value);
+            Assert.IsFalse(result.WasFound);
         }
 
         #region Methods with AOP redis caching

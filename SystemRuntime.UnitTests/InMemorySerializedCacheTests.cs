@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PubComp.Caching.SystemRuntime;
-using PubComp.Testing.TestingUtils;
 
 namespace PubComp.Caching.SystemRuntime.UnitTests
 {
@@ -61,12 +60,12 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             IEnumerable<object> result;
 
             result = cache.Get("key", getter);
-            LinqAssert.AreSame(new object[] { "1" }, result);
+            CollectionAssert.AreEqual(new object[] { "1" }, result.ToArray());
 
             value.Add("2");
 
             result = cache.Get("key", getter);
-            LinqAssert.AreSame(new object[] { "1" }, result);
+            CollectionAssert.AreEqual(new object[] { "1" }, result.ToArray());
         }
 
         [TestMethod]
