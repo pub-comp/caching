@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>PubComp.Caching.SystemRuntime</AssemblyName>
     <RootNamespace>PubComp.Caching.SystemRuntime</RootNamespace>
-    <AssemblyVersion>4.1.0.0</AssemblyVersion>
-    <FileVersion>4.1.0.0</FileVersion>
+    <Version>4.1.1</Version>
+    <AssemblyVersion>4.1.1.0</AssemblyVersion>
+    <FileVersion>4.1.1.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
   <PackageReference Include="System.Runtime.Caching" Version="4.5.0" />
