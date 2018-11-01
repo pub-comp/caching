@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>PubComp.Caching.WebApiExtended.NETCore</AssemblyName>
     <RootNamespace>PubComp.Caching.WebApiExtended.NETCore</RootNamespace>
     <Version>4.1.1</Version>

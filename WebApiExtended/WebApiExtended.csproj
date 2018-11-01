@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net461</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>PubComp.Caching.WebApiExtended</AssemblyName>
     <RootNamespace>PubComp.Caching.WebApiExtended</RootNamespace>
     <Version>4.1.1</Version>

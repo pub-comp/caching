@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net461</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>PubComp.Caching.MongoDbCaching</AssemblyName>
     <RootNamespace>PubComp.Caching.MongoDbCaching</RootNamespace>
     <Version>4.1.1</Version>
