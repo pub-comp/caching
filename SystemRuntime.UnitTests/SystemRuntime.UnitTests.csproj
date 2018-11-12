@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net461</TargetFrameworks>
+    <TargetFramework>net461</TargetFramework>
     <AssemblyName>PubComp.Caching.SystemRuntime.UnitTests</AssemblyName>
     <RootNamespace>PubComp.Caching.SystemRuntime.UnitTests</RootNamespace>
   </PropertyGroup>

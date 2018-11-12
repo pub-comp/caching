@@ -129,3 +129,6 @@
 ### 4.1.0:
 	* Migrate NuGet projects to .Net standard
 	* Migrate all projects to new csproj
+
+### 4.1.1:
+	* Fixes due to NuGetPack.exe issues
