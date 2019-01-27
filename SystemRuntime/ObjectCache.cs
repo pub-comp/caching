@@ -119,7 +119,8 @@ namespace PubComp.Caching.SystemRuntime
             if (TryGetInner(key, out value))
                 return value;
 
-            sync.Wait();
+            if (!policy.DoNotLock) sync.Wait();
+
             try
             {
                 if (TryGetInner(key, out value))
@@ -130,7 +131,7 @@ namespace PubComp.Caching.SystemRuntime
             }
             finally
             {
-                sync.Release();
+                if (!policy.DoNotLock) sync.Release();
             }
 
             return value;
@@ -141,7 +142,7 @@ namespace PubComp.Caching.SystemRuntime
             if (TryGetInner(key, out TValue value))
                 return value;
 
-            await sync.WaitAsync().ConfigureAwait(false); //This will deadlock if reentered recursively -- should not happen
+            if (!policy.DoNotLock) await sync.WaitAsync().ConfigureAwait(false); //This will deadlock if reentered recursively -- should not happen
             try
             {
                 if (TryGetInner(key, out value))
@@ -152,7 +153,7 @@ namespace PubComp.Caching.SystemRuntime
             }
             finally
             {
-                sync.Release();
+                if (!policy.DoNotLock) sync.Release();
             }
 
             return value;

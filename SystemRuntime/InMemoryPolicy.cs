@@ -31,5 +31,11 @@ namespace PubComp.Caching.SystemRuntime
         /// <remarks>Default value is a time-duration value that is set to zero,
         /// which indicates that a cache entry has no sliding expiration time</remarks>
         public TimeSpan? SlidingExpiration { get; set; }
+
+        /// <summary>
+        /// Whether or not to lock on cache misses before calling underlying getter.
+        /// </summary>
+        /// <remarks>Default value is false, which indicates lock will be used.</remarks>
+        public bool DoNotLock { get; set; }
     }
 }

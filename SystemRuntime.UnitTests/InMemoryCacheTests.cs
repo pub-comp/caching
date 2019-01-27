@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core.UnitTests;
@@ -264,6 +265,63 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             wasFound = cache.TryGet("key", out result);
             Assert.AreEqual(true, wasFound);
             Assert.AreEqual("2", result);
+        }
+
+        [TestMethod]
+        public void Get_NestedGetWithoutLock_2Hits()
+        {
+            //Arrange
+            var cache = new InMemoryCache("cache1",
+                new InMemoryPolicy {SlidingExpiration = new TimeSpan(0, 2, 0), DoNotLock = true});
+            int hits = 0;
+
+            int Get()
+            {
+                cache.Get("key2", () => 0);
+                hits++;
+                return hits;
+            }
+
+            //Act
+            var result1 = cache.Get("key", (Func<int>)Get);
+            var hits1 = hits;
+
+            var result2 = cache.Get("key", (Func<int>)Get);
+            var hits2 = hits;
+
+            //Assert
+            Assert.AreEqual(1, hits1);
+            Assert.AreEqual(1, result1);
+
+            Assert.AreEqual(1, hits2);
+            Assert.AreEqual(1, result2);
+        }
+
+        [TestMethod]
+        public void Get_NestedGetWithLock_Deadlock()
+        {
+            //Arrange
+            var cache = new InMemoryCache("cache1",
+                new InMemoryPolicy {SlidingExpiration = new TimeSpan(0, 2, 0), DoNotLock = false});
+            int hits = 0;
+
+            int Get()
+            {
+                cache.Get("key2", () => 0);
+                hits++;
+                return hits;
+            }
+
+            var tokenSource = new CancellationTokenSource();
+
+            //Act
+            var t = Task.Factory.StartNew(() => cache.Get("key", Get), tokenSource.Token);
+            var finished = t.Wait(TimeSpan.FromSeconds(2));
+            
+            //Assert
+            Assert.AreEqual(false, finished);
+            Assert.AreEqual(0, hits);
+            tokenSource.Cancel();
         }
     }
 }
