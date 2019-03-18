@@ -12,8 +12,12 @@ using PubComp.Caching.Core.Notifications;
 
 namespace PubComp.Caching.Core
 {
-    // TODO: Add XML comments
-    public class CacheManagerLogic
+    /// <summary>
+    /// The main logic class to handle all the named caches, connectionStrings and notifiers.
+    /// The class exist to allow slight decouple from the singleton instance,
+    /// Allowing to make the CacheManager to behave differently based on settings, e.g. source of cache configuration
+    /// </summary>
+    internal class CacheManagerLogic
     {
         private Func<MethodBase> callingMethodGetter;
 
@@ -45,8 +49,17 @@ namespace PubComp.Caching.Core
         private ConcurrentDictionary<string, string> cacheNotifierAssociations
             = new ConcurrentDictionary<string, string>();
 
+        /// <summary>
+        /// The source to load the cache configuration from
+        /// OPTIONAL: if null then no cache configuration will be loaded
+        /// </summary>
         public ICacheConfigLoader ConfigLoader { get; private set; }
 
+        /// <summary>
+        /// The CTOR to set up the initial configLoader
+        /// OPTIONAL: if null then no cache configuration will be loaded
+        /// </summary>
+        /// <param name="configLoader"></param>
         public CacheManagerLogic(ICacheConfigLoader configLoader)
         {
             ConfigLoader = configLoader;
@@ -304,15 +317,18 @@ namespace PubComp.Caching.Core
 
         /// <summary>
         /// Sets named cached according to set config loader
-        /// Initialization cab be overriden using SetCache and RemoveCache (and this method)
+        /// Initialization can be overriden using SetCache and RemoveCache (and this method)
         /// </summary>
         public void InitializeFromConfig()
         {
-            var config = ConfigLoader.LoadConfig();
             RemoveAllCaches();
             RemoveAllNotifiers();
             RemoveAllConnectionStrings();
-            ApplyConfig(config);
+            if (ConfigLoader != null)
+            {
+                var config = ConfigLoader.LoadConfig();
+                ApplyConfig(config);
+            }
         }
 
         /// <summary>

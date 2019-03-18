@@ -3,7 +3,9 @@ using System.Configuration;
 
 namespace PubComp.Caching.Core.Config.Loaders
 {
-    // TODO: Add XML comments
+    /// <summary>
+    /// Load the cache configuration using App/Web.config files (System.ConfigurationManager)
+    /// </summary>
     public class SystemConfigurationManagerCacheConfigLoader : ICacheConfigLoader
     {
         public IList<ConfigNode> LoadConfig()

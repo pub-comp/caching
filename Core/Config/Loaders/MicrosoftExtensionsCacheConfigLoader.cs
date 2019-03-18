@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
-using System.Linq;
 using System.Reflection;
 
 namespace PubComp.Caching.Core.Config.Loaders
 {
-    // TODO: Add XML comments
+    /// <summary>
+    /// Load the cache configuration using .NetStandard's Microsoft.Extenstions.Configuration
+    /// </summary>
     public class MicrosoftExtensionsCacheConfigLoader : ICacheConfigLoader
     {
+        private readonly Dictionary<string, Assembly> _assemblies = new Dictionary<string, Assembly>();
+
         private readonly IConfigurationSection pubCompCacheConfigurationSection;
 
         public MicrosoftExtensionsCacheConfigLoader(IConfigurationSection pubCompCacheConfigurationSection)
@@ -20,12 +23,23 @@ namespace PubComp.Caching.Core.Config.Loaders
         : this(pubCompCacheConfiguration.GetSection("PubComp:CacheConfig"))
         {
         }
+
+        /// <summary>
+        /// Load the configuration data from the PubComp CacheConfig ConfigurationSource
+        /// and return it as an ordered list of relevant ConfigNode types
+        /// e.g.:
+        /// "PubComp:CacheConfig:0:Action"->"Add",
+        /// "PubComp:CacheConfig:0:Name"->"NoCache1",
+        /// "PubComp:CacheConfig:0:Assembly"->"PubComp.Caching.Core",
+        /// "PubComp:CacheConfig:0:Type"->"NoCache",
+        /// "PubComp:CacheConfig:1:Name"->"NoCache2",
+        /// ...
+        /// </summary>
+        /// <returns>The list of Cache ConfigNode (and its inheriting classes)</returns>
         public IList<ConfigNode> LoadConfig()
         {
             var configNodes = new List<ConfigNode>();
-            var cacheConfigs =
-                pubCompCacheConfigurationSection
-                    .GetChildren();
+            var cacheConfigs = pubCompCacheConfigurationSection.GetChildren();
 
             foreach (var cacheConfig in cacheConfigs)
             {
@@ -39,20 +53,24 @@ namespace PubComp.Caching.Core.Config.Loaders
                 var assemblyName = cacheConfig["assembly"];
                 Assembly assembly;
 
-                try
+                if (!_assemblies.TryGetValue(assemblyName, out assembly))
                 {
-                    // TODO: Reusage of Assemblies
-                    assembly = Assembly.Load(assemblyName);
-                }
-                catch (System.IO.FileLoadException ex)
-                {
-                    LogConfigError($"Could not load assembly {assemblyName}", ex);
-                    continue;
-                }
-                catch (BadImageFormatException ex)
-                {
-                    LogConfigError($"Could not load assembly {assemblyName}", ex);
-                    continue;
+                    try
+                    {
+                        assembly = Assembly.Load(assemblyName);
+                    }
+                    catch (System.IO.FileLoadException ex)
+                    {
+                        LogConfigError($"Could not load assembly {assemblyName}", ex);
+                        continue;
+                    }
+                    catch (BadImageFormatException ex)
+                    {
+                        LogConfigError($"Could not load assembly {assemblyName}", ex);
+                        continue;
+                    }
+
+                    _assemblies.Add(assemblyName, assembly);
                 }
 
                 var configType = assembly.GetType(typeName, false, false);

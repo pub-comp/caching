@@ -1,14 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using PubComp.Caching.Core.Config.Loaders;
 using PubComp.Caching.Core.Notifications;
 
+[assembly: InternalsVisibleTo("PubComp.Caching.Core.UnitTests")]
 namespace PubComp.Caching.Core
 {
-    // TODO: Add XML comments
     // TODO: Create interfaces
+    /// <summary>
+    /// The main manager class to handle all the named caches, connectionStrings and notifiers
+    /// It's a singleton instance wrapped around <see cref=" CacheManagerLogic"/>
+    /// </summary>
     public class CacheManager
     {
         #region innerInstance
@@ -18,9 +22,12 @@ namespace PubComp.Caching.Core
 
         // The reason the logic init is split to CTOR and InitializeFromConfig is
         // to allow the calls to CacheManager while loading and applying the configuration
-        // TODO: Change to internal to be accessed by unit tests
+        // i.e. the apply config logic itself sometimes call the CacheManager itself...
         // TODO: Pass ICacheManager or subset to ConfigNode classes that call CacheManager directly
-        public static CacheManagerLogic CacheManagerLogic
+        /// <summary>
+        /// The internal instance of the manager
+        /// </summary>
+        internal static CacheManagerLogic CacheManagerLogic
         {
             get
             {
@@ -46,6 +53,12 @@ namespace PubComp.Caching.Core
 
         #endregion
 
+        /// <summary>
+        /// The source from which the entire cache configuration will be loaded from.
+        /// The default value is to use System.ConfigurationManager internally to load from app/web.config
+        /// This setting should be set before any call to the API methods
+        /// </summary>
+        // TODO: replace with an entire CacheManagerSettings class (in ctor)
         public static ICacheConfigLoader ConfigLoader { get; set; } = new SystemConfigurationManagerCacheConfigLoader();
 
         #region Cache access API

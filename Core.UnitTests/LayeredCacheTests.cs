@@ -7,6 +7,14 @@ namespace PubComp.Caching.Core.UnitTests
     [TestClass]
     public class LayeredCacheTests
     {
+        [TestInitialize]
+        public void TestInitialize()
+        {
+            CacheManager.ConfigLoader = null;
+            CacheManager.CacheManagerLogic = null;
+            CacheManager.RemoveAllCaches();
+        }
+
         [TestMethod]
         public void TestLayeredCacheValidInnerCaches()
         {

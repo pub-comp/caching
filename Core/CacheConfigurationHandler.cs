@@ -11,6 +11,8 @@ namespace PubComp.Caching.Core
 {
     public class CacheConfigurationHandler : IConfigurationSectionHandler
     {
+        private readonly Dictionary<string, Assembly> _assemblies = new Dictionary<string, Assembly>();
+
         public object Create(object parent, object configContext, System.Xml.XmlNode section)
         {
             var configuration = new List<ConfigNode>();
@@ -60,19 +62,24 @@ namespace PubComp.Caching.Core
 
                 Assembly assembly;
 
-                try
+                if (!_assemblies.TryGetValue(assemblyNode.Value, out assembly))
                 {
-                    assembly = Assembly.Load(assemblyNode.Value);
-                }
-                catch (System.IO.FileLoadException ex)
-                {
-                    LogConfigError($"Could not load assembly {assemblyNode.Value}", ex);
-                    continue;
-                }
-                catch (System.BadImageFormatException ex)
-                {
-                    LogConfigError($"Could not load assembly {assemblyNode.Value}", ex);
-                    continue;
+                    try
+                    {
+                        assembly = Assembly.Load(assemblyNode.Value);
+                    }
+                    catch (System.IO.FileLoadException ex)
+                    {
+                        LogConfigError($"Could not load assembly {assemblyNode.Value}", ex);
+                        continue;
+                    }
+                    catch (System.BadImageFormatException ex)
+                    {
+                        LogConfigError($"Could not load assembly {assemblyNode.Value}", ex);
+                        continue;
+                    }
+
+                    _assemblies.Add(assemblyNode.Value, assembly);
                 }
 
                 var configType = assembly.GetType(typeName, false, false);
