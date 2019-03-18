@@ -17,6 +17,8 @@ namespace PubComp.Caching.Core.UnitTests
         [TestInitialize]
         public void TestInitialize()
         {
+            new CacheControllerUtil().ClearRegisteredCacheNames();
+
             CacheManager.CacheManagerLogic = null;
 
             var configuration = new ConfigurationBuilder()
@@ -24,14 +26,17 @@ namespace PubComp.Caching.Core.UnitTests
                 .Build();
             // The json loading is not part of the test, it's just a convenient helper.
 
-            CacheManager.ConfigLoader = new MicrosoftExtensionsCacheConfigLoader(configuration);
+            CacheManager.Settings = new CacheManagerSettings
+                { ConfigLoader = new MicrosoftExtensionsCacheConfigLoader(configuration), ShouldRegisterAllCaches = true };
         }
 
         [TestMethod]
         public void TestMECConfigLoader()
         {
             Assert.IsNotNull(CacheManager.CacheManagerLogic);
-            Assert.IsInstanceOfType(CacheManager.CacheManagerLogic.ConfigLoader, typeof(MicrosoftExtensionsCacheConfigLoader));
+            Assert.IsNotNull(CacheManager.CacheManagerLogic.Settings);
+            Assert.IsInstanceOfType(CacheManager.CacheManagerLogic.Settings.ConfigLoader, typeof(MicrosoftExtensionsCacheConfigLoader));
+            Assert.AreEqual(true, CacheManager.CacheManagerLogic.Settings.ShouldRegisterAllCaches);
         }
 
         [TestMethod]
@@ -75,6 +80,48 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.IsInstanceOfType(connectionString1, typeof(B64EncConnectionString));
             Assert.AreEqual("127.0.0.1:6379,serviceName=mymaster,allowAdmin=true",
                 ((B64EncConnectionString) connectionString1).ConnectionString);
+        }
+
+        [TestMethod]
+        public void TestRegisteredCacheNames()
+        {
+            var cacheNames = CacheManager.GetCacheNames().ToList();
+            var ccu = new CacheControllerUtil();
+            var registeredCacheNames = ccu.GetRegisteredCacheNames().ToList();
+
+            Assert.AreEqual(cacheNames.Count, registeredCacheNames.Count);
+            Assert.IsTrue(registeredCacheNames.All(rcn => cacheNames.Contains(rcn)));
+        }
+
+        [TestMethod]
+        public void TestMECConfigLoader_AssemblyError()
+        {
+            CacheManager.CacheManagerLogic = null;
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                    {
+                        { "PubComp:CacheConfig:0:name", "nameTypeNotFound1" },
+                        { "PubComp:CacheConfig:0:assembly", "PubComp.Caching.Core" },
+                        { "PubComp:CacheConfig:0:type", "typeNotFound" },
+                        { "PubComp:CacheConfig:1:name", "nameAssemblyNotFound1" },
+                        { "PubComp:CacheConfig:1:assembly", "PubComp.Caching.Core.AssemblyNotFound" },
+                        { "PubComp:CacheConfig:1:type", "typeNotFound" },
+                    }
+                )
+                .Build();
+            // The json loading is not part of the test, it's just a convenient helper.
+
+            CacheManager.Settings = new CacheManagerSettings
+                { ConfigLoader = new MicrosoftExtensionsCacheConfigLoader(configuration) };
+
+            CacheManager.InitializeFromConfig();
+
+            Assert.IsNotNull(CacheManager.CacheManagerLogic);
+            Assert.IsNotNull(CacheManager.CacheManagerLogic.Settings);
+            Assert.IsInstanceOfType(CacheManager.CacheManagerLogic.Settings.ConfigLoader, typeof(MicrosoftExtensionsCacheConfigLoader));
+            Assert.AreEqual(false, CacheManager.CacheManagerLogic.Settings.ShouldRegisterAllCaches);
+            Assert.AreEqual(0, CacheManager.GetCacheNames().Count());
         }
     }
 }

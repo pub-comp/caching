@@ -37,7 +37,7 @@ namespace PubComp.Caching.Core
                     {
                         if (_innerCacheManagerInstance == null)
                         {
-                            _innerCacheManagerInstance = new CacheManagerLogic(ConfigLoader);
+                            _innerCacheManagerInstance = new CacheManagerLogic(Settings);
                             _innerCacheManagerInstance.InitializeFromConfig();
                         }
                     }
@@ -54,12 +54,14 @@ namespace PubComp.Caching.Core
         #endregion
 
         /// <summary>
+        /// The initialization time settings for the Cache Manager.
         /// The source from which the entire cache configuration will be loaded from.
         /// The default value is to use System.ConfigurationManager internally to load from app/web.config
+        /// Also default is to not register automatically all the cache names with CacheControllerUtil
         /// This setting should be set before any call to the API methods
         /// </summary>
-        // TODO: replace with an entire CacheManagerSettings class (in ctor)
-        public static ICacheConfigLoader ConfigLoader { get; set; } = new SystemConfigurationManagerCacheConfigLoader();
+        public static CacheManagerSettings Settings { get; set; } = new CacheManagerSettings
+            {ConfigLoader = new SystemConfigurationManagerCacheConfigLoader(), ShouldRegisterAllCaches = false};
 
         #region Cache access API
 

@@ -16,17 +16,22 @@ namespace PubComp.Caching.Core.UnitTests
         [TestInitialize]
         public void TestInitialize()
         {
+            new CacheControllerUtil().ClearRegisteredCacheNames();
+
             // The test can't be completely implicit as the CacheManager is a singleton
             // this is carried across all unit-tests.
             CacheManager.CacheManagerLogic = null;
-            CacheManager.ConfigLoader = new SystemConfigurationManagerCacheConfigLoader();
+            CacheManager.Settings = new CacheManagerSettings
+                { ConfigLoader = new SystemConfigurationManagerCacheConfigLoader(), ShouldRegisterAllCaches = false };
         }
 
         [TestMethod]
         public void TestSCMConfigLoader()
         {
             Assert.IsNotNull(CacheManager.CacheManagerLogic);
-            Assert.IsInstanceOfType(CacheManager.CacheManagerLogic.ConfigLoader, typeof(SystemConfigurationManagerCacheConfigLoader));
+            Assert.IsNotNull(CacheManager.CacheManagerLogic.Settings);
+            Assert.IsInstanceOfType(CacheManager.CacheManagerLogic.Settings.ConfigLoader, typeof(SystemConfigurationManagerCacheConfigLoader));
+            Assert.AreEqual(false, CacheManager.CacheManagerLogic.Settings.ShouldRegisterAllCaches);
         }
 
         [TestMethod]
@@ -70,6 +75,15 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.IsInstanceOfType(connectionString1, typeof(B64EncConnectionString));
             Assert.AreEqual("127.0.0.1:6379,serviceName=mymaster,allowAdmin=true",
                 ((B64EncConnectionString)connectionString1).ConnectionString);
+        }
+
+        [TestMethod]
+        public void TestNotRegisteredCacheNames()
+        {
+            var ccu = new CacheControllerUtil();
+            var registeredCacheNames = ccu.GetRegisteredCacheNames().ToList();
+
+            Assert.AreEqual(0, registeredCacheNames.Count);
         }
     }
 }

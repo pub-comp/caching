@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
 
@@ -59,12 +60,9 @@ namespace PubComp.Caching.Core.Config.Loaders
                     {
                         assembly = Assembly.Load(assemblyName);
                     }
-                    catch (System.IO.FileLoadException ex)
-                    {
-                        LogConfigError($"Could not load assembly {assemblyName}", ex);
-                        continue;
-                    }
-                    catch (BadImageFormatException ex)
+                    catch (Exception ex) when (ex is FileLoadException ||
+                                               ex is FileNotFoundException ||
+                                               ex is BadImageFormatException)
                     {
                         LogConfigError($"Could not load assembly {assemblyName}", ex);
                         continue;

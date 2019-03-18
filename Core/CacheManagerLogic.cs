@@ -53,16 +53,16 @@ namespace PubComp.Caching.Core
         /// The source to load the cache configuration from
         /// OPTIONAL: if null then no cache configuration will be loaded
         /// </summary>
-        public ICacheConfigLoader ConfigLoader { get; private set; }
+        public CacheManagerSettings Settings { get; }
 
         /// <summary>
-        /// The CTOR to set up the initial configLoader
+        /// The CTOR to set up the initial settings for the cache manager.
         /// OPTIONAL: if null then no cache configuration will be loaded
         /// </summary>
-        /// <param name="configLoader"></param>
-        public CacheManagerLogic(ICacheConfigLoader configLoader)
+        /// <param name="settings"></param>
+        public CacheManagerLogic(CacheManagerSettings settings)
         {
-            ConfigLoader = configLoader;
+            Settings = settings;
         }
 
         #region Cache access API
@@ -324,10 +324,16 @@ namespace PubComp.Caching.Core
             RemoveAllCaches();
             RemoveAllNotifiers();
             RemoveAllConnectionStrings();
-            if (ConfigLoader != null)
+            if (Settings != null && Settings.ConfigLoader != null)
             {
-                var config = ConfigLoader.LoadConfig();
+                var config = Settings.ConfigLoader.LoadConfig();
                 ApplyConfig(config);
+                if (Settings.ShouldRegisterAllCaches)
+                {
+                    var ccu = new CacheControllerUtil();
+                    ccu.ClearRegisteredCacheNames();
+                    ccu.RegisterAllCaches();
+                }
             }
         }
 
@@ -549,12 +555,6 @@ namespace PubComp.Caching.Core
         #endregion
 
         #region Config Loading
-
-        //private static IList<ConfigNode> LoadConfig()
-        //{
-        //    var config = ConfigurationManager.GetSection("PubComp/CacheConfig") as IList<ConfigNode>;
-        //    return config;
-        //}
 
         private void ApplyConfig(IList<ConfigNode> config)
         {
