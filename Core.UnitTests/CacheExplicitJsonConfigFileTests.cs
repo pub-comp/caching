@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Reflection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core.Config;
 using PubComp.Caching.Core.Config.Loaders;
@@ -11,26 +12,30 @@ using PubComp.Caching.Core.UnitTests.Mocks;
 namespace PubComp.Caching.Core.UnitTests
 {
     [TestClass]
-    public class CacheImplicitAppConfigFileTests
+    public class CacheExplicitJsonConfigFileTests
     {
         [TestInitialize]
         public void TestInitialize()
         {
-            // The test can't be completely implicit as the CacheManager is a singleton
-            // this is carried across all unit-tests.
             CacheManager.CacheManagerLogic = null;
-            CacheManager.ConfigLoader = new SystemConfigurationManagerCacheConfigLoader();
+
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("unittests_pubcompcachesettings.json", false, false)
+                .Build();
+            // The json loading is not part of the test, it's just a convenient helper.
+
+            CacheManager.ConfigLoader = new MicrosoftExtensionsCacheConfigLoader(configuration);
         }
 
         [TestMethod]
-        public void TestSCMConfigLoader()
+        public void TestMECConfigLoader()
         {
             Assert.IsNotNull(CacheManager.CacheManagerLogic);
-            Assert.IsInstanceOfType(CacheManager.CacheManagerLogic.ConfigLoader, typeof(SystemConfigurationManagerCacheConfigLoader));
+            Assert.IsInstanceOfType(CacheManager.CacheManagerLogic.ConfigLoader, typeof(MicrosoftExtensionsCacheConfigLoader));
         }
 
         [TestMethod]
-        public void TestReadAppConfig()
+        public void TestReadInMemConfig()
         {
             var cacheNames = CacheManager.GetCacheNames();
             var connectionStringNames = CacheManager.GetConnectionStringNames();
@@ -42,7 +47,7 @@ namespace PubComp.Caching.Core.UnitTests
         }
 
         [TestMethod]
-        public void TestCreateCachesFromAppConfig()
+        public void TestCreateCachesFromInMemConfig()
         {
             var cache1 = CacheManager.GetCache("cacheFromConfig1");
             Assert.IsNotNull(cache1);
@@ -69,7 +74,7 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.IsNotNull(connectionString1);
             Assert.IsInstanceOfType(connectionString1, typeof(B64EncConnectionString));
             Assert.AreEqual("127.0.0.1:6379,serviceName=mymaster,allowAdmin=true",
-                ((B64EncConnectionString)connectionString1).ConnectionString);
+                ((B64EncConnectionString) connectionString1).ConnectionString);
         }
     }
 }

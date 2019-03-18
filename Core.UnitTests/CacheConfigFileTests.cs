@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core.Config;
+using PubComp.Caching.Core.Config.Loaders;
 using PubComp.Caching.Core.UnitTests.Mocks;
 
 namespace PubComp.Caching.Core.UnitTests
@@ -15,6 +16,8 @@ namespace PubComp.Caching.Core.UnitTests
         [TestInitialize]
         public void TestInitialize()
         {
+            CacheManager.CacheManagerLogic = null;
+            CacheManager.ConfigLoader = new SystemConfigurationManagerCacheConfigLoader();
             CacheManager.RemoveAllCaches();
         }
 

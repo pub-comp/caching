@@ -45,7 +45,7 @@ namespace PubComp.Caching.Core
         private ConcurrentDictionary<string, string> cacheNotifierAssociations
             = new ConcurrentDictionary<string, string>();
 
-        public ICacheConfigLoader ConfigLoader { get; private set; } = new SystemConfigurationManagerCacheConfigLoader();
+        public ICacheConfigLoader ConfigLoader { get; private set; }
 
         public CacheManagerLogic(ICacheConfigLoader configLoader)
         {
