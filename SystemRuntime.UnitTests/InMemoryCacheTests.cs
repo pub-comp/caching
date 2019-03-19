@@ -272,7 +272,7 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
         {
             //Arrange
             var cache = new InMemoryCache("cache1",
-                new InMemoryPolicy {SlidingExpiration = new TimeSpan(0, 2, 0), DoNotLock = true});
+                new InMemoryPolicy {SlidingExpiration = new TimeSpan(0, 2, 0), DoNotLock = true, NumberOfLocks = 1});
             int hits = 0;
 
             int Get()
@@ -302,7 +302,7 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
         {
             //Arrange
             var cache = new InMemoryCache("cache1",
-                new InMemoryPolicy {SlidingExpiration = new TimeSpan(0, 2, 0), DoNotLock = false});
+                new InMemoryPolicy {SlidingExpiration = new TimeSpan(0, 2, 0), DoNotLock = false, NumberOfLocks = 1});
             int hits = 0;
 
             int Get()
@@ -322,6 +322,89 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             Assert.AreEqual(false, finished);
             Assert.AreEqual(0, hits);
             tokenSource.Cancel();
+        }
+
+        [TestMethod]
+        public void LoadTest_LockingStrategiesComparison()
+        {
+            const int numberOfThreads = 16;
+            const int numberOfIterations = 1000; // With less iterations times vary too much
+
+            var keys = new[] { "key1", "key2222", "key333333", "key4444444", "keyV", "vi", "7777777", "ate", "IX", "/o" };
+
+            var rand = new Random();
+
+            var threadKeys = Enumerable.Range(0, numberOfThreads)
+                .Select(threadNumber => keys[rand.Next(keys.Length)])
+                .ToList();
+
+            var noLockTime = LoadTest(null, numberOfIterations, threadKeys);
+            var oneLockTime = LoadTest(1, numberOfIterations, threadKeys);
+            var onehundredLocksTime = LoadTest(100, numberOfIterations, threadKeys);
+
+            Console.WriteLine($"{nameof(noLockTime)} = {noLockTime}");
+            Console.WriteLine($"{nameof(oneLockTime)} = {oneLockTime}");
+            Console.WriteLine($"{nameof(onehundredLocksTime)} = {onehundredLocksTime}");
+
+            Assert.IsTrue(noLockTime < oneLockTime);
+            Assert.IsTrue(onehundredLocksTime < oneLockTime);
+
+            // Should be almost the same, using 1.5 in case of different HW changing stats
+            Assert.IsTrue(oneLockTime < noLockTime * 1.5);
+
+            // Should be more than 1/3 * difference, using 1/2 in case of different HW changing stats
+            Assert.IsTrue(noLockTime < oneLockTime * 0.5);
+            Assert.IsTrue(onehundredLocksTime < oneLockTime * 0.5);
+        }
+
+        private double LoadTest(ushort? numberOfLocks, int numberOfIterations, List<string> threadKeys)
+        {
+            double time = 0.0;
+            for (int cnt = 0; cnt < numberOfIterations; cnt++)
+            {
+                time += LoadTest(numberOfLocks, threadKeys);
+            }
+
+            return time;
+        }
+
+        private double LoadTest(ushort? numberOfLocks, List<string> threadKeys)
+        {
+            var cache = new InMemoryCache("cache1",
+                new InMemoryPolicy
+                {
+                    SlidingExpiration = new TimeSpan(0, 2, 0),
+                    DoNotLock = !numberOfLocks.HasValue,
+                    NumberOfLocks = numberOfLocks
+                });
+
+            Action<string> action = (string key) =>
+            {
+                cache.Get(key, () =>
+                {
+                    Task.Delay(10).Wait();
+                    return $"***{key}***";
+                });
+            };
+
+            var tasks = threadKeys.Select(k => new Task(() => action(k))).ToArray();
+
+            double elapsedTime;
+            var sw = new Stopwatch();
+            sw.Start();
+
+            try
+            {
+                foreach (var task in tasks) task.Start();
+                Task.WaitAll(tasks);
+            }
+            finally
+            {
+                elapsedTime = sw.Elapsed.TotalMilliseconds;
+                sw.Stop();
+            }
+
+            return elapsedTime;
         }
     }
 }

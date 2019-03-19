@@ -37,5 +37,7 @@ namespace PubComp.Caching.SystemRuntime
         /// </summary>
         /// <remarks>Default value is false, which indicates lock will be used.</remarks>
         public bool DoNotLock { get; set; }
+
+        public ushort? NumberOfLocks { get; set; }
     }
 }
