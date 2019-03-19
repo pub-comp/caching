@@ -346,15 +346,20 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             Console.WriteLine($"{nameof(oneLockTime)} = {oneLockTime}");
             Console.WriteLine($"{nameof(onehundredLocksTime)} = {onehundredLocksTime}");
 
-            Assert.IsTrue(noLockTime < oneLockTime);
-            Assert.IsTrue(onehundredLocksTime < oneLockTime);
+            Assert.IsTrue(noLockTime < oneLockTime,
+                $"a. {nameof(noLockTime)} < {nameof(oneLockTime)}");
+            Assert.IsTrue(onehundredLocksTime < oneLockTime,
+                $"b. {nameof(onehundredLocksTime)} < {nameof(oneLockTime)}");
 
             // Should be almost the same, using 1.5 in case of different HW changing stats
-            Assert.IsTrue(oneLockTime < noLockTime * 1.5);
+            Assert.IsTrue(onehundredLocksTime < noLockTime * 1.5,
+                $"c. {nameof(onehundredLocksTime)} < {nameof(noLockTime)} * 1.5");
 
             // Should be more than 1/3 * difference, using 1/2 in case of different HW changing stats
-            Assert.IsTrue(noLockTime < oneLockTime * 0.5);
-            Assert.IsTrue(onehundredLocksTime < oneLockTime * 0.5);
+            Assert.IsTrue(noLockTime < oneLockTime * 0.5,
+                $"d. {nameof(noLockTime)} < {nameof(oneLockTime)} * 0.5");
+            Assert.IsTrue(onehundredLocksTime < oneLockTime * 0.5,
+                $"e. {nameof(onehundredLocksTime)} < {nameof(oneLockTime)} * 0.5");
         }
 
         private double LoadTest(ushort? numberOfLocks, int numberOfIterations, List<string> threadKeys)
