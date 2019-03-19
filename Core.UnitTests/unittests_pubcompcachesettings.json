@@ -1,88 +1,41 @@
 {
   "PubComp": {
-    "CacheConfig": [
-      {
-        "name": "cacheFromConfig1",
+    "CacheConfig": {
+      "cacheFromConfig1": {
         "assembly": "PubComp.Caching.Core",
         "type": "NoCache"
       },
-      {
-        "action": "Add",
-        "name": "cacheFromConfig2",
-        "assembly": "PubComp.Caching.Core",
-        "type": "NoCache"
-      },
-      {
-        "action": "Remove",
-        "name": "cacheFromConfig2"
-      },
-      {
-        "name": "cacheFromConfig2",
+      "cacheFromConfig2": {
         "assembly": "PubComp.Caching.Core.UnitTests",
         "type": "PubComp.Caching.Core.UnitTests.Mocks.MockNoCache",
         "policy": {
           "SlidingExpiration": "00:15:00"
         }
       },
-      {
-        "name": "cacheFromConfig3",
+      "cacheFromConfig3": {
         "assembly": "PubComp.Caching.Core",
         "type": "NoCache"
       },
-      {
-        "action": "Remove",
-        "name": "cacheFromConfig3"
-      },
-      {
-        "name": "localRedisUrl",
+      "localRedisUrl": {
         "assembly": "PubComp.Caching.Core.UnitTests",
         "type": "Mocks.PlainConnectionString",
         "connectionString": "127.0.0.1:1234,serviceName=mymaster"
       },
-      {
-        "action": "Remove",
-        "name": "localRedisUrl"
-      },
-      {
-        "action": "Remove",
-        "name": "cacheFromConfig4"
-      },
-      {
-        "action": "Add",
-        "name": "localRedisUrl",
-        "assembly": "PubComp.Caching.Core.UnitTests",
-        "type": "Mocks.PlainConnectionString",
-        "connectionString": "127.0.0.1:6379,serviceName=mymaster"
-      },
-      {
-        "name": "localRedisUrlEnc",
+      "localRedisUrlEnc": {
         "assembly": "PubComp.Caching.Core.UnitTests",
         "type": "Mocks.UrlEncConnectionString",
         "encConnectionString": "127.0.0.1%3A6379%2CserviceName%3Dmymaster"
       },
-      {
-        "name": "noNotifier",
-        "assembly": "PubComp.Caching.Core.UnitTests",
-        "type": "Mocks.NoNotifier",
-        "policy": { "ConnectionName": "localRedisUrl" }
-      },
-      {
-        "action": "Remove",
-        "name": "noNotifier"
-      },
-      {
-        "action": "Add",
-        "name": "localRedisB64Enc",
+      "localRedisB64Enc": {
         "assembly": "PubComp.Caching.Core.UnitTests",
         "type": "Mocks.B64EncConnectionString",
         "encConnectionString": "MTI3LjAuMC4xOjYzNzksc2VydmljZU5hbWU9bXltYXN0ZXIsYWxsb3dBZG1pbj10cnVl"
       },
-      {
-        "name": "noNotifier",
+      "noNotifier": {
         "assembly": "PubComp.Caching.Core.UnitTests",
         "type": "Mocks.NoNotifier",
-        "policy": { "ConnectionName": "localRedisB64Enc" }
+        "policy": { "ConnectionName": "localRedisUrl" }
       }
-    ]
+    }
   }
 }

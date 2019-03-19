@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
-using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PubComp.Caching.Core.Config;
 using PubComp.Caching.Core.Config.Loaders;
 using PubComp.Caching.Core.UnitTests.Mocks;
 

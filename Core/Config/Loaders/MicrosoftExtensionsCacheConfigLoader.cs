@@ -11,8 +11,6 @@ namespace PubComp.Caching.Core.Config.Loaders
     /// </summary>
     public class MicrosoftExtensionsCacheConfigLoader : ICacheConfigLoader
     {
-        private readonly Dictionary<string, Assembly> _assemblies = new Dictionary<string, Assembly>();
-
         private readonly IConfigurationSection pubCompCacheConfigurationSection;
 
         public MicrosoftExtensionsCacheConfigLoader(IConfigurationSection pubCompCacheConfigurationSection)
@@ -29,16 +27,16 @@ namespace PubComp.Caching.Core.Config.Loaders
         /// Load the configuration data from the PubComp CacheConfig ConfigurationSource
         /// and return it as an ordered list of relevant ConfigNode types
         /// e.g.:
-        /// "PubComp:CacheConfig:0:Action"->"Add",
-        /// "PubComp:CacheConfig:0:Name"->"NoCache1",
-        /// "PubComp:CacheConfig:0:Assembly"->"PubComp.Caching.Core",
-        /// "PubComp:CacheConfig:0:Type"->"NoCache",
-        /// "PubComp:CacheConfig:1:Name"->"NoCache2",
+        /// "PubComp:CacheConfig:NoCache1:Assembly"->"PubComp.Caching.Core",
+        /// "PubComp:CacheConfig:NoCache1:Type"->"NoCache",
+        /// "PubComp:CacheConfig:YesCache2:Assembly"->"PubComp.Caching.Core",
+        /// "PubComp:CacheConfig:YesCache2:Type"->"JustAnExampleCache",
         /// ...
         /// </summary>
         /// <returns>The list of Cache ConfigNode (and its inheriting classes)</returns>
         public IList<ConfigNode> LoadConfig()
         {
+            var assemblies = new Dictionary<string, Assembly>();
             var configNodes = new List<ConfigNode>();
             var cacheConfigs = pubCompCacheConfigurationSection.GetChildren();
 
@@ -46,29 +44,28 @@ namespace PubComp.Caching.Core.Config.Loaders
             {
                 if (cacheConfig.GetValue<ConfigAction>("action") == ConfigAction.Remove)
                 {
-                    configNodes.Add(new RemoveConfig { Action = ConfigAction.Remove, Name = cacheConfig["name"] });
+                    configNodes.Add(new RemoveConfig { Action = ConfigAction.Remove, Name = cacheConfig.Key });
                     continue;
                 }
-
                 var typeName = cacheConfig["type"] + "Config";
                 var assemblyName = cacheConfig["assembly"];
                 Assembly assembly;
 
-                if (!_assemblies.TryGetValue(assemblyName, out assembly))
+                if (!assemblies.TryGetValue(assemblyName, out assembly))
                 {
                     try
                     {
                         assembly = Assembly.Load(assemblyName);
                     }
                     catch (Exception ex) when (ex is FileLoadException ||
-                                               ex is FileNotFoundException ||
+                                               ex is FileNotFoundException || // Was FileNotFoundException missing on purpose?
                                                ex is BadImageFormatException)
                     {
                         LogConfigError($"Could not load assembly {assemblyName}", ex);
                         continue;
                     }
 
-                    _assemblies.Add(assemblyName, assembly);
+                    assemblies.Add(assemblyName, assembly);
                 }
 
                 var configType = assembly.GetType(typeName, false, false);
@@ -83,12 +80,15 @@ namespace PubComp.Caching.Core.Config.Loaders
                     continue;
                 }
 
-                configNodes.Add(cacheConfig.Get(configType) as ConfigNode);
+                var configNode = cacheConfig.Get(configType) as ConfigNode;
+                configNode.Name = cacheConfig.Key;
+                configNodes.Add(configNode);
             }
 
             return configNodes;
         }
 
+        // TODO: Use real log here - and throw a fatal exception instead of swallowing the missing assembly/type
         private void LogConfigError(string error, Exception ex = null)
         {
             if (ex != null)

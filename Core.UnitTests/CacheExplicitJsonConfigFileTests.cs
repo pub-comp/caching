@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PubComp.Caching.Core.Config;
 using PubComp.Caching.Core.Config.Loaders;
 using PubComp.Caching.Core.UnitTests.Mocks;
 
@@ -23,6 +20,8 @@ namespace PubComp.Caching.Core.UnitTests
 
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("unittests_pubcompcachesettings.json", false, false)
+                .AddJsonFile("unittests_pubcompcachesettings_override1.json", false, false)
+                .AddJsonFile("unittests_pubcompcachesettings_override2.json", false, false)
                 .Build();
             // The json loading is not part of the test, it's just a convenient helper.
 
@@ -79,7 +78,13 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.IsNotNull(connectionString1);
             Assert.IsInstanceOfType(connectionString1, typeof(B64EncConnectionString));
             Assert.AreEqual("127.0.0.1:6379,serviceName=mymaster,allowAdmin=true",
-                ((B64EncConnectionString) connectionString1).ConnectionString);
+                ((B64EncConnectionString)connectionString1).ConnectionString);
+
+            var connectionString2 = CacheManager.GetConnectionString("localRedisUrl");
+            Assert.IsNotNull(connectionString2);
+            Assert.IsInstanceOfType(connectionString2, typeof(PlainConnectionString));
+            Assert.AreEqual("127.0.0.1:6379,serviceName=mymaster",
+                ((PlainConnectionString)connectionString2).ConnectionString);
         }
 
         [TestMethod]
@@ -101,12 +106,10 @@ namespace PubComp.Caching.Core.UnitTests
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>
                     {
-                        { "PubComp:CacheConfig:0:name", "nameTypeNotFound1" },
-                        { "PubComp:CacheConfig:0:assembly", "PubComp.Caching.Core" },
-                        { "PubComp:CacheConfig:0:type", "typeNotFound" },
-                        { "PubComp:CacheConfig:1:name", "nameAssemblyNotFound1" },
-                        { "PubComp:CacheConfig:1:assembly", "PubComp.Caching.Core.AssemblyNotFound" },
-                        { "PubComp:CacheConfig:1:type", "typeNotFound" },
+                        { "PubComp:CacheConfig:nameTypeNotFound1:assembly", "PubComp.Caching.Core" },
+                        { "PubComp:CacheConfig:nameTypeNotFound1:type", "typeNotFound" },
+                        { "PubComp:CacheConfig:nameAssemblyNotFound1:assembly", "PubComp.Caching.Core.AssemblyNotFound" },
+                        { "PubComp:CacheConfig:nameAssemblyNotFound1:type", "typeNotFound" },
                     }
                 )
                 .Build();

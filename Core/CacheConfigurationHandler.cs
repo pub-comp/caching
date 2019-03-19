@@ -4,7 +4,6 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Xml;
 using PubComp.Caching.Core.Config;
 
@@ -12,10 +11,9 @@ namespace PubComp.Caching.Core
 {
     public class CacheConfigurationHandler : IConfigurationSectionHandler
     {
-        private readonly Dictionary<string, Assembly> _assemblies = new Dictionary<string, Assembly>();
-
         public object Create(object parent, object configContext, System.Xml.XmlNode section)
         {
+            var assemblies = new Dictionary<string, Assembly>();
             var configuration = new List<ConfigNode>();
 
             foreach (XmlNode child in section.ChildNodes)
@@ -63,21 +61,21 @@ namespace PubComp.Caching.Core
 
                 Assembly assembly;
 
-                if (!_assemblies.TryGetValue(assemblyNode.Value, out assembly))
+                if (!assemblies.TryGetValue(assemblyNode.Value, out assembly))
                 {
                     try
                     {
                         assembly = Assembly.Load(assemblyNode.Value);
                     }
                     catch (Exception ex) when (ex is FileLoadException ||
-                                               ex is FileNotFoundException ||
+                                               ex is FileNotFoundException || // Was FileNotFoundException missing on purpose?
                                                ex is BadImageFormatException)
                     {
                         LogConfigError($"Could not load assembly {assemblyNode.Value}", ex);
                         continue;
                     }
 
-                    _assemblies.Add(assemblyNode.Value, assembly);
+                    assemblies.Add(assemblyNode.Value, assembly);
                 }
 
                 var configType = assembly.GetType(typeName, false, false);
@@ -178,6 +176,7 @@ namespace PubComp.Caching.Core
             configuration.Add(cacheConfig);
         }
 
+        // TODO: Use real log here - and throw a fatal exception instead of swallowing the missing assembly/type
         private void LogConfigError(string error, Exception ex = null)
         {
             if (ex != null)

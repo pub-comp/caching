@@ -19,6 +19,12 @@
     <ProjectReference Include="..\SystemRuntime\SystemRuntime.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Update="unittests_pubcompcachesettings_override2.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="unittests_pubcompcachesettings_override1.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="unittests_pubcompcachesettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
