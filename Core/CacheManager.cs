@@ -13,7 +13,7 @@ namespace PubComp.Caching.Core
     /// The main manager class to handle all the named caches, connectionStrings and notifiers
     /// It's a singleton instance wrapped around <see cref=" CacheManagerLogic"/>
     /// </summary>
-    public class CacheManager
+    public static class CacheManager
     {
         #region innerInstance
 
@@ -169,7 +169,11 @@ namespace PubComp.Caching.Core
         /// </summary>
         public static void InitializeFromConfig()
         {
-            CacheManagerLogic.InitializeFromConfig();
+            lock (_instanceGeneratorLock)
+            {
+                CacheManagerLogic = null;
+                CacheManagerLogic.ToString(); // Just touch the getter
+            }
         }
 
         /// <summary>

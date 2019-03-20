@@ -19,7 +19,6 @@ namespace PubComp.Caching.Core.UnitTests
         {
             CacheManager.Settings = null;
             CacheManager.CacheManagerLogic = null;
-            CacheManager.RemoveAllCaches();
 
             CacheManager.SetCache("cache*", new NoCache());
 
