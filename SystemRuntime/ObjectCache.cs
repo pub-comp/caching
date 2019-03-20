@@ -25,7 +25,10 @@ namespace PubComp.Caching.SystemRuntime
             this.policy = policy;
             this.innerCache = innerCache;
 
-            this.locks = new MultiLock(this.policy.NumberOfLocks ?? 50);
+            this.locks = !this.policy.DoNotLock
+                ? new MultiLock(this.policy.NumberOfLocks ?? 50)
+                : null;
+
             this.notiferName = this.policy?.SyncProvider;
             this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.notiferName);
         }
