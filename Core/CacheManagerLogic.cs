@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using PubComp.Caching.Core.Config;
-using PubComp.Caching.Core.Config.Loaders;
 using PubComp.Caching.Core.Notifications;
 
 namespace PubComp.Caching.Core
@@ -21,32 +20,34 @@ namespace PubComp.Caching.Core
     {
         private Func<MethodBase> callingMethodGetter;
 
+        // TODO: Test if semaphores are needed here
+
         //ReSharper disable once InconsistentNaming
-        private static readonly SemaphoreSlim cachesSync
+        private readonly SemaphoreSlim cachesSync
             = new SemaphoreSlim(1, 1);
 
         // ReSharper disable once InconsistentNaming
-        private ConcurrentDictionary<CacheName, ICache> caches
+        private readonly ConcurrentDictionary<CacheName, ICache> caches
             = new ConcurrentDictionary<CacheName, ICache>();
 
         // ReSharper disable once InconsistentNaming
-        private static readonly ReaderWriterLockSlim notifiersSync
+        private readonly ReaderWriterLockSlim notifiersSync
             = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
         // ReSharper disable once InconsistentNaming
-        private ConcurrentDictionary<string, ICacheNotifier> notifiers
+        private readonly ConcurrentDictionary<string, ICacheNotifier> notifiers
             = new ConcurrentDictionary<string, ICacheNotifier>();
 
         // ReSharper disable once InconsistentNaming
-        private static readonly ReaderWriterLockSlim connectionStringsSync
+        private readonly ReaderWriterLockSlim connectionStringsSync
             = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
         // ReSharper disable once InconsistentNaming
-        private ConcurrentDictionary<string, ICacheConnectionString> connectionStrings
+        private readonly ConcurrentDictionary<string, ICacheConnectionString> connectionStrings
             = new ConcurrentDictionary<string, ICacheConnectionString>();
 
         // ReSharper disable once InconsistentNaming
-        private ConcurrentDictionary<string, string> cacheNotifierAssociations
+        private readonly ConcurrentDictionary<string, string> cacheNotifierAssociations
             = new ConcurrentDictionary<string, string>();
 
         /// <summary>
@@ -64,6 +65,8 @@ namespace PubComp.Caching.Core
         {
             Settings = settings;
         }
+
+        // TODO: In future version, consider removing async API for configuration - not relevant
 
         #region Cache access API
 
@@ -241,7 +244,19 @@ namespace PubComp.Caching.Core
                 cache.Name, c => notifier.Name, (c, n) => notifier.Name);
         }
 
-        /// <summary>Gets the notifier that was associated with a cahe</summary>
+        // TODO: Check, test, doc
+        public void RemoveAssociation(ICache cache)
+        {
+            cacheNotifierAssociations.TryRemove(cache.Name, out _);
+        }
+
+        // TODO: Check, test, doc
+        public void RemoveAllAssociations()
+        {
+            cacheNotifierAssociations.Clear();
+        }
+
+        /// <summary>Gets the notifier that was associated with a cache</summary>
         /// <param name="cache"></param>
         /// <returns></returns>
         public ICacheNotifier GetAssociatedNotifier(ICache cache)
@@ -321,13 +336,17 @@ namespace PubComp.Caching.Core
         /// </summary>
         public void InitializeFromConfig()
         {
+            RemoveAllAssociations();
             RemoveAllCaches();
             RemoveAllNotifiers();
             RemoveAllConnectionStrings();
-            if (Settings != null && Settings.ConfigLoader != null)
+
+            var configLoader = Settings?.ConfigLoader;
+            if (configLoader != null)
             {
-                var config = Settings.ConfigLoader.LoadConfig();
+                var config = configLoader.LoadConfig();
                 ApplyConfig(config);
+
                 if (Settings.ShouldRegisterAllCaches)
                 {
                     var ccu = new CacheControllerUtil();

@@ -12,6 +12,8 @@ namespace PubComp.Caching.Core.Config.Loaders
     public class MicrosoftExtensionsCacheConfigLoader : ICacheConfigLoader
     {
         private readonly IConfigurationSection pubCompCacheConfigurationSection;
+
+        // TODO: move this to a local variable
         private CacheConfigLoadErrorsException cacheConfigLoadErrorsException;
 
         public MicrosoftExtensionsCacheConfigLoader(IConfigurationSection pubCompCacheConfigurationSection)

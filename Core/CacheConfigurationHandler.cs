@@ -12,6 +12,7 @@ namespace PubComp.Caching.Core
 {
     public class CacheConfigurationHandler : IConfigurationSectionHandler
     {
+        // TODO: move this to a local variable
         private CacheConfigLoadErrorsException cacheConfigLoadErrorsException;
 
         public object Create(object parent, object configContext, System.Xml.XmlNode section)

@@ -60,8 +60,12 @@ namespace PubComp.Caching.Core
         /// Also default is to not register automatically all the cache names with CacheControllerUtil
         /// This setting should be set before any call to the API methods
         /// </summary>
-        public static CacheManagerSettings Settings { get; set; } = new CacheManagerSettings
-            {ConfigLoader = new SystemConfigurationManagerCacheConfigLoader(), ShouldRegisterAllCaches = false};
+        public static CacheManagerSettings Settings { get; set; } =
+            new CacheManagerSettings
+            {
+                ConfigLoader = new SystemConfigurationManagerCacheConfigLoader(),
+                ShouldRegisterAllCaches = false
+            };
 
         #region Cache access API
 

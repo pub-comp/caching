@@ -8,6 +8,7 @@ namespace PubComp.Caching.Core.UnitTests
     public class MockConfigLoaderTests
     {
         private CacheManagerLogic _cacheManagerLogic;
+
         [TestInitialize]
         public void TestInitialize()
         {
@@ -15,6 +16,7 @@ namespace PubComp.Caching.Core.UnitTests
             {
                 ConfigLoader = new MockCacheConfigLoader()
             };
+
             _cacheManagerLogic = new CacheManagerLogic(settings);
             _cacheManagerLogic.InitializeFromConfig();
         }

@@ -17,8 +17,12 @@ namespace PubComp.Caching.Core.UnitTests
             // The test can't be completely implicit as the CacheManager is a singleton
             // this is carried across all unit-tests.
             CacheManager.CacheManagerLogic = null;
-            CacheManager.Settings = new CacheManagerSettings
-                { ConfigLoader = new SystemConfigurationManagerCacheConfigLoader(), ShouldRegisterAllCaches = false };
+            CacheManager.Settings =
+                new CacheManagerSettings
+                {
+                    ConfigLoader = new SystemConfigurationManagerCacheConfigLoader(),
+                    ShouldRegisterAllCaches = false
+                };
         }
 
         [TestMethod]

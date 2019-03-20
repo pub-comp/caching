@@ -25,8 +25,12 @@ namespace PubComp.Caching.Core.UnitTests
                 .Build();
             // The json loading is not part of the test, it's just a convenient helper.
 
-            CacheManager.Settings = new CacheManagerSettings
-                { ConfigLoader = new MicrosoftExtensionsCacheConfigLoader(configuration), ShouldRegisterAllCaches = true };
+            CacheManager.Settings =
+                new CacheManagerSettings
+                {
+                    ConfigLoader = new MicrosoftExtensionsCacheConfigLoader(configuration),
+                    ShouldRegisterAllCaches = true
+                };
         }
 
         [TestMethod]
