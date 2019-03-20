@@ -12,10 +12,12 @@ namespace PubComp.Caching.Core
 {
     public class CacheConfigurationHandler : IConfigurationSectionHandler
     {
-        private readonly CacheConfigLoadErrorsException cacheConfigLoadErrorsException = new CacheConfigLoadErrorsException();
+        private CacheConfigLoadErrorsException cacheConfigLoadErrorsException;
 
         public object Create(object parent, object configContext, System.Xml.XmlNode section)
         {
+            cacheConfigLoadErrorsException = new CacheConfigLoadErrorsException();
+
             var assemblies = new Dictionary<string, Assembly>();
             var configuration = new List<ConfigNode>();
 
@@ -71,7 +73,7 @@ namespace PubComp.Caching.Core
                         assembly = Assembly.Load(assemblyNode.Value);
                     }
                     catch (Exception ex) when (ex is FileLoadException ||
-                                               ex is FileNotFoundException || // Was FileNotFoundException missing on purpose?
+                                               ex is FileNotFoundException ||
                                                ex is BadImageFormatException)
                     {
                         LogConfigError($"Could not load assembly {assemblyNode.Value}", ex);

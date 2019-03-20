@@ -12,7 +12,7 @@ namespace PubComp.Caching.Core.Config.Loaders
     public class MicrosoftExtensionsCacheConfigLoader : ICacheConfigLoader
     {
         private readonly IConfigurationSection pubCompCacheConfigurationSection;
-        private readonly CacheConfigLoadErrorsException cacheConfigLoadErrorsException = new CacheConfigLoadErrorsException();
+        private CacheConfigLoadErrorsException cacheConfigLoadErrorsException;
 
         public MicrosoftExtensionsCacheConfigLoader(IConfigurationSection pubCompCacheConfigurationSection)
         {
@@ -37,6 +37,7 @@ namespace PubComp.Caching.Core.Config.Loaders
         /// <returns>The list of Cache ConfigNode (and its inheriting classes)</returns>
         public IList<ConfigNode> LoadConfig()
         {
+            cacheConfigLoadErrorsException = new CacheConfigLoadErrorsException();
             var assemblies = new Dictionary<string, Assembly>();
             var configNodes = new List<ConfigNode>();
             var cacheConfigs = pubCompCacheConfigurationSection.GetChildren();
@@ -59,7 +60,7 @@ namespace PubComp.Caching.Core.Config.Loaders
                         assembly = Assembly.Load(assemblyName);
                     }
                     catch (Exception ex) when (ex is FileLoadException ||
-                                               ex is FileNotFoundException || // Was FileNotFoundException missing on purpose?
+                                               ex is FileNotFoundException ||
                                                ex is BadImageFormatException)
                     {
                         LogConfigError($"Could not load assembly {assemblyName}", ex);
