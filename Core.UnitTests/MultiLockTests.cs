@@ -107,6 +107,7 @@ namespace PubComp.Caching.Core.UnitTests
                     if (l.CurrentCount > 0) Interlocked.Increment(ref locked[0]);
                     return result;
                 });
+                _.Wait();
                 #pragma warning restore 1998
             });
 
@@ -142,15 +143,15 @@ namespace PubComp.Caching.Core.UnitTests
             multiLock = new MultiLock(numberOfLocks);
 
             var keys = GetRandomStrings(numberOfKeys, maxKeyLength).ToList();
-            Print("keys: ", keys);
+            Print("keys (first 10): ", keys.Select(k => $"\"{k}\"").Take(10));
 
             var lockNumbers0 = keys.Select(GetLockNumber).ToList();
-            Print("lockNumbers0: ", lockNumbers0);
+            Print("lockNumbers0 (first 10): ", lockNumbers0.Take(10));
 
             for (int cnt = 1; cnt < iterations; cnt++)
             {
                 var lockNumbersN = keys.Select(GetLockNumber).ToList();
-                Print($"lockNumbers{cnt}: ", lockNumbersN);
+                Print($"lockNumbers{cnt} (first 10): ", lockNumbersN.Take(10));
 
                 CollectionAssert.AreEqual(lockNumbers0, lockNumbersN);
             }
@@ -201,71 +202,90 @@ namespace PubComp.Caching.Core.UnitTests
         private void RunLockNumberDistributionTest(
             ushort numberOfLocks, Func<int, int, IEnumerable<String>> keysGenerator)
         {
+            const int iterations = 100;
             int[] maxKeyLengths = { 10, 31, 42, 101, 292 };
 
-            RunLockNumberDistributionTest(numberOfLocks, keysGenerator, 1, 0.40, 3.0, maxKeyLengths);
-            RunLockNumberDistributionTest(numberOfLocks, keysGenerator, 3, 0.65, 2.0, maxKeyLengths);
-            RunLockNumberDistributionTest(numberOfLocks, keysGenerator, 5, 0.75, 1.5, maxKeyLengths);
-            RunLockNumberDistributionTest(numberOfLocks, keysGenerator, 9, 0.85, 1.2, maxKeyLengths);
+            RunLockNumberDistributionTest(numberOfLocks, keysGenerator, 1, 0.40, maxKeyLengths, iterations);
+            RunLockNumberDistributionTest(numberOfLocks, keysGenerator, 3, 0.70, maxKeyLengths, iterations);
+            RunLockNumberDistributionTest(numberOfLocks, keysGenerator, 5, 0.80, maxKeyLengths, iterations);
+            RunLockNumberDistributionTest(numberOfLocks, keysGenerator, 9, 0.88, maxKeyLengths, iterations);
         }
 
         private void RunLockNumberDistributionTest(
             ushort numberOfLocks, Func<int, int, IEnumerable<String>> keysGenerator,
-            int numberOfKeysPerLock, double minDistribution, double maxUsageFactor,
-            int[] maxKeyLengths)
+            int numberOfKeysPerLock, double minDistribution, int[] maxKeyLengths, int iterations)
         {
-            if (numberOfKeysPerLock <= 0) throw new ArgumentOutOfRangeException(nameof(numberOfKeysPerLock));
-            if (minDistribution <= 0) throw new ArgumentOutOfRangeException(nameof(minDistribution));
-
-            int numberOfKeys = numberOfLocks * numberOfKeysPerLock;
-
-            multiLock = new MultiLock(numberOfLocks);
-
             foreach (var maxKeyLength in maxKeyLengths)
             {
                 Console.WriteLine($"{nameof(numberOfLocks)} = {numberOfLocks}");
                 Console.WriteLine($"{nameof(maxKeyLength)} = {maxKeyLength}");
-                Console.WriteLine($"{nameof(numberOfKeys)} = {numberOfKeys}");
+                Console.WriteLine($"numberOfKeys = {numberOfLocks * numberOfKeysPerLock}");
 
-                var keys = keysGenerator(numberOfKeys, maxKeyLength).ToList();
-                Print("keys: ", keys);
+                int totalUsage = 0;
+                double totalError = 0.0;
 
-                var lockNumbers = keys.Select(GetLockNumber).ToList();
-                Print("lockNumbers: ", lockNumbers);
+                for (int cnt = 0; cnt < iterations; cnt++)
+                {
+                    (int usage, double error) = RunLockNumberDistributionTest(
+                        numberOfLocks, keysGenerator, numberOfKeysPerLock, maxKeyLength);
 
-                Assert.AreEqual(numberOfKeys, lockNumbers.Count, "number of locks");
+                    totalUsage += usage;
+                    totalError += error;
+                }
 
-                Assert.IsTrue(lockNumbers.All(l => l < numberOfLocks), "range check");
+                var averageUsage = totalUsage / (double)iterations;
+                var averageError = totalError / iterations;
 
-                var usedLocks = lockNumbers.Distinct().ToList();
+                Console.WriteLine($"Number of distinct lockNumbers {averageUsage}");
 
-                var zeros = Enumerable.Repeat(0, numberOfLocks - usedLocks.Count);
-
-                var usageCount = lockNumbers.GroupBy(ln => ln).Select(g => g.Count()).ToList();
-                usageCount.AddRange(zeros);
-
-                var distributionVsExpected = Math.Sqrt(
-                    usageCount
-                        .Select(x => Math.Pow(numberOfKeysPerLock - x, 2))
-                        .Sum()
-                    ) / usageCount.Count;
-
-                Console.WriteLine($"Number of distinct lockNumbers {usedLocks.Count}");
-
-                var test1Msg = $"distribution test #1, expected {usedLocks.Count} >= {numberOfLocks * minDistribution}";
+                var test1Msg = $"distribution test #1, expected {averageUsage} >= {numberOfLocks * minDistribution}";
                 Console.WriteLine(test1Msg);
                 Assert.IsTrue(
-                    usedLocks.Count >= numberOfLocks * minDistribution,
+                    averageUsage >= (int)(numberOfLocks * minDistribution),
                     test1Msg);
 
-                const double factor = 5.0;
-                var expected = factor / (1 + Math.Log10(maxKeyLength) + Math.Log10(numberOfKeysPerLock));
-                var test2Msg = $"distribution test #2, expected {distributionVsExpected} <= {expected}";
+                // 5.7 >= ln(maxMaxKeyLength), 6.3 >= ln(maxNumberOfLocks)
+                var expected = 0.3 + 0.2 * (5.7 - Math.Log(maxKeyLength)) + 0.4 * (6.3 - Math.Log(numberOfLocks));
+                var test2Msg = $"distribution test #2, expected {averageError} <= {expected}";
                 Console.WriteLine(test2Msg);
                 Assert.IsTrue(
-                    distributionVsExpected <= expected,
+                    averageError <= expected,
                     test2Msg);
             }
+        }
+
+        private (int, double) RunLockNumberDistributionTest(
+            ushort numberOfLocks, Func<int, int, IEnumerable<String>> keysGenerator,
+            int numberOfKeysPerLock, int maxKeyLength)
+        {
+            int numberOfKeys = numberOfLocks * numberOfKeysPerLock;
+
+            multiLock = new MultiLock(numberOfLocks);
+
+            var keys = keysGenerator(numberOfKeys, maxKeyLength).ToList();
+            Print("keys (first 10): ", keys.Select(k => $"\"{k}\"").Take(10));
+
+            var lockNumbers = keys.Select(GetLockNumber).ToList();
+            Print("lockNumbers (first 10): ", lockNumbers.Take(10));
+
+            Assert.AreEqual(numberOfKeys, lockNumbers.Count, "number of locks");
+
+            Assert.IsTrue(lockNumbers.All(l => l < numberOfLocks), "range check");
+
+            var usedLocks = lockNumbers.Distinct().ToList();
+
+            var zeros = Enumerable.Repeat(0, numberOfLocks - usedLocks.Count);
+
+            var usageCount = lockNumbers.GroupBy(ln => ln).Select(g => g.Count()).ToList();
+            usageCount.AddRange(zeros);
+
+            var distributionVsExpected = Math.Sqrt(
+                usageCount
+                    .Select(x => Math.Pow(numberOfKeysPerLock - x, 2))
+                    .Sum()
+                ) / usageCount.Count;
+
+            return (usedLocks.Count, distributionVsExpected);
         }
 
         private void Print<T>(string prefix, IEnumerable<T> items)
