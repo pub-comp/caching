@@ -98,6 +98,7 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.IsTrue(registeredCacheNames.All(rcn => cacheNames.Contains(rcn)));
         }
 
+        [ExpectedException(typeof(CacheConfigLoadErrorsException))]
         [TestMethod]
         public void TestMECConfigLoader_AssemblyError()
         {

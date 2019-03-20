@@ -7,11 +7,12 @@ using System.Reflection;
 namespace PubComp.Caching.Core.Config.Loaders
 {
     /// <summary>
-    /// Load the cache configuration using .NetStandard's Microsoft.Extenstions.Configuration
+    /// Load the cache configuration using .NetStandard's Microsoft.Extensions.Configuration
     /// </summary>
     public class MicrosoftExtensionsCacheConfigLoader : ICacheConfigLoader
     {
         private readonly IConfigurationSection pubCompCacheConfigurationSection;
+        private readonly CacheConfigLoadErrorsException cacheConfigLoadErrorsException = new CacheConfigLoadErrorsException();
 
         public MicrosoftExtensionsCacheConfigLoader(IConfigurationSection pubCompCacheConfigurationSection)
         {
@@ -85,6 +86,9 @@ namespace PubComp.Caching.Core.Config.Loaders
                 configNodes.Add(configNode);
             }
 
+            if (!cacheConfigLoadErrorsException.IsEmpty())
+                throw cacheConfigLoadErrorsException;
+
             return configNodes;
         }
 
@@ -101,6 +105,9 @@ namespace PubComp.Caching.Core.Config.Loaders
                 System.Diagnostics.Debug.WriteLine(
                     $"{typeof(MicrosoftExtensionsCacheConfigLoader).FullName}: {error}");
             }
+
+            cacheConfigLoadErrorsException.Add(new CacheConfigLoadErrorsException.CacheConfigLoadError
+                {Error = error, Exception = ex});
         }
     }
 }

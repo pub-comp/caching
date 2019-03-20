@@ -6,11 +6,14 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 using PubComp.Caching.Core.Config;
+using PubComp.Caching.Core.Config.Loaders;
 
 namespace PubComp.Caching.Core
 {
     public class CacheConfigurationHandler : IConfigurationSectionHandler
     {
+        private readonly CacheConfigLoadErrorsException cacheConfigLoadErrorsException = new CacheConfigLoadErrorsException();
+
         public object Create(object parent, object configContext, System.Xml.XmlNode section)
         {
             var assemblies = new Dictionary<string, Assembly>();
@@ -113,6 +116,9 @@ namespace PubComp.Caching.Core
                 ApplyConfig(configuration, child.Attributes, configType, action, configNode);
             }
 
+            if (!cacheConfigLoadErrorsException.IsEmpty())
+                throw cacheConfigLoadErrorsException;
+
             return configuration;
         }
 
@@ -189,6 +195,9 @@ namespace PubComp.Caching.Core
                 System.Diagnostics.Debug.WriteLine(
                     $"{typeof(CacheConfigurationHandler).FullName}: {error}");
             }
+
+            cacheConfigLoadErrorsException.Add(new CacheConfigLoadErrorsException.CacheConfigLoadError
+                { Error = error, Exception = ex });
         }
     }
 }
