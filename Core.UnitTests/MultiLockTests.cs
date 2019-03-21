@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core.CacheUtils;
+using PubComp.Caching.Core.Exceptions;
 
 namespace PubComp.Caching.Core.UnitTests
 {
@@ -37,7 +38,7 @@ namespace PubComp.Caching.Core.UnitTests
                 multiLock.Release(key);
             }
 
-            Assert.IsTrue(lck.CurrentCount > 0, "Lock should have been released");
+            Assert.IsTrue(lck.CurrentCount == 1, "Lock should have been released");
         }
 
         [TestMethod]
@@ -75,7 +76,7 @@ namespace PubComp.Caching.Core.UnitTests
             }
 
             runResult.Wait(100);
-            Assert.IsTrue(Interlocked.Read(ref entered[0]) != 0L, "Should have gotten lock");
+            Assert.IsTrue(Interlocked.Read(ref entered[0]) == 1L, "Should have gotten lock");
             Assert.IsTrue(Interlocked.Read(ref locked[0]) == 0L, "Lock should have been taken");
 
             var lockNumber = GetLockNumber(key);
@@ -130,6 +131,166 @@ namespace PubComp.Caching.Core.UnitTests
             var lockNumber = GetLockNumber(key);
             var lck = GetLock(lockNumber);
             Assert.IsTrue(lck.CurrentCount > 0, "Lock should have been released");
+        }
+
+        [TestMethod][ExpectedException(typeof(CacheLockException))]
+        public void LockAndLoad_WaitsForLock_Timeout_Throw()
+        {
+            const int numberOfLocks = 512;
+            const string key = "key1";
+
+            multiLock = new MultiLock(numberOfLocks, 10, true);
+
+            long[] entered = { 0L };
+            long[] locked = { 0L };
+
+            multiLock.Take(key);
+
+            var lockNumber = GetLockNumber(key);
+            var lck = GetLock(lockNumber);
+
+            try
+            {
+                multiLock.LockAndLoad(key, () =>
+                {
+                    var result = Interlocked.Increment(ref entered[0]);
+                    var ln = GetLockNumber(key);
+                    var l = GetLock(ln);
+                    if (l.CurrentCount > 0) Interlocked.Increment(ref locked[0]);
+                    return result;
+                });
+            }
+            finally
+            {
+                var lockCount = lck.CurrentCount;
+
+                multiLock.Release(key);
+
+                Assert.IsTrue(lockCount == 0, "Lock should have been taken");
+                Assert.IsTrue(lck.CurrentCount == 1, "Lock should have been released");
+            }
+        }
+
+        [TestMethod][ExpectedException(typeof(AggregateException))]
+        public void LockAndLoadAsync_WaitsForLock_Timeout_Throw()
+        {
+            const int numberOfLocks = 512;
+            const string key = "key1";
+
+            multiLock = new MultiLock(numberOfLocks, 10, true);
+
+            long[] entered = { 0L };
+            long[] locked = { 0L };
+
+            multiLock.Take(key);
+
+            var lockNumber = GetLockNumber(key);
+            var lck = GetLock(lockNumber);
+
+            try
+            {
+                #pragma warning disable 1998
+                var _ = multiLock.LockAndLoadAsync(key, async () =>
+                {
+                    var result = Interlocked.Increment(ref entered[0]);
+                    var ln = GetLockNumber(key);
+                    var l = GetLock(ln);
+                    if (l.CurrentCount > 0) Interlocked.Increment(ref locked[0]);
+                    return result;
+                });
+                _.Wait();
+                #pragma warning restore 1998
+            }
+            finally
+            {
+                var lockCount = lck.CurrentCount;
+
+                multiLock.Release(key);
+
+                Assert.IsTrue(lockCount == 0, "Lock should have been taken");
+                Assert.IsTrue(lck.CurrentCount == 1, "Lock should have been released");
+            }
+        }
+
+        [TestMethod]
+        public void LockAndLoad_WaitsForLock_Timeout_NoThrow()
+        {
+            const int numberOfLocks = 512;
+            const string key = "key1";
+
+            multiLock = new MultiLock(numberOfLocks, 10, false);
+
+            long[] entered = { 0L };
+            long[] locked = { 0L };
+
+            multiLock.Take(key);
+
+            var lockNumber = GetLockNumber(key);
+            var lck = GetLock(lockNumber);
+
+            try
+            {
+                multiLock.LockAndLoad(key, () =>
+                {
+                    var result = Interlocked.Increment(ref entered[0]);
+                    var ln = GetLockNumber(key);
+                    var l = GetLock(ln);
+                    if (l.CurrentCount > 0) Interlocked.Increment(ref locked[0]);
+                    return result;
+                });
+            }
+            finally
+            {
+                var lockCount = lck.CurrentCount;
+
+                multiLock.Release(key);
+
+                Assert.IsTrue(Interlocked.Read(ref entered[0]) != 0L, "Should have timed out and entered");
+                Assert.IsTrue(lockCount == 0, "Lock should have been taken");
+                Assert.IsTrue(lck.CurrentCount == 1, "Lock should have been released");
+            }
+        }
+
+        [TestMethod]
+        public void LockAndLoadAsync_WaitsForLock_Timeout_NoThrow()
+        {
+            const int numberOfLocks = 512;
+            const string key = "key1";
+
+            multiLock = new MultiLock(numberOfLocks, 10, false);
+
+            long[] entered = { 0L };
+            long[] locked = { 0L };
+
+            multiLock.Take(key);
+
+            var lockNumber = GetLockNumber(key);
+            var lck = GetLock(lockNumber);
+
+            try
+            {
+                #pragma warning disable 1998
+                var _ = multiLock.LockAndLoadAsync(key, async () =>
+                {
+                    var result = Interlocked.Increment(ref entered[0]);
+                    var ln = GetLockNumber(key);
+                    var l = GetLock(ln);
+                    if (l.CurrentCount > 0) Interlocked.Increment(ref locked[0]);
+                    return result;
+                });
+                _.Wait();
+                #pragma warning restore 1998
+            }
+            finally
+            {
+                var lockCount = lck.CurrentCount;
+
+                multiLock.Release(key);
+
+                Assert.IsTrue(Interlocked.Read(ref entered[0]) != 0L, "Should have timed out and entered");
+                Assert.IsTrue(lockCount == 0, "Lock should have been taken");
+                Assert.IsTrue(lck.CurrentCount == 1, "Lock should have been released"); ;
+            }
         }
 
         [TestMethod]

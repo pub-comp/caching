@@ -26,7 +26,12 @@ namespace PubComp.Caching.SystemRuntime
             this.innerCache = innerCache;
 
             this.locks = !this.policy.DoNotLock
-                ? new MultiLock(this.policy.NumberOfLocks ?? 50)
+                ? new MultiLock(
+                    this.policy.NumberOfLocks ?? 50,
+                    this.policy.LockTimeoutMilliseconds != null && this.policy.LockTimeoutMilliseconds > 0
+                        ? this.policy.LockTimeoutMilliseconds
+                        : null,
+                    this.policy.DoThrowExceptionOnTimeout ?? true)
                 : null;
 
             this.notiferName = this.policy?.SyncProvider;
@@ -154,7 +159,7 @@ namespace PubComp.Caching.SystemRuntime
             if (policy.DoNotLock)
                 return await OnCacheMiss().ConfigureAwait(false);
 
-            return await this.locks.LockAndLoadAsync(key, OnCacheMiss);
+            return await this.locks.LockAndLoadAsync(key, OnCacheMiss).ConfigureAwait(false);
         }
 
         public void Clear(String key)

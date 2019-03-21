@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using PubComp.Caching.Core.Exceptions;
 
 namespace PubComp.Caching.Core.CacheUtils
 {
@@ -13,12 +14,17 @@ namespace PubComp.Caching.Core.CacheUtils
         private readonly SemaphoreSlim[] locks;
         private readonly uint[] scramblers;
         private const int MaxNumberOfLocks = 1000;
+        private readonly int? timeoutMilliseconds;
+        private readonly bool doThrowExceptionOnTimeout;
 
         /// <summary>
         /// Create an instance of <see cref="MultiLock" />
         /// </summary>
-        /// <param name="numberOfLocks"></param>
-        public MultiLock(ushort numberOfLocks)
+        /// <param name="numberOfLocks">Number of locks</param>
+        /// <param name="timeoutMilliseconds">Optional timeout in mSec</param>
+        /// <param name="doThrowExceptionOnTimeout">If using timeout, determines if an exception is thrown on timeout</param>
+        public MultiLock(
+            ushort numberOfLocks, int? timeoutMilliseconds = null, bool doThrowExceptionOnTimeout = true)
         {
             if (numberOfLocks < 1)
             {
@@ -50,6 +56,8 @@ namespace PubComp.Caching.Core.CacheUtils
 
             this.locks = l;
             this.scramblers = s;
+            this.timeoutMilliseconds = timeoutMilliseconds;
+            this.doThrowExceptionOnTimeout = doThrowExceptionOnTimeout;
         }
 
         /// <summary>
@@ -91,25 +99,29 @@ namespace PubComp.Caching.Core.CacheUtils
         /// Attempts to take a lock, depending on the key.
         /// </summary>
         /// <param name="key">The key to use for choosing the lock</param>
-        /// <param name="timeoutMilliseconds">Optional timeout in mSec</param>
-        public void Take(string key, int? timeoutMilliseconds = null)
+        /// <returns>If case timeoutMilliseconds was defined (non-null),
+        /// true if take succeeded, false if timed out.
+        /// If timeoutMilliseconds is null returns true.</returns>
+        public bool Take(string key)
         {
             var lockNumber = GetLockNumber(key);
 
             if (timeoutMilliseconds.HasValue)
-                this.locks[lockNumber].Wait(timeoutMilliseconds.Value);
-            else
-                this.locks[lockNumber].Wait();
+                return this.locks[lockNumber].Wait(timeoutMilliseconds.Value);
+            
+            this.locks[lockNumber].Wait();
+            return true;
         }
 
         /// <summary>
         /// Releases a lock, depending on the key.
         /// </summary>
         /// <param name="key">The key to use for choosing the lock</param>
-        public void Release(string key)
+        /// <returns>1 if the lock was already available, 0 if not</returns>
+        public int Release(string key)
         {
             var lockNumber = GetLockNumber(key);
-            this.locks[lockNumber].Release();
+            return this.locks[lockNumber].Release();
         }
 
         /// <summary>
@@ -119,16 +131,25 @@ namespace PubComp.Caching.Core.CacheUtils
         /// <typeparam name="TResult">The type of result, returned by the loader method</typeparam>
         /// <param name="key">The key to use for choosing the lock</param>
         /// <param name="loader">A method to run for loading the result</param>
-        /// <param name="timeoutMilliseconds">Optional timeout in mSec</param>
         /// <returns>The result of the loader</returns>
-        public TResult LockAndLoad<TResult>(String key, Func<TResult> loader, int? timeoutMilliseconds = null)
+        public TResult LockAndLoad<TResult>(
+            String key, Func<TResult> loader)
         {
             var lockNumber = GetLockNumber(key);
+            bool gotLock;
 
-            if (timeoutMilliseconds.HasValue)
-                this.locks[lockNumber].Wait(timeoutMilliseconds.Value);
-            else
+            if (!timeoutMilliseconds.HasValue)
+            {
                 this.locks[lockNumber].Wait();
+                gotLock = true;
+            }
+            else
+            {
+                gotLock = this.locks[lockNumber].Wait(timeoutMilliseconds.Value);
+
+                if (!gotLock && doThrowExceptionOnTimeout)
+                    throw new CacheLockException($"Failed to obtain lock for {key}");
+            }
 
             try
             {
@@ -136,7 +157,8 @@ namespace PubComp.Caching.Core.CacheUtils
             }
             finally
             {
-                this.locks[lockNumber].Release();
+                if (gotLock)
+                    this.locks[lockNumber].Release();
             }
         }
 
@@ -147,16 +169,24 @@ namespace PubComp.Caching.Core.CacheUtils
         /// <typeparam name="TResult">The type of result, returned by the loader method</typeparam>
         /// <param name="key">The key to use for choosing the lock</param>
         /// <param name="loader">A method to run for loading the result</param>
-        /// <param name="timeoutMilliseconds">Optional timeout in mSec</param>
         /// <returns>A task that returns the result of the loader</returns>
-        public async Task<TResult> LockAndLoadAsync<TResult>(String key, Func<Task<TResult>> loader, int? timeoutMilliseconds = null)
+        public async Task<TResult> LockAndLoadAsync<TResult>(String key, Func<Task<TResult>> loader)
         {
             var lockNumber = GetLockNumber(key);
+            bool gotLock;
 
-            if (timeoutMilliseconds.HasValue)
-                await this.locks[lockNumber].WaitAsync(timeoutMilliseconds.Value);
+            if (!timeoutMilliseconds.HasValue)
+            {
+                await this.locks[lockNumber].WaitAsync().ConfigureAwait(false);
+                gotLock = true;
+            }
             else
-                await this.locks[lockNumber].WaitAsync();
+            {
+                gotLock = await this.locks[lockNumber].WaitAsync(timeoutMilliseconds.Value).ConfigureAwait(false);
+
+                if (!gotLock && doThrowExceptionOnTimeout)
+                    throw new CacheLockException($"Failed to obtain lock for {key}");
+            }
 
             try
             {
@@ -164,7 +194,8 @@ namespace PubComp.Caching.Core.CacheUtils
             }
             finally
             {
-                this.locks[lockNumber].Release();
+                if (gotLock)
+                    this.locks[lockNumber].Release();
             }
         }
     }
