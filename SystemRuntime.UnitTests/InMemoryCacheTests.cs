@@ -297,7 +297,7 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             Assert.AreEqual(1, result2);
         }
 
-        [TestMethod]
+        [TestMethod][Ignore] // Now reentrant locking is supported
         public void Get_NestedGetWithLock_Deadlock()
         {
             //Arrange

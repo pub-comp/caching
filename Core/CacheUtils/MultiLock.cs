@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using PubComp.Caching.Core.Exceptions;
@@ -11,11 +12,16 @@ namespace PubComp.Caching.Core.CacheUtils
     /// </summary>
     public class MultiLock
     {
+        private static readonly ConcurrentDictionary<string, AsyncLocal<bool>> AsyncLocalContext
+            = new ConcurrentDictionary<string, AsyncLocal<bool>>();
+
+        private readonly string id = Guid.NewGuid().ToString();
         private readonly SemaphoreSlim[] locks;
         private readonly uint[] scramblers;
         private const int MaxNumberOfLocks = 1000;
         private readonly int? timeoutMilliseconds;
         private readonly bool doThrowExceptionOnTimeout;
+        private readonly bool doEnableReentrantLocking;
 
         /// <summary>
         /// Create an instance of <see cref="MultiLock" />
@@ -23,8 +29,10 @@ namespace PubComp.Caching.Core.CacheUtils
         /// <param name="numberOfLocks">Number of locks</param>
         /// <param name="timeoutMilliseconds">Optional timeout in mSec</param>
         /// <param name="doThrowExceptionOnTimeout">If using timeout, determines if an exception is thrown on timeout</param>
+        /// <param name="doEnableReentrantLocking">If true, enables reentrant (recursive) calls without deadlocking</param>
         public MultiLock(
-            ushort numberOfLocks, int? timeoutMilliseconds = null, bool doThrowExceptionOnTimeout = true)
+            ushort numberOfLocks, int? timeoutMilliseconds = null, bool doThrowExceptionOnTimeout = true,
+            bool doEnableReentrantLocking = true)
         {
             if (numberOfLocks < 1)
             {
@@ -58,6 +66,7 @@ namespace PubComp.Caching.Core.CacheUtils
             this.scramblers = s;
             this.timeoutMilliseconds = timeoutMilliseconds;
             this.doThrowExceptionOnTimeout = doThrowExceptionOnTimeout;
+            this.doEnableReentrantLocking = doEnableReentrantLocking;
         }
 
         /// <summary>
@@ -95,6 +104,75 @@ namespace PubComp.Caching.Core.CacheUtils
             return result;
         }
 
+        private string GetContextKey(uint lockNumber)
+        {
+            return $"{this.id}.{lockNumber}";
+        }
+
+        /// <summary>
+        /// Mark that flow has passed reentrant check
+        /// </summary>
+        /// <param name="lockNumber"></param>
+        /// <returns></returns>
+        private bool MarkFlow(uint lockNumber)
+        {
+            var contextKey = GetContextKey(lockNumber);
+            var variable = AsyncLocalContext.GetOrAdd(contextKey, _ => new AsyncLocal<bool>());
+            if (variable.Value == false)
+            {
+                variable.Value = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Unmark flow
+        /// </summary>
+        /// <param name="lockNumber"></param>
+        private void UnmarkFlow(uint lockNumber)
+        {
+            var contextKey = GetContextKey(lockNumber);
+            AsyncLocalContext.GetOrAdd(contextKey, _ => new AsyncLocal<bool>()).Value = false;
+        }
+
+        private bool Take(uint lockNumber, int? timeoutOverride = null)
+        {
+            var timeout = timeoutOverride ?? this.timeoutMilliseconds;
+
+            bool taken;
+            if (timeout.HasValue)
+            {
+                taken = this.locks[lockNumber].Wait(timeout.Value);
+            }
+            else
+            {
+                this.locks[lockNumber].Wait();
+                taken = true;
+            }
+
+            return taken;
+        }
+
+        private async Task<bool> TakeAsync(uint lockNumber, int? timeoutOverride = null)
+        {
+            var timeout = timeoutOverride ?? this.timeoutMilliseconds;
+
+            bool taken;
+            if (timeout.HasValue)
+            {
+                taken = await this.locks[lockNumber].WaitAsync(timeout.Value).ConfigureAwait(false);
+            }
+            else
+            {
+                await this.locks[lockNumber].WaitAsync().ConfigureAwait(false);
+                taken = true;
+            }
+
+            return taken;
+        }
+
         /// <summary>
         /// Attempts to take a lock, depending on the key.
         /// </summary>
@@ -105,12 +183,26 @@ namespace PubComp.Caching.Core.CacheUtils
         public bool Take(string key)
         {
             var lockNumber = GetLockNumber(key);
+            return Take(lockNumber);
+        }
 
-            if (timeoutMilliseconds.HasValue)
-                return this.locks[lockNumber].Wait(timeoutMilliseconds.Value);
-            
-            this.locks[lockNumber].Wait();
-            return true;
+        /// <summary>
+        /// Attempts to take a lock, depending on the key.
+        /// </summary>
+        /// <param name="key">The key to use for choosing the lock</param>
+        /// <returns>If case timeoutMilliseconds was defined (non-null),
+        /// true if take succeeded, false if timed out.
+        /// If timeoutMilliseconds is null returns true.</returns>
+        public async Task<bool> TakeAsync(string key)
+        {
+            var lockNumber = GetLockNumber(key);
+            return await TakeAsync(lockNumber);
+        }
+
+        private int Release(uint lockNumber)
+        {
+            var count = this.locks[lockNumber].Release();
+            return count;
         }
 
         /// <summary>
@@ -121,7 +213,13 @@ namespace PubComp.Caching.Core.CacheUtils
         public int Release(string key)
         {
             var lockNumber = GetLockNumber(key);
-            return this.locks[lockNumber].Release();
+            return Release(lockNumber);
+        }
+
+        private bool DoesFlowAlreadyHaveLock(uint lockNumber)
+        {
+            var contextKey = GetContextKey(lockNumber);
+            return AsyncLocalContext.TryGetValue(contextKey, out var result) && result.Value;
         }
 
         /// <summary>
@@ -132,33 +230,37 @@ namespace PubComp.Caching.Core.CacheUtils
         /// <param name="key">The key to use for choosing the lock</param>
         /// <param name="loader">A method to run for loading the result</param>
         /// <returns>The result of the loader</returns>
-        public TResult LockAndLoad<TResult>(
-            String key, Func<TResult> loader)
+        public TResult LockAndLoad<TResult>(String key, Func<TResult> loader)
         {
             var lockNumber = GetLockNumber(key);
-            bool gotLock;
 
-            if (!timeoutMilliseconds.HasValue)
-            {
-                this.locks[lockNumber].Wait();
-                gotLock = true;
-            }
-            else
-            {
-                gotLock = this.locks[lockNumber].Wait(timeoutMilliseconds.Value);
+            // If failed to get lock, check if already have this lock (higher up in call stack)
+            if (doEnableReentrantLocking && DoesFlowAlreadyHaveLock(lockNumber))
+                return loader();
 
-                if (!gotLock && doThrowExceptionOnTimeout)
-                    throw new CacheLockException($"Failed to obtain lock for {key}");
-            }
-
+            // Do this BEFORE first async call, otherwise it won't affect current thread!
+            var wasMarked = MarkFlow(lockNumber);
             try
             {
-                return loader();
+                // Wait for lock with or without timeout (depending on field)
+                var gotLock = Take(lockNumber);
+                if (!gotLock && doThrowExceptionOnTimeout)
+                    throw new CacheLockException($"Failed to obtain lock for {key}");
+
+                try
+                {
+                    return loader();
+                }
+                finally
+                {
+                    if (gotLock)
+                        Release(lockNumber);
+                }
             }
             finally
             {
-                if (gotLock)
-                    this.locks[lockNumber].Release();
+                if (wasMarked)
+                    UnmarkFlow(lockNumber);
             }
         }
 
@@ -173,29 +275,34 @@ namespace PubComp.Caching.Core.CacheUtils
         public async Task<TResult> LockAndLoadAsync<TResult>(String key, Func<Task<TResult>> loader)
         {
             var lockNumber = GetLockNumber(key);
-            bool gotLock;
 
-            if (!timeoutMilliseconds.HasValue)
-            {
-                await this.locks[lockNumber].WaitAsync().ConfigureAwait(false);
-                gotLock = true;
-            }
-            else
-            {
-                gotLock = await this.locks[lockNumber].WaitAsync(timeoutMilliseconds.Value).ConfigureAwait(false);
+            // If failed to get lock, check if already have this lock (higher up in call stack)
+            if (doEnableReentrantLocking && DoesFlowAlreadyHaveLock(lockNumber))
+                return await loader().ConfigureAwait(false);
 
-                if (!gotLock && doThrowExceptionOnTimeout)
-                    throw new CacheLockException($"Failed to obtain lock for {key}");
-            }
-
+            // Do this BEFORE first async call, otherwise it won't affect current thread!
+            var wasMarked = MarkFlow(lockNumber);
             try
             {
-                return await loader().ConfigureAwait(false);
+                // Wait for lock with or without timeout (depending on field)
+                var gotLock = await TakeAsync(lockNumber);
+                if (!gotLock && doThrowExceptionOnTimeout)
+                    throw new CacheLockException($"Failed to obtain lock for {key}");
+
+                try
+                {
+                    return await loader().ConfigureAwait(false);
+                }
+                finally
+                {
+                    if (gotLock)
+                        Release(lockNumber);
+                }
             }
             finally
             {
-                if (gotLock)
-                    this.locks[lockNumber].Release();
+                if (wasMarked)
+                    UnmarkFlow(lockNumber);
             }
         }
     }

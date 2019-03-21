@@ -17,6 +17,8 @@ namespace PubComp.Caching.Core.UnitTests
         private MultiLock multiLock;
         private readonly Random random = new Random();
 
+        #region Basic functionality
+
         [TestMethod]
         public void TakeAndRelease_CheckLock()
         {
@@ -47,7 +49,7 @@ namespace PubComp.Caching.Core.UnitTests
             const int numberOfLocks = 512;
             const string key = "key1";
 
-            multiLock = new MultiLock(numberOfLocks);
+            multiLock = new MultiLock(numberOfLocks, doEnableReentrantLocking: false);
 
             long[] entered = {0L};
             long[] locked = {0L};
@@ -90,7 +92,7 @@ namespace PubComp.Caching.Core.UnitTests
             const int numberOfLocks = 512;
             const string key = "key1";
 
-            multiLock = new MultiLock(numberOfLocks);
+            multiLock = new MultiLock(numberOfLocks, doEnableReentrantLocking: false);
 
             long[] entered = { 0L };
             long[] locked = { 0L };
@@ -133,13 +135,17 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.IsTrue(lck.CurrentCount > 0, "Lock should have been released");
         }
 
+        #endregion
+
+        #region Timeout
+
         [TestMethod][ExpectedException(typeof(CacheLockException))]
         public void LockAndLoad_WaitsForLock_Timeout_Throw()
         {
             const int numberOfLocks = 512;
             const string key = "key1";
 
-            multiLock = new MultiLock(numberOfLocks, 10, true);
+            multiLock = new MultiLock(numberOfLocks, 10, true, doEnableReentrantLocking: false);
 
             long[] entered = { 0L };
             long[] locked = { 0L };
@@ -177,7 +183,7 @@ namespace PubComp.Caching.Core.UnitTests
             const int numberOfLocks = 512;
             const string key = "key1";
 
-            multiLock = new MultiLock(numberOfLocks, 10, true);
+            multiLock = new MultiLock(numberOfLocks, 10, true, doEnableReentrantLocking: false);
 
             long[] entered = { 0L };
             long[] locked = { 0L };
@@ -218,7 +224,7 @@ namespace PubComp.Caching.Core.UnitTests
             const int numberOfLocks = 512;
             const string key = "key1";
 
-            multiLock = new MultiLock(numberOfLocks, 10, false);
+            multiLock = new MultiLock(numberOfLocks, 10, false, doEnableReentrantLocking: false);
 
             long[] entered = { 0L };
             long[] locked = { 0L };
@@ -257,7 +263,7 @@ namespace PubComp.Caching.Core.UnitTests
             const int numberOfLocks = 512;
             const string key = "key1";
 
-            multiLock = new MultiLock(numberOfLocks, 10, false);
+            multiLock = new MultiLock(numberOfLocks, 10, false, doEnableReentrantLocking: false);
 
             long[] entered = { 0L };
             long[] locked = { 0L };
@@ -293,6 +299,10 @@ namespace PubComp.Caching.Core.UnitTests
             }
         }
 
+        #endregion
+
+        #region Deterministic check
+
         [TestMethod]
         public void GetLockNumber_Deterministic_Random()
         {
@@ -317,6 +327,130 @@ namespace PubComp.Caching.Core.UnitTests
                 CollectionAssert.AreEqual(lockNumbers0, lockNumbersN);
             }
         }
+
+        #endregion
+
+        #region Reentrant locking
+
+        [TestMethod][ExpectedException(typeof(CacheLockException))]
+        public void DelockTest_1Lock_1Task_DisabledReentrance_0Complete()
+        {
+            const string key = "aKey";
+            var counter = new[] { 0L };
+
+            var locks = new MultiLock(1, 10, true, doEnableReentrantLocking: false);
+
+            try
+            {
+                locks.LockAndLoad(key, () =>
+                {
+                    locks.LockAndLoad(key, () => Interlocked.Increment(ref counter[0]));
+                    return Interlocked.Increment(ref counter[0]);
+                });
+            }
+            finally
+            {
+                Assert.AreEqual(0L, Interlocked.Read(ref counter[0]));
+            }
+        }
+
+        [TestMethod][ExpectedException(typeof(AggregateException))]
+        public void DelockTest_1Lock_2Tasks_0Complete()
+        {
+            const string key = "aKey";
+            var counter = new[] { 0L };
+
+            var locks = new MultiLock(1, 10, true);
+
+            Task<long> task1 = new Task<long>(() =>
+            {
+                return locks.LockAndLoad(key, () => Interlocked.Increment(ref counter[0]));
+            });
+
+            Task<long> task2 = new Task<long>(() =>
+            {
+                return locks.LockAndLoad(key, () =>
+                {
+                    task1.Start();
+                    task1.Wait();
+                    return Interlocked.Increment(ref counter[0]);
+                });
+            });
+
+
+            try
+            {
+                task2.Start();
+                task2.Wait();
+            }
+            finally
+            {
+                Assert.AreEqual(0L, Interlocked.Read(ref counter[0]));
+            }
+        }
+
+        [TestMethod]
+        public void DelockTest_1Lock_1Task_2Complete()
+        {
+            const string key = "aKey";
+            var counter = new[] { 0L };
+
+            var locks = new MultiLock(1, 10, true);
+
+            locks.LockAndLoad(key, () =>
+            {
+                locks.LockAndLoad(key, () => Interlocked.Increment(ref counter[0]));
+                return Interlocked.Increment(ref counter[0]);
+            });
+
+            Assert.AreEqual(2L, Interlocked.Read(ref counter[0]));
+        }
+
+        [TestMethod][ExpectedException(typeof(CacheLockException))]
+        public async Task DelockTestAsync_1Lock_1Task_DisabledReentrance_0Complete()
+        {
+            const string key = "aKey";
+            var counter = new[] { 0L };
+
+            var locks = new MultiLock(1, 10, true, doEnableReentrantLocking: false);
+
+            try
+            {
+                await locks.LockAndLoadAsync(key, async () => await ExternalIncPosZero(locks, key, counter));
+            }
+            finally
+            {
+                Assert.AreEqual(0L, Interlocked.Read(ref counter[0]));
+            }
+        }
+
+        [TestMethod]
+        public async Task DelockTestAsync_1Lock_1Task_2Complete()
+        {
+            const string key = "aKey";
+            var counter = new[] { 0L };
+
+            var locks = new MultiLock(1, 10, true);
+
+            await locks.LockAndLoadAsync(key, async () => await ExternalIncPosZero(locks, key, counter));
+            Assert.AreEqual(2L, Interlocked.Read(ref counter[0]));
+        }
+
+        private async Task<long> ExternalIncPosZero(MultiLock locks, string key, long[] counter)
+        {
+            await locks.LockAndLoadAsync(key, async () => await InternalIncPosZero(counter));
+            return Interlocked.Increment(ref counter[0]);
+        }
+
+        private async Task<long> InternalIncPosZero(long[] counter)
+        {
+            await Task.Delay(0);
+            return Interlocked.Increment(ref counter[0]);
+        }
+
+        #endregion
+
+        #region Distribution
 
         [TestMethod]
         public void GetLockNumber_Distribution_100_Random()
@@ -449,6 +583,37 @@ namespace PubComp.Caching.Core.UnitTests
             return (usedLocks.Count, distributionVsExpected);
         }
 
+        #endregion
+
+        #region Access privates
+
+        private uint GetLockNumber(string key)
+        {
+            const string methodName = "GetLockNumber";
+            var method = typeof(MultiLock)
+                .GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(method, $"{nameof(methodName)} != {methodName}");
+            var result = method.Invoke(multiLock, new object[] { key });
+            Assert.IsTrue(result is uint, $"{methodName} no longer returns a {typeof(uint).Name}");
+            return (uint)result;
+        }
+
+        private SemaphoreSlim GetLock(uint lockNumber)
+        {
+            const string fieldName = "locks";
+            var field = typeof(MultiLock)
+                .GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(field, $"{nameof(fieldName)} != {fieldName}");
+            var result = field.GetValue(multiLock);
+            var array = result as SemaphoreSlim[];
+            Assert.IsTrue(array != null, $"{fieldName} no longer returns a {typeof(SemaphoreSlim[]).Name}");
+            return array[lockNumber];
+        }
+
+        #endregion
+
+        #region Random string generation
+
         private void Print<T>(string prefix, IEnumerable<T> items)
         {
             Console.WriteLine(string.Concat(prefix, "(", string.Join(", ", items), ")"));
@@ -466,29 +631,6 @@ namespace PubComp.Caching.Core.UnitTests
 
             for (int cnt = 0; cnt < numberOfKeys; cnt++)
                 yield return GetRandomMutation(baseKey);
-        }
-
-        private uint GetLockNumber(string key)
-        {
-            const string methodName = "GetLockNumber";
-            var method = typeof(MultiLock)
-                .GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.IsNotNull(method, $"{nameof(methodName)} != {methodName}");
-            var result = method.Invoke(multiLock, new object[] {key});
-            Assert.IsTrue(result is uint, $"{methodName} no longer returns a {typeof(uint).Name}");
-            return (uint)result;
-        }
-
-        private SemaphoreSlim GetLock(uint lockNumber)
-        {
-            const string fieldName = "locks";
-            var field = typeof(MultiLock)
-                .GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.IsNotNull(field, $"{nameof(fieldName)} != {fieldName}");
-            var result = field.GetValue(multiLock);
-            var array = result as SemaphoreSlim[];
-            Assert.IsTrue(array != null, $"{fieldName} no longer returns a {typeof(SemaphoreSlim[]).Name}");
-            return array[lockNumber];
         }
 
         private string GetRandomString(int length)
@@ -554,5 +696,7 @@ namespace PubComp.Caching.Core.UnitTests
 
             return source.Substring(start, length);
         }
+
+        #endregion
     }
 }
