@@ -340,11 +340,15 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
 
             var noLockTime = LoadTest(null, numberOfIterations, threadKeys);
             var oneLockTime = LoadTest(1, numberOfIterations, threadKeys);
+            var tenLocksTime = LoadTest(10, numberOfIterations, threadKeys);
             var onehundredLocksTime = LoadTest(100, numberOfIterations, threadKeys);
+            var oneThousandLocksTime = LoadTest(1000, numberOfIterations, threadKeys);
 
             Console.WriteLine($"{nameof(noLockTime)} = {noLockTime}");
             Console.WriteLine($"{nameof(oneLockTime)} = {oneLockTime}");
+            Console.WriteLine($"{nameof(tenLocksTime)} = {tenLocksTime}");
             Console.WriteLine($"{nameof(onehundredLocksTime)} = {onehundredLocksTime}");
+            Console.WriteLine($"{nameof(oneThousandLocksTime)} = {oneThousandLocksTime}");
 
             Assert.IsTrue(noLockTime < oneLockTime,
                 $"a. {nameof(noLockTime)} < {nameof(oneLockTime)}");
