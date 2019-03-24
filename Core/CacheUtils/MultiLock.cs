@@ -216,7 +216,7 @@ namespace PubComp.Caching.Core.CacheUtils
             return Release(lockNumber);
         }
 
-        private bool DoesFlowAlreadyHaveLock(uint lockNumber)
+        private bool IsFlowAlreadyMarked(uint lockNumber)
         {
             var contextKey = GetContextKey(lockNumber);
             return AsyncLocalContext.TryGetValue(contextKey, out var result) && result.Value;
@@ -235,7 +235,7 @@ namespace PubComp.Caching.Core.CacheUtils
             var lockNumber = GetLockNumber(key);
 
             // If failed to get lock, check if already have this lock (higher up in call stack)
-            if (doEnableReentrantLocking && DoesFlowAlreadyHaveLock(lockNumber))
+            if (doEnableReentrantLocking && IsFlowAlreadyMarked(lockNumber))
                 return loader();
 
             // Do this BEFORE first async call, otherwise it won't affect current thread!
@@ -277,7 +277,7 @@ namespace PubComp.Caching.Core.CacheUtils
             var lockNumber = GetLockNumber(key);
 
             // If failed to get lock, check if already have this lock (higher up in call stack)
-            if (doEnableReentrantLocking && DoesFlowAlreadyHaveLock(lockNumber))
+            if (doEnableReentrantLocking && IsFlowAlreadyMarked(lockNumber))
                 return await loader().ConfigureAwait(false);
 
             // Do this BEFORE first async call, otherwise it won't affect current thread!
