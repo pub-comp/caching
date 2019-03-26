@@ -132,3 +132,10 @@
 
 ### 4.1.1:
 	* Fixes due to NuGetPack.exe issues
+
+### 4.2.0:
+	* DoNotLock policy for SystemRuntime (InMemoryCache)
+
+### 4.3.0:
+	* Improved locking mechanism - using multiple SemaphoreSlim depending on cache and key's hash
+	* Improved locking mechanism - enable reentrant (recursive) calls without deadlocks

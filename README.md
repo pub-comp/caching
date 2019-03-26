@@ -62,7 +62,7 @@ or
 MyData data = cache.Get("myKey", () => FallbackMethodToRun());
 ~~~
 
-this single line of code above is equivalent to the mulitple lines of code in the above [TryGet](#tryget) example
+this single line of code above is equivalent to the multiple lines of code in the above [TryGet](#tryget) example
 in the above usage, the method will be run only if the requested key is not in the cache (on cache miss).
 
 ### AOP Wrapper
@@ -124,7 +124,7 @@ var cache = CacheManager.GetCache("myLocalCache");
 
 ## Cache Management
 
-A cache can be created programatically:
+A cache can be created programmatically:
 
 ~~~csharp
 var cache = new InMemoryCache("myOtherLocalCache", new InMemoryPolicy());
