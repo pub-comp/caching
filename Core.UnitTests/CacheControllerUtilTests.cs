@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.AopCaching;
+using PubComp.Caching.Core.Exceptions;
 
 namespace PubComp.Caching.Core.UnitTests
 {
@@ -82,14 +83,14 @@ namespace PubComp.Caching.Core.UnitTests
             CollectionAssert.AreEquivalent(new string[0], cacheNames);
         }
 
-        [TestMethod][ExpectedException(typeof(CacheException))]
+        [TestMethod][ExpectedException(typeof(CacheClearException))]
         public void TestCacheRegisterCacheItems_NullCacheName()
         {
             this.cacheControllerUtil.GetRegisteredCacheItemKeys(null);
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestCacheRegisterCacheItems_EmptyCacheName()
         {
             this.cacheControllerUtil.GetRegisteredCacheItemKeys(string.Empty);
@@ -102,14 +103,14 @@ namespace PubComp.Caching.Core.UnitTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestClearCache_FallbackToWildcard()
         {
             this.cacheControllerUtil.ClearCache("cache4");
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestClearCache_NotFound()
         {
             this.cacheControllerUtil.ClearCache("nosuchcache");
@@ -124,7 +125,7 @@ namespace PubComp.Caching.Core.UnitTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestRegisterCacheWithFalse_ClearCache()
         {
             this.cacheControllerUtil.RegisterCache("cache2", false);
@@ -133,14 +134,14 @@ namespace PubComp.Caching.Core.UnitTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestRegisterCache_EmptyName()
         {
             this.cacheControllerUtil.RegisterCache(string.Empty, true);
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestRegisterCache_NullName()
         {
             this.cacheControllerUtil.RegisterCache(null, true);
@@ -153,28 +154,28 @@ namespace PubComp.Caching.Core.UnitTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestRegisterCacheItem_NullCacheName()
         {
             this.cacheControllerUtil.RegisterCacheItem<SubClass1>(null, "keyA");
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestRegisterCacheItem_EmptyCacheName()
         {
             this.cacheControllerUtil.RegisterCacheItem<SubClass1>(string.Empty, "keyA");
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestRegisterCacheItem_NullItemKey()
         {
             this.cacheControllerUtil.RegisterCacheItem<SubClass1>("cache1", null);
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestRegisterCacheItem_EmptyItemKey()
         {
             this.cacheControllerUtil.RegisterCacheItem<SubClass1>("cache1", string.Empty);
@@ -192,7 +193,7 @@ namespace PubComp.Caching.Core.UnitTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestRegisterCacheWithFalse_RegisterCacheItems_ClearCache()
         {
             this.cacheControllerUtil.RegisterCache("cache2", false);
@@ -204,7 +205,7 @@ namespace PubComp.Caching.Core.UnitTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestCacheRegisterCacheItems_ClearCache()
         {
             this.cacheControllerUtil.RegisterCacheItem(
@@ -237,21 +238,21 @@ namespace PubComp.Caching.Core.UnitTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestRegisterCacheWithTrue_RegisterCacheItems_ClearCacheItem_WrongCacheName()
         {
             this.cacheControllerUtil.ClearCacheItem("nosuchcache", "keyA");
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestRegisterCacheWithTrue_RegisterCacheItems_ClearCacheItem_EmptyKey()
         {
             this.cacheControllerUtil.ClearCacheItem("cache1", string.Empty);
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestRegisterCacheWithTrue_RegisterCacheItems_ClearCacheItem_NullKey()
         {
             this.cacheControllerUtil.ClearCacheItem("cache1", null);
@@ -304,35 +305,35 @@ namespace PubComp.Caching.Core.UnitTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestCacheRefreshItem_NoSuchCache()
         {
             this.cacheControllerUtil.RefreshCacheItem("nosuchcache", "keyB");
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestCacheRefreshItem_NullCacheName()
         {
             this.cacheControllerUtil.RefreshCacheItem(null, "keyB");
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestCacheRefreshItem_EmptyCacheName()
         {
             this.cacheControllerUtil.RefreshCacheItem(string.Empty, "keyB");
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestCacheRefreshItem_NullKey()
         {
             this.cacheControllerUtil.RefreshCacheItem("cache1", null);
         }
 
         [TestMethod]
-        [ExpectedException(typeof(CacheException))]
+        [ExpectedException(typeof(CacheClearException))]
         public void TestCacheRefreshItem_EmptyKey()
         {
             this.cacheControllerUtil.RefreshCacheItem(string.Empty, null);
