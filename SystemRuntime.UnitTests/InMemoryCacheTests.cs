@@ -13,6 +13,21 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
     public class InMemoryCacheTests
     {
         [TestMethod]
+        public void TestPolicyDeserialization()
+        {
+            var policyString = @"{'SyncProvider':'RedisNotifier', 'SlidingExpiration':'1:02:03:04.567', 'DoNotLock':true, 'NumberOfLocks':10, 'LockTimeoutMilliseconds':10000, 'DoThrowExceptionOnTimeout':false}";
+            var policy = Newtonsoft.Json.JsonConvert.DeserializeObject<InMemoryPolicy>(policyString);
+
+            Assert.IsNotNull(policy);
+            Assert.AreEqual("RedisNotifier", policy.SyncProvider);
+            Assert.AreEqual(new TimeSpan(1, 2, 3, 4, 567), policy.SlidingExpiration);
+            Assert.AreEqual(true, policy.DoNotLock);
+            Assert.AreEqual((ushort)10, policy.NumberOfLocks);
+            Assert.AreEqual(10000, policy.LockTimeoutMilliseconds);
+            Assert.AreEqual(false, policy.DoThrowExceptionOnTimeout);
+        }
+
+        [TestMethod]
         public void TestInMemoryCacheStruct()
         {
             var cache = new InMemoryCache("cache1", new TimeSpan(0, 2, 0));
