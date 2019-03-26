@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Serialization;
 
 namespace PubComp.Caching.Core.Exceptions
 {
@@ -15,6 +16,12 @@ namespace PubComp.Caching.Core.Exceptions
 
         public CacheClearException(string message, Exception innerException)
             : base(message, innerException)
+        {
+        }
+
+        protected CacheClearException(
+            SerializationInfo info,
+            StreamingContext context) : base(info, context)
         {
         }
     }
