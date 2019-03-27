@@ -4,43 +4,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using PubComp.Caching.Core.Config;
 using PubComp.Caching.Core.Notifications;
 
 namespace PubComp.Caching.Core
 {
+    // TODO: Create interface(s)
     /// <summary>
     /// The main logic class to handle all the named caches, connectionStrings and notifiers.
     /// The class exist to allow slight decouple from the singleton instance,
     /// Allowing to make the CacheManager to behave differently based on settings, e.g. source of cache configuration
     /// </summary>
-    internal class CacheManagerLogic
+    internal class CacheManagerInternals
     {
         private Func<MethodBase> callingMethodGetter;
-
-        // TODO: Test if semaphores are needed here
-
-        //ReSharper disable once InconsistentNaming
-        private readonly SemaphoreSlim cachesSync
-            = new SemaphoreSlim(1, 1);
-
+        
         // ReSharper disable once InconsistentNaming
         private readonly ConcurrentDictionary<CacheName, ICache> caches
             = new ConcurrentDictionary<CacheName, ICache>();
 
         // ReSharper disable once InconsistentNaming
-        private readonly ReaderWriterLockSlim notifiersSync
-            = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
-
-        // ReSharper disable once InconsistentNaming
         private readonly ConcurrentDictionary<string, ICacheNotifier> notifiers
             = new ConcurrentDictionary<string, ICacheNotifier>();
-
-        // ReSharper disable once InconsistentNaming
-        private readonly ReaderWriterLockSlim connectionStringsSync
-            = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 
         // ReSharper disable once InconsistentNaming
         private readonly ConcurrentDictionary<string, ICacheConnectionString> connectionStrings
@@ -61,12 +47,10 @@ namespace PubComp.Caching.Core
         /// OPTIONAL: if null then no cache configuration will be loaded
         /// </summary>
         /// <param name="settings"></param>
-        public CacheManagerLogic(CacheManagerSettings settings)
+        public CacheManagerInternals(CacheManagerSettings settings)
         {
             Settings = settings;
         }
-
-        // TODO: In future version, consider removing async API for configuration - not relevant
 
         #region Cache access API
 
@@ -97,18 +81,7 @@ namespace PubComp.Caching.Core
         /// <remarks>For better performance, store the result in client class</remarks>
         public IEnumerable<string> GetCacheNames()
         {
-            string[] names;
-
-            cachesSync.Wait();
-            try
-            {
-                names = caches.Values.Select(v => v.Name).ToArray();
-            }
-            finally
-            {
-                cachesSync.Release();
-            }
-
+            var names = caches.Values.ToArray().Select(v => v.Name).ToArray();
             return names;
         }
 
@@ -129,17 +102,12 @@ namespace PubComp.Caching.Core
 
         /// <summary>Gets a cache by name</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
+        [Obsolete("Use GetCache(string name) instead - no need for async here", true)]
+#pragma warning disable 1998
         public async Task<ICache> GetCacheAsync(string name)
+#pragma warning restore 1998
         {
-            if (name == null)
-                throw new ArgumentNullException(nameof(name));
-
-            var cachesArray = await GetCachesAsync().ConfigureAwait(false);
-            
-            var cachesSorted = cachesArray.OrderByDescending(c => c.Key.GetMatchLevel(name));
-            var cache = cachesSorted.FirstOrDefault();
-
-            return (cache.Key.Prefix != null && cache.Key.GetMatchLevel(name) >= cache.Key.Prefix.Length) ? cache.Value : null;
+            return GetCache(name);
         }
 
         /// <summary>Gets a cache by name - return a specialized cache implementation type</summary>
@@ -157,18 +125,7 @@ namespace PubComp.Caching.Core
         /// <remarks>For better performance, store the result in client class</remarks>
         public IEnumerable<string> GetNotifierNames()
         {
-            string[] names;
-
-            notifiersSync.EnterReadLock();
-            try
-            {
-                names = notifiers.Values.Select(v => v.Name).ToArray();
-            }
-            finally
-            {
-                notifiersSync.ExitReadLock();
-            }
-
+            var names = notifiers.Values.ToArray().Select(v => v.Name).ToArray();
             return names;
         }
 
@@ -179,18 +136,7 @@ namespace PubComp.Caching.Core
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
 
-            ICacheNotifier result;
-
-            notifiersSync.EnterReadLock();
-            try
-            {
-                notifiers.TryGetValue(name, out result);
-            }
-            finally
-            {
-                notifiersSync.ExitReadLock();
-            }
-
+            notifiers.TryGetValue(name, out var result);
             return result;
         }
 
@@ -198,18 +144,7 @@ namespace PubComp.Caching.Core
         /// <remarks>For better performance, store the result in client class</remarks>
         public IEnumerable<string> GetConnectionStringNames()
         {
-            string[] names;
-
-            connectionStringsSync.EnterReadLock();
-            try
-            {
-                names = connectionStrings.Values.Select(v => v.Name).ToArray();
-            }
-            finally
-            {
-                connectionStringsSync.ExitReadLock();
-            }
-
+            var names = connectionStrings.Values.ToArray().Select(v => v.Name).ToArray();
             return names;
         }
 
@@ -220,18 +155,7 @@ namespace PubComp.Caching.Core
             if (name == null)
                 throw new ArgumentNullException(nameof(name));
 
-            ICacheConnectionString result;
-
-            connectionStringsSync.EnterReadLock();
-            try
-            {
-                connectionStrings.TryGetValue(name, out result);
-            }
-            finally
-            {
-                connectionStringsSync.ExitReadLock();
-            }
-
+            connectionStrings.TryGetValue(name, out var result);
             return result;
         }
 
@@ -244,13 +168,19 @@ namespace PubComp.Caching.Core
                 cache.Name, c => notifier.Name, (c, n) => notifier.Name);
         }
 
-        // TODO: Check, test, doc
+        /// <summary>
+        /// Removes an association between a cache and a notifier.
+        /// This method is to be used during application initialization.
+        /// </summary>
         public void RemoveAssociation(ICache cache)
         {
             cacheNotifierAssociations.TryRemove(cache.Name, out _);
         }
 
-        // TODO: Check, test, doc
+        /// <summary>
+        /// Removes all associations between caches and notifiers.
+        /// This method is to be used during application initialization.
+        /// </summary>
         public void RemoveAllAssociations()
         {
             cacheNotifierAssociations.Clear();
@@ -270,62 +200,8 @@ namespace PubComp.Caching.Core
 
         private KeyValuePair<CacheName, ICache>[] GetCaches()
         {
-            KeyValuePair<CacheName, ICache>[] cachesArray;
-
-            cachesSync.Wait();
-            try
-            {
-                cachesArray = caches.ToArray();
-            }
-            finally
-            {
-                cachesSync.Release();
-            }
-
+            var cachesArray = caches.ToArray();
             return cachesArray;
-        }
-
-        private async Task<KeyValuePair<CacheName, ICache>[]> GetCachesAsync()
-        {
-            KeyValuePair<CacheName, ICache>[] cachesArray;
-
-            await cachesSync.WaitAsync().ConfigureAwait(false);
-            try
-            {
-                cachesArray = caches.ToArray();
-            }
-            finally
-            {
-                cachesSync.Release();
-            }
-
-            return cachesArray;
-        }
-
-        private void SyncSet(ReaderWriterLockSlim syncObj, Action action)
-        {
-            syncObj.EnterWriteLock();
-            try
-            {
-                action();
-            }
-            finally
-            {
-                syncObj.ExitWriteLock();
-            }
-        }
-
-        private void SyncSet(SemaphoreSlim syncObj, Action action)
-        {
-            syncObj.Wait();
-            try
-            {
-                action();
-            }
-            finally
-            {
-                syncObj.Release();
-            }
         }
 
         #region Cache configuration API
@@ -366,21 +242,10 @@ namespace PubComp.Caching.Core
         public void SetCache(string name, ICache cache)
         {
             var cacheName = new CacheName(name);
-
-            void Action()
-            {
-                if (cache == null)
-                {
-                    // ReSharper disable once UnusedVariable
-                    caches.TryRemove(cacheName, out var oldValue);
-                }
-                else
-                {
-                    caches.AddOrUpdate(cacheName, cache, (k, v) => cache);
-                }
-            }
-
-            SyncSet(cachesSync, Action);
+            if (cache == null)
+                caches.TryRemove(cacheName, out var _);
+            else
+                caches.AddOrUpdate(cacheName, cache, (k, v) => cache);
         }
 
         /// <summary>
@@ -391,14 +256,7 @@ namespace PubComp.Caching.Core
         public void RemoveCache(string name)
         {
             var cacheName = new CacheName(name);
-
-            void Action()
-            {
-                // ReSharper disable once UnusedVariable
-                caches.TryRemove(cacheName, out var oldValue);
-            }
-
-            SyncSet(cachesSync, Action);
+            caches.TryRemove(cacheName, out var _);
         }
 
         /// <summary>
@@ -407,12 +265,7 @@ namespace PubComp.Caching.Core
         /// </summary>
         public void RemoveAllCaches()
         {
-            void Action()
-            {
-                caches.Clear();
-            }
-
-            SyncSet(cachesSync, Action);
+            caches.Clear();
         }
 
         /// <summary>
@@ -424,20 +277,10 @@ namespace PubComp.Caching.Core
         /// <remarks>Cache name can end with wildcard '*'</remarks>
         public void SetConnectionString(string name, ICacheConnectionString connectionString)
         {
-            void Action()
-            {
-                if (connectionString == null)
-                {
-                    // ReSharper disable once UnusedVariable
-                    connectionStrings.TryRemove(name, out var oldValue);
-                }
-                else
-                {
-                    connectionStrings.AddOrUpdate(name, connectionString, (k, v) => connectionString);
-                }
-            }
-
-            SyncSet(connectionStringsSync, Action);
+            if (connectionString == null)
+                connectionStrings.TryRemove(name, out var _);
+            else
+                connectionStrings.AddOrUpdate(name, connectionString, (k, v) => connectionString);
         }
 
         /// <summary>
@@ -447,13 +290,7 @@ namespace PubComp.Caching.Core
         /// <param name="name"></param>
         public void RemoveConnectionString(string name)
         {
-            void Action()
-            {
-                // ReSharper disable once UnusedVariable
-                connectionStrings.TryRemove(name, out var oldValue);
-            }
-
-            SyncSet(connectionStringsSync, Action);
+            connectionStrings.TryRemove(name, out var _);
         }
 
         /// <summary>
@@ -462,12 +299,7 @@ namespace PubComp.Caching.Core
         /// </summary>
         public void RemoveAllConnectionStrings()
         {
-            void Action()
-            {
-                connectionStrings.Clear();
-            }
-
-            SyncSet(connectionStringsSync, Action);
+            connectionStrings.Clear();
         }
 
         /// <summary>
@@ -478,20 +310,10 @@ namespace PubComp.Caching.Core
         /// <param name="notifier"></param>
         public void SetNotifier(string name, ICacheNotifier notifier)
         {
-            void Action()
-            {
-                if (notifier == null)
-                {
-                    // ReSharper disable once UnusedVariable
-                    notifiers.TryRemove(name, out var oldValue);
-                }
-                else
-                {
-                    notifiers.AddOrUpdate(name, notifier, (k, v) => notifier);
-                }
-            }
-
-            SyncSet(notifiersSync, Action);
+            if (notifier == null)
+                notifiers.TryRemove(name, out var _);
+            else
+                notifiers.AddOrUpdate(name, notifier, (k, v) => notifier);
         }
 
         /// <summary>
@@ -501,13 +323,7 @@ namespace PubComp.Caching.Core
         /// <param name="name"></param>
         public void RemoveNotifier(string name)
         {
-            void Action()
-            {
-                // ReSharper disable once UnusedVariable
-                notifiers.TryRemove(name, out var oldValue);
-            }
-
-            SyncSet(notifiersSync, Action);
+            notifiers.TryRemove(name, out var _);
         }
 
         /// <summary>
@@ -516,12 +332,7 @@ namespace PubComp.Caching.Core
         /// </summary>
         public void RemoveAllNotifiers()
         {
-            void Action()
-            {
-                notifiers.Clear();
-            }
-
-            SyncSet(notifiersSync, Action);
+            notifiers.Clear();
         }
 
         #endregion
@@ -565,10 +376,7 @@ namespace PubComp.Caching.Core
             var stackFrame = Expression.New(constructor, Expression.Constant(4));
             var method = Expression.Call(stackFrame, getMethodMethod);
             var lambda = Expression.Lambda<Func<MethodBase>>(method);
-            var compileFunction = lambda.GetType().GetMethod("Compile", new Type[0]);
-            var function = (Func<MethodBase>)compileFunction.Invoke(lambda, null);
-
-            return function;
+            return lambda.Compile();
         }
 
         #endregion

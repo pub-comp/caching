@@ -10,7 +10,7 @@ namespace PubComp.Caching.Core.UnitTests
         public void TestInitialize()
         {
             CacheManager.Settings = null;
-            CacheManager.CacheManagerLogic = null;
+            CacheManager.CacheManagerInternals = null;
         }
 
         [TestMethod]

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace PubComp.Caching.Core.Config.Loaders
 {
-    public class CacheConfigLoadErrorsException : ApplicationException
+    [Serializable]
+    public class CacheConfigLoadErrorsException : CacheException
     {
         public override string Message => string.Join(Environment.NewLine, errors);
 
@@ -34,6 +36,12 @@ namespace PubComp.Caching.Core.Config.Loaders
 
                 return $"Error:{Error}";
             }
+        }
+
+        protected CacheConfigLoadErrorsException(
+            SerializationInfo info,
+            StreamingContext context) : base(info, context)
+        {
         }
     }
 }

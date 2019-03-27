@@ -8,46 +8,45 @@ using PubComp.Caching.Core.Notifications;
 [assembly: InternalsVisibleTo("PubComp.Caching.Core.UnitTests")]
 namespace PubComp.Caching.Core
 {
-    // TODO: Create interfaces
     /// <summary>
     /// The main manager class to handle all the named caches, connectionStrings and notifiers
-    /// It's a singleton instance wrapped around <see cref=" CacheManagerLogic"/>
+    /// It's a singleton instance wrapped around <see cref=" CacheManagerInternals"/>
     /// </summary>
     public static class CacheManager
     {
         #region innerInstance
 
-        private static CacheManagerLogic _innerCacheManagerInstance;
-        private static readonly object _instanceGeneratorLock = new object();
+        private static CacheManagerInternals innerCacheManagerInstance;
+        private static readonly object instanceGeneratorLock = new object();
 
-        // The reason the logic init is split to CTOR and InitializeFromConfig is
+        // The reason the initialization logic is split to CTOR and InitializeFromConfig is
         // to allow the calls to CacheManager while loading and applying the configuration
         // i.e. the apply config logic itself sometimes call the CacheManager itself...
         // TODO: Pass ICacheManager or subset to ConfigNode classes that call CacheManager directly
         /// <summary>
         /// The internal instance of the manager
         /// </summary>
-        internal static CacheManagerLogic CacheManagerLogic
+        internal static CacheManagerInternals CacheManagerInternals
         {
             get
             {
-                if (_innerCacheManagerInstance == null)
+                if (innerCacheManagerInstance == null)
                 {
-                    lock (_instanceGeneratorLock)
+                    lock (instanceGeneratorLock)
                     {
-                        if (_innerCacheManagerInstance == null)
+                        if (innerCacheManagerInstance == null)
                         {
-                            _innerCacheManagerInstance = new CacheManagerLogic(Settings);
-                            _innerCacheManagerInstance.InitializeFromConfig();
+                            innerCacheManagerInstance = new CacheManagerInternals(Settings);
+                            innerCacheManagerInstance.InitializeFromConfig();
                         }
                     }
                 }
 
-                return _innerCacheManagerInstance;
+                return innerCacheManagerInstance;
             }
             set
             {
-                _innerCacheManagerInstance = value;
+                innerCacheManagerInstance = value;
             }
         }
 
@@ -73,77 +72,78 @@ namespace PubComp.Caching.Core
         /// <remarks>For better performance, store the result in client class</remarks>
         public static ICache GetCurrentClassCache()
         {
-            return CacheManagerLogic.GetCurrentClassCache();
+            return CacheManagerInternals.GetCurrentClassCache();
         }
 
         /// <summary>Gets a cache instance using full name of given class</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
         public static ICache GetCache<TClass>()
         {
-            return CacheManagerLogic.GetCache<TClass>();
+            return CacheManagerInternals.GetCache<TClass>();
         }
 
         /// <summary>Gets a cache instance using full name of given class</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
         public static ICache GetCache(Type type)
         {
-            return CacheManagerLogic.GetCache(type);
+            return CacheManagerInternals.GetCache(type);
         }
 
         /// <summary>Gets a list of all cache names</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
         public static IEnumerable<string> GetCacheNames()
         {
-            return CacheManagerLogic.GetCacheNames();
+            return CacheManagerInternals.GetCacheNames();
         }
 
         /// <summary>Gets a cache by name</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
         public static ICache GetCache(string name)
         {
-            return CacheManagerLogic.GetCache(name);
+            return CacheManagerInternals.GetCache(name);
         }
 
         /// <summary>Gets a cache by name</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
+        [Obsolete("Use GetCache(string name) instead - no need for async here", true)]
         public static async Task<ICache> GetCacheAsync(string name)
         {
-            return await CacheManagerLogic.GetCacheAsync(name).ConfigureAwait(false);
+            return await CacheManagerInternals.GetCacheAsync(name).ConfigureAwait(false);
         }
 
         /// <summary>Gets a cache by name - return a specialized cache implementation type</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
         public static TCache GetCache<TCache>(string name) where TCache : ICache
         {
-            return CacheManagerLogic.GetCache<TCache>(name);
+            return CacheManagerInternals.GetCache<TCache>(name);
         }
 
         /// <summary>Gets a list of all notifier names</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
         public static IEnumerable<string> GetNotifierNames()
         {
-            return CacheManagerLogic.GetNotifierNames();
+            return CacheManagerInternals.GetNotifierNames();
         }
 
         /// <summary>Gets a notifier by name</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
         public static ICacheNotifier GetNotifier(string name)
         {
-            return CacheManagerLogic.GetNotifier(name);
+            return CacheManagerInternals.GetNotifier(name);
         }
 
         /// <summary>Gets a list of all connection string names</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
         public static IEnumerable<string> GetConnectionStringNames()
         {
-            return CacheManagerLogic.GetConnectionStringNames();
+            return CacheManagerInternals.GetConnectionStringNames();
         }
 
         /// <summary>Gets a connection string by name</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
         public static ICacheConnectionString GetConnectionString(string name)
         {
-            return CacheManagerLogic.GetConnectionString(name);
+            return CacheManagerInternals.GetConnectionString(name);
         }
 
         /// <summary>Associates a cache with a notifier</summary>
@@ -151,7 +151,7 @@ namespace PubComp.Caching.Core
         /// <param name="notifier"></param>
         public static void Associate(ICache cache, ICacheNotifier notifier)
         {
-            CacheManagerLogic.Associate(cache, notifier);
+            CacheManagerInternals.Associate(cache, notifier);
         }
 
         /// <summary>Gets the notifier that was associated with a cahe</summary>
@@ -159,7 +159,7 @@ namespace PubComp.Caching.Core
         /// <returns></returns>
         public static ICacheNotifier GetAssociatedNotifier(ICache cache)
         {
-            return CacheManagerLogic.GetAssociatedNotifier(cache);
+            return CacheManagerInternals.GetAssociatedNotifier(cache);
         }
 
         #endregion
@@ -173,10 +173,10 @@ namespace PubComp.Caching.Core
         /// </summary>
         public static void InitializeFromConfig()
         {
-            lock (_instanceGeneratorLock)
+            lock (instanceGeneratorLock)
             {
-                CacheManagerLogic = null;
-                CacheManagerLogic.ToString(); // Just touch the getter
+                CacheManagerInternals = null;
+                GC.KeepAlive(CacheManagerInternals); // Call the getter to implicitly create instance
             }
         }
 
@@ -189,7 +189,7 @@ namespace PubComp.Caching.Core
         /// <remarks>Cache name can end with wildcard '*'</remarks>
         public static void SetCache(string name, ICache cache)
         {
-            CacheManagerLogic.SetCache(name, cache);
+            CacheManagerInternals.SetCache(name, cache);
         }
 
         /// <summary>
@@ -199,7 +199,7 @@ namespace PubComp.Caching.Core
         /// <param name="name"></param>
         public static void RemoveCache(string name)
         {
-            CacheManagerLogic.RemoveCache(name);
+            CacheManagerInternals.RemoveCache(name);
         }
 
         /// <summary>
@@ -208,7 +208,7 @@ namespace PubComp.Caching.Core
         /// </summary>
         public static void RemoveAllCaches()
         {
-            CacheManagerLogic.RemoveAllCaches();
+            CacheManagerInternals.RemoveAllCaches();
         }
 
         /// <summary>
@@ -220,7 +220,7 @@ namespace PubComp.Caching.Core
         /// <remarks>Cache name can end with wildcard '*'</remarks>
         public static void SetConnectionString(string name, ICacheConnectionString connectionString)
         {
-            CacheManagerLogic.SetConnectionString(name, connectionString);
+            CacheManagerInternals.SetConnectionString(name, connectionString);
         }
 
         /// <summary>
@@ -230,7 +230,7 @@ namespace PubComp.Caching.Core
         /// <param name="name"></param>
         public static void RemoveConnectionString(string name)
         {
-            CacheManagerLogic.RemoveConnectionString(name);
+            CacheManagerInternals.RemoveConnectionString(name);
         }
 
         /// <summary>
@@ -239,7 +239,7 @@ namespace PubComp.Caching.Core
         /// </summary>
         public static void RemoveAllConnectionStrings()
         {
-            CacheManagerLogic.RemoveAllConnectionStrings();
+            CacheManagerInternals.RemoveAllConnectionStrings();
         }
 
         /// <summary>
@@ -250,7 +250,7 @@ namespace PubComp.Caching.Core
         /// <param name="notifier"></param>
         public static void SetNotifier(string name, ICacheNotifier notifier)
         {
-            CacheManagerLogic.SetNotifier(name, notifier);
+            CacheManagerInternals.SetNotifier(name, notifier);
         }
 
         /// <summary>
@@ -260,7 +260,7 @@ namespace PubComp.Caching.Core
         /// <param name="name"></param>
         public static void RemoveNotifier(string name)
         {
-            CacheManagerLogic.RemoveNotifier(name);
+            CacheManagerInternals.RemoveNotifier(name);
         }
 
         /// <summary>
@@ -269,7 +269,7 @@ namespace PubComp.Caching.Core
         /// </summary>
         public static void RemoveAllNotifiers()
         {
-            CacheManagerLogic.RemoveAllNotifiers();
+            CacheManagerInternals.RemoveAllNotifiers();
         }
 
         #endregion

@@ -7,7 +7,7 @@ namespace PubComp.Caching.Core.UnitTests
     [TestClass]
     public class MockConfigLoaderTests
     {
-        private CacheManagerLogic _cacheManagerLogic;
+        private CacheManagerInternals cacheManagerInternals;
 
         [TestInitialize]
         public void TestInitialize()
@@ -17,31 +17,31 @@ namespace PubComp.Caching.Core.UnitTests
                 ConfigLoader = new MockCacheConfigLoader()
             };
 
-            _cacheManagerLogic = new CacheManagerLogic(settings);
-            _cacheManagerLogic.InitializeFromConfig();
+            cacheManagerInternals = new CacheManagerInternals(settings);
+            cacheManagerInternals.InitializeFromConfig();
         }
 
         [TestMethod]
         public void TestConfigLoader()
         {
-            Assert.IsNotNull(_cacheManagerLogic);
-            Assert.IsNotNull(_cacheManagerLogic.Settings);
-            Assert.IsInstanceOfType(_cacheManagerLogic.Settings.ConfigLoader, typeof(MockCacheConfigLoader));
+            Assert.IsNotNull(cacheManagerInternals);
+            Assert.IsNotNull(cacheManagerInternals.Settings);
+            Assert.IsInstanceOfType(cacheManagerInternals.Settings.ConfigLoader, typeof(MockCacheConfigLoader));
         }
 
         [TestMethod]
         public void TestCaches()
         {
-            var cacheNames = _cacheManagerLogic.GetCacheNames();
+            var cacheNames = cacheManagerInternals.GetCacheNames();
 
             Assert.AreEqual(2, cacheNames.Count());
-            var cache1 = _cacheManagerLogic.GetCache("mockCache1");
+            var cache1 = cacheManagerInternals.GetCache("mockCache1");
             Assert.IsNotNull(cache1);
             Assert.IsInstanceOfType(cache1, typeof(MockNoCache));
-            var cache2 = _cacheManagerLogic.GetCache("mockCache2");
+            var cache2 = cacheManagerInternals.GetCache("mockCache2");
             Assert.IsNotNull(cache2);
             Assert.IsInstanceOfType(cache2, typeof(MockNoCache));
-            var cacheNotExist = _cacheManagerLogic.GetCache("mockCache3");
+            var cacheNotExist = cacheManagerInternals.GetCache("mockCache3");
             Assert.IsNull(cacheNotExist);
         }
     }

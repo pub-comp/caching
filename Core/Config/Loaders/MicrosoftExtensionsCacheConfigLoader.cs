@@ -13,9 +13,6 @@ namespace PubComp.Caching.Core.Config.Loaders
     {
         private readonly IConfigurationSection pubCompCacheConfigurationSection;
 
-        // TODO: move this to a local variable
-        private CacheConfigLoadErrorsException cacheConfigLoadErrorsException;
-
         public MicrosoftExtensionsCacheConfigLoader(IConfigurationSection pubCompCacheConfigurationSection)
         {
             this.pubCompCacheConfigurationSection = pubCompCacheConfigurationSection;
@@ -39,7 +36,7 @@ namespace PubComp.Caching.Core.Config.Loaders
         /// <returns>The list of Cache ConfigNode (and its inheriting classes)</returns>
         public IList<ConfigNode> LoadConfig()
         {
-            cacheConfigLoadErrorsException = new CacheConfigLoadErrorsException();
+            var loadErrors = new CacheConfigLoadErrorsException();
             var assemblies = new Dictionary<string, Assembly>();
             var configNodes = new List<ConfigNode>();
             var cacheConfigs = pubCompCacheConfigurationSection.GetChildren();
@@ -53,9 +50,8 @@ namespace PubComp.Caching.Core.Config.Loaders
                 }
                 var typeName = cacheConfig["type"] + "Config";
                 var assemblyName = cacheConfig["assembly"];
-                Assembly assembly;
 
-                if (!assemblies.TryGetValue(assemblyName, out assembly))
+                if (!assemblies.TryGetValue(assemblyName, out var assembly))
                 {
                     try
                     {
@@ -65,7 +61,7 @@ namespace PubComp.Caching.Core.Config.Loaders
                                                ex is FileNotFoundException ||
                                                ex is BadImageFormatException)
                     {
-                        LogConfigError($"Could not load assembly {assemblyName}", ex);
+                        LogConfigError(loadErrors, $"Could not load assembly {assemblyName}", ex);
                         continue;
                     }
 
@@ -80,7 +76,7 @@ namespace PubComp.Caching.Core.Config.Loaders
 
                 if (configType == null)
                 {
-                    LogConfigError($"Could not load type {typeName} from assembly {assemblyName}");
+                    LogConfigError(loadErrors, $"Could not load type {typeName} from assembly {assemblyName}");
                     continue;
                 }
 
@@ -89,28 +85,27 @@ namespace PubComp.Caching.Core.Config.Loaders
                 configNodes.Add(configNode);
             }
 
-            if (!cacheConfigLoadErrorsException.IsEmpty())
-                throw cacheConfigLoadErrorsException;
+            if (!loadErrors.IsEmpty())
+                throw loadErrors;
 
             return configNodes;
         }
 
         // TODO: Use real log here - and throw a fatal exception instead of swallowing the missing assembly/type
-        private void LogConfigError(string error, Exception ex = null)
+        private void LogConfigError(
+            CacheConfigLoadErrorsException loadErrors, string error, Exception ex = null)
         {
-            if (ex != null)
-            {
-                System.Diagnostics.Debug.WriteLine(
-                    $"{typeof(MicrosoftExtensionsCacheConfigLoader).FullName}: {error}. Exception: {ex}");
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine(
-                    $"{typeof(MicrosoftExtensionsCacheConfigLoader).FullName}: {error}");
-            }
+            System.Diagnostics.Debug.WriteLine(
+                ex != null
+                    ? $"{typeof(MicrosoftExtensionsCacheConfigLoader).FullName}: {error}, Exception: {ex}"
+                    : $"{typeof(MicrosoftExtensionsCacheConfigLoader).FullName}: {error}");
 
-            cacheConfigLoadErrorsException.Add(new CacheConfigLoadErrorsException.CacheConfigLoadError
-                {Error = error, Exception = ex});
+            loadErrors.Add(
+                new CacheConfigLoadErrorsException.CacheConfigLoadError
+                {
+                    Error = error,
+                    Exception = ex
+                });
         }
     }
 }

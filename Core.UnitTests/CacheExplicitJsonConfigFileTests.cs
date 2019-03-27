@@ -16,7 +16,7 @@ namespace PubComp.Caching.Core.UnitTests
         {
             new CacheControllerUtil().ClearRegisteredCacheNames();
 
-            CacheManager.CacheManagerLogic = null;
+            CacheManager.CacheManagerInternals = null;
 
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("unittests_pubcompcachesettings.json", false, false)
@@ -36,10 +36,10 @@ namespace PubComp.Caching.Core.UnitTests
         [TestMethod]
         public void TestMECConfigLoader()
         {
-            Assert.IsNotNull(CacheManager.CacheManagerLogic);
-            Assert.IsNotNull(CacheManager.CacheManagerLogic.Settings);
-            Assert.IsInstanceOfType(CacheManager.CacheManagerLogic.Settings.ConfigLoader, typeof(MicrosoftExtensionsCacheConfigLoader));
-            Assert.AreEqual(true, CacheManager.CacheManagerLogic.Settings.ShouldRegisterAllCaches);
+            Assert.IsNotNull(CacheManager.CacheManagerInternals);
+            Assert.IsNotNull(CacheManager.CacheManagerInternals.Settings);
+            Assert.IsInstanceOfType(CacheManager.CacheManagerInternals.Settings.ConfigLoader, typeof(MicrosoftExtensionsCacheConfigLoader));
+            Assert.AreEqual(true, CacheManager.CacheManagerInternals.Settings.ShouldRegisterAllCaches);
         }
 
         [TestMethod]
@@ -106,7 +106,7 @@ namespace PubComp.Caching.Core.UnitTests
         [TestMethod]
         public void TestMECConfigLoader_AssemblyError()
         {
-            CacheManager.CacheManagerLogic = null;
+            CacheManager.CacheManagerInternals = null;
 
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>
@@ -125,10 +125,10 @@ namespace PubComp.Caching.Core.UnitTests
 
             CacheManager.InitializeFromConfig();
 
-            Assert.IsNotNull(CacheManager.CacheManagerLogic);
-            Assert.IsNotNull(CacheManager.CacheManagerLogic.Settings);
-            Assert.IsInstanceOfType(CacheManager.CacheManagerLogic.Settings.ConfigLoader, typeof(MicrosoftExtensionsCacheConfigLoader));
-            Assert.AreEqual(false, CacheManager.CacheManagerLogic.Settings.ShouldRegisterAllCaches);
+            Assert.IsNotNull(CacheManager.CacheManagerInternals);
+            Assert.IsNotNull(CacheManager.CacheManagerInternals.Settings);
+            Assert.IsInstanceOfType(CacheManager.CacheManagerInternals.Settings.ConfigLoader, typeof(MicrosoftExtensionsCacheConfigLoader));
+            Assert.AreEqual(false, CacheManager.CacheManagerInternals.Settings.ShouldRegisterAllCaches);
             Assert.AreEqual(0, CacheManager.GetCacheNames().Count());
         }
     }

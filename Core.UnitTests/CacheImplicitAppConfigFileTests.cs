@@ -16,7 +16,7 @@ namespace PubComp.Caching.Core.UnitTests
 
             // The test can't be completely implicit as the CacheManager is a singleton
             // this is carried across all unit-tests.
-            CacheManager.CacheManagerLogic = null;
+            CacheManager.CacheManagerInternals = null;
             CacheManager.Settings =
                 new CacheManagerSettings
                 {
@@ -28,10 +28,10 @@ namespace PubComp.Caching.Core.UnitTests
         [TestMethod]
         public void TestSCMConfigLoader()
         {
-            Assert.IsNotNull(CacheManager.CacheManagerLogic);
-            Assert.IsNotNull(CacheManager.CacheManagerLogic.Settings);
-            Assert.IsInstanceOfType(CacheManager.CacheManagerLogic.Settings.ConfigLoader, typeof(SystemConfigurationManagerCacheConfigLoader));
-            Assert.AreEqual(false, CacheManager.CacheManagerLogic.Settings.ShouldRegisterAllCaches);
+            Assert.IsNotNull(CacheManager.CacheManagerInternals);
+            Assert.IsNotNull(CacheManager.CacheManagerInternals.Settings);
+            Assert.IsInstanceOfType(CacheManager.CacheManagerInternals.Settings.ConfigLoader, typeof(SystemConfigurationManagerCacheConfigLoader));
+            Assert.AreEqual(false, CacheManager.CacheManagerInternals.Settings.ShouldRegisterAllCaches);
         }
 
         [TestMethod]
