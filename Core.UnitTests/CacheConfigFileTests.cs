@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.Core.Config;
+using PubComp.Caching.Core.Config.Loaders;
 using PubComp.Caching.Core.UnitTests.Mocks;
 
 namespace PubComp.Caching.Core.UnitTests
@@ -12,10 +13,17 @@ namespace PubComp.Caching.Core.UnitTests
     [TestClass]
     public class CacheConfigFileTests
     {
+        private CacheManagerInternals cacheManagerInternals;
+
         [TestInitialize]
         public void TestInitialize()
         {
-            CacheManager.RemoveAllCaches();
+            CacheManager.CacheManagerInternals = null;
+            CacheManager.Settings = new CacheManagerSettings
+                {ConfigLoader = new SystemConfigurationManagerCacheConfigLoader(), ShouldRegisterAllCaches = false};
+            CacheManager.InitializeFromConfig();
+            cacheManagerInternals = CacheManager.CacheManagerInternals;
+
         }
 
         [TestMethod]
@@ -96,40 +104,38 @@ namespace PubComp.Caching.Core.UnitTests
         [TestMethod]
         public void TestCreateCachesFromAppConfig()
         {
-            CacheManager.InitializeFromConfig();
-
-            var cache1 = CacheManager.GetCache("cacheFromConfig1");
+            var cache1 = cacheManagerInternals.GetCache("cacheFromConfig1");
             Assert.IsNotNull(cache1);
             Assert.IsInstanceOfType(cache1, typeof(NoCache));
 
-            var cache2 = CacheManager.GetCache("cacheFromConfig2");
+            var cache2 = cacheManagerInternals.GetCache("cacheFromConfig2");
             Assert.IsNotNull(cache2);
             Assert.IsInstanceOfType(cache2, typeof(MockNoCache));
             Assert.IsNotNull(((MockNoCache)cache2).Policy);
             Assert.IsNotNull(((MockNoCache)cache2).Policy.SlidingExpiration);
             Assert.AreEqual(new TimeSpan(0, 15, 0), ((MockNoCache)cache2).Policy.SlidingExpiration);
 
-            var cache3 = CacheManager.GetCache("cacheFromConfig3");
+            var cache3 = cacheManagerInternals.GetCache("cacheFromConfig3");
             Assert.IsNull(cache3);
 
-            var cache4 = CacheManager.GetCache("cacheFromConfig4");
+            var cache4 = cacheManagerInternals.GetCache("cacheFromConfig4");
             Assert.IsNull(cache4);
         }
 
         [TestMethod]
         public void TestReadConnectionStringsFromConfig()
         {
-            var connectionString0 = CacheManager.GetConnectionString("localRedisUrl");
+            var connectionString0 = cacheManagerInternals.GetConnectionString("localRedisUrl");
             Assert.IsInstanceOfType(connectionString0, typeof(PlainConnectionString));
             Assert.AreEqual("localRedisUrl", connectionString0.Name);
             Assert.AreEqual("127.0.0.1:6379,serviceName=mymaster", connectionString0.ConnectionString);
 
-            var connectionString1 = CacheManager.GetConnectionString("localRedisUrlEnc");
+            var connectionString1 = cacheManagerInternals.GetConnectionString("localRedisUrlEnc");
             Assert.IsInstanceOfType(connectionString1, typeof(UrlEncConnectionString));
             Assert.AreEqual("localRedisUrlEnc", connectionString1.Name);
             Assert.AreEqual("127.0.0.1:6379,serviceName=mymaster", connectionString1.ConnectionString);
 
-            var connectionString2 = CacheManager.GetConnectionString("localRedisB64Enc");
+            var connectionString2 = cacheManagerInternals.GetConnectionString("localRedisB64Enc");
             Assert.IsInstanceOfType(connectionString2, typeof(B64EncConnectionString));
             Assert.AreEqual("localRedisB64Enc", connectionString2.Name);
             Assert.AreEqual("127.0.0.1:6379,serviceName=mymaster,allowAdmin=true", connectionString2.ConnectionString);
@@ -138,7 +144,7 @@ namespace PubComp.Caching.Core.UnitTests
         [TestMethod]
         public void TestReadNotifierFromConfig()
         {
-            var notifier = CacheManager.GetNotifier("noNotifier");
+            var notifier = cacheManagerInternals.GetNotifier("noNotifier");
             Assert.IsInstanceOfType(notifier, typeof(NoNotifier));
             Assert.AreEqual("noNotifier", notifier.Name);
             Assert.AreEqual("127.0.0.1:6379,serviceName=mymaster,allowAdmin=true", GetFieldValue(notifier));

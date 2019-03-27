@@ -18,8 +18,9 @@ namespace PubComp.Caching.Core.UnitTests
         [TestInitialize]
         public void TestInitialize()
         {
-            CacheManager.RemoveAllCaches();
-            
+            CacheManager.Settings = null;
+            CacheManager.CacheManagerInternals = null;
+
             CacheManager.SetCache("cache*", new NoCache());
 
             cache1 = new Mocks.MockMemCache("cache1");

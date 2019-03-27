@@ -503,7 +503,7 @@ namespace PubComp.Caching.Core.UnitTests
             RunLockNumberDistributionTest(numberOfLocks, keysGenerator, 1, 0.40, maxKeyLengths, iterations);
             RunLockNumberDistributionTest(numberOfLocks, keysGenerator, 3, 0.70, maxKeyLengths, iterations);
             RunLockNumberDistributionTest(numberOfLocks, keysGenerator, 5, 0.80, maxKeyLengths, iterations);
-            RunLockNumberDistributionTest(numberOfLocks, keysGenerator, 9, 0.88, maxKeyLengths, iterations);
+            RunLockNumberDistributionTest(numberOfLocks, keysGenerator, 9, 0.85, maxKeyLengths, iterations);
         }
 
         private void RunLockNumberDistributionTest(
@@ -540,7 +540,7 @@ namespace PubComp.Caching.Core.UnitTests
                     test1Msg);
 
                 // 5.7 >= ln(maxMaxKeyLength), 6.3 >= ln(maxNumberOfLocks)
-                var expected = 0.3 + 0.2 * (5.7 - Math.Log(maxKeyLength)) + 0.4 * (6.3 - Math.Log(numberOfLocks));
+                var expected = 0.35 + 0.2 * (5.7 - Math.Log(maxKeyLength)) + 0.4 * (6.3 - Math.Log(numberOfLocks));
                 var test2Msg = $"distribution test #2, expected {averageError} <= {expected}";
                 Console.WriteLine(test2Msg);
                 Assert.IsTrue(

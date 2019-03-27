@@ -1,0 +1,15 @@
+{
+  "PubComp": {
+    "CacheConfig": {
+      "cacheFromConfig3": {
+        "action": "Remove"
+      },
+      "localRedisUrl": {
+        "connectionString": "127.0.0.1:6379,serviceName=mymaster"
+      },
+      "noNotifier": {
+        "action": "Remove"
+      }
+    }
+  }
+}

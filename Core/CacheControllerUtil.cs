@@ -248,6 +248,14 @@ namespace PubComp.Caching.Core
         }
 
         /// <summary>
+        /// Clears all registrations of named caches
+        /// </summary>
+        internal void ClearRegisteredCacheNames()
+        {
+            RegisteredCacheNames.Clear();
+        }
+
+        /// <summary>
         /// Gets names of all registered cache instances
         /// </summary>
         public IEnumerable<string> GetRegisteredCacheNames()

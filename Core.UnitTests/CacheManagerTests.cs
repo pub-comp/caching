@@ -9,7 +9,8 @@ namespace PubComp.Caching.Core.UnitTests
         [TestInitialize]
         public void TestInitialize()
         {
-            CacheManager.RemoveAllCaches();
+            CacheManager.Settings = null;
+            CacheManager.CacheManagerInternals = null;
         }
 
         [TestMethod]
