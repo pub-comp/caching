@@ -81,7 +81,7 @@ namespace PubComp.Caching.Core.Config.Loaders
                 }
 
                 var configNode = cacheConfig.Get(configType) as ConfigNode;
-                configNode.Name = cacheConfig.Key;
+                configNode.Name = cacheConfig["Name"] ?? cacheConfig.Key; // Use explicit name if possible. Key is the fallback name. 
                 configNodes.Add(configNode);
             }
 
