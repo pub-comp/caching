@@ -301,46 +301,6 @@ namespace PubComp.Caching.RedisCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestRedisCacheTimeToLive_Constant()
-        {
-            var ttl = 10;
-            int misses = 0;
-            string result;
-            var stopwatch = new Stopwatch();
-            Func<string> getter = () => { misses++; return misses.ToString(); };
-
-            var expireAt = DateTime.Now.AddSeconds(ttl);
-            stopwatch.Start();
-
-            var cache = new RedisCache(
-                "constant-expire",
-                new RedisCachePolicy
-                {
-                    ConnectionString = connectionString,
-                    AbsoluteExpiration = expireAt,
-                });
-            cache.ClearAll();
-
-            result = cache.Get("key", getter);
-            DateTime insertTime = DateTime.Now;
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual("1", result);
-
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual("1", result);
-
-            CacheTestTools.AssertValueDoesntChangeWithin(cache, "key", "1", getter, stopwatch, ttl - 1);
-
-            // Should expire within TTL+60sec from insert
-            CacheTestTools.AssertValueDoesChangeWithin(cache, "key", "1", getter, stopwatch, 60.1);
-
-            result = cache.Get("key", getter);
-            Assert.AreNotEqual(1, misses);
-            Assert.AreNotEqual("1", result);
-        }
-
-        [TestMethod]
         public void TestRedisCacheGetTwice()
         {
             var cache = new RedisCache(
