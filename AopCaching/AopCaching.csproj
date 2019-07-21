@@ -4,9 +4,9 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>PubComp.Caching.AopCaching</AssemblyName>
     <RootNamespace>PubComp.Caching.AopCaching</RootNamespace>
-    <Version>4.1.1</Version>
-    <AssemblyVersion>4.1.1.0</AssemblyVersion>
-    <FileVersion>4.1.1.0</FileVersion>
+    <Version>4.1.2</Version>
+    <AssemblyVersion>4.1.2.0</AssemblyVersion>
+    <FileVersion>4.1.2.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="PostSharp" Version="6.0.28" />

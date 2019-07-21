@@ -114,17 +114,18 @@ namespace PubComp.Caching.AopCaching
                 ? this.className
                 : args.Method.DeclaringType.FullName;
 
-            var parameterTypeNamesNonGeneric = !this.isMethodGeneric
+            var parameterAndArgumentsTypeNames = !this.isMethodGeneric
                 ? this.parameterTypeNames
-                : args.Method.GetParameters().Select(p => p.ParameterType.FullName).ToArray();
+                : args.Method.GetParameters().Select(p => p.ParameterType.FullName)
+                    .Union(args.Method.GetGenericArguments().Select(a => a.FullName)).ToArray();
 
             var parameterValues = args.Arguments.Where((arg, index) => !this.indexesNotToCache.Contains(index)).ToArray();
 
             var key =
-                new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues).ToString();
+                new CacheKey(classNameNonGeneric, this.methodName, parameterAndArgumentsTypeNames, parameterValues).ToString();
             return key;
         }
-
+        
         private static Type GetReturnType(MethodBase method)
         {
             var returnType = (method as MethodInfo)?.ReturnType;
