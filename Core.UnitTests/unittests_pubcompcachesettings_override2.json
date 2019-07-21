@@ -1,0 +1,14 @@
+{
+  "PubComp": {
+    "CacheConfig": {
+      "noNotifier": {
+        "action": "Add",
+        "assembly": "PubComp.Caching.Core.UnitTests",
+        "type": "Mocks.NoNotifier",
+        "policy": {
+          "ConnectionName": "localRedisB64Enc"
+        }
+      }
+    }
+  }
+}

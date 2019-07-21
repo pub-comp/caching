@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using PubComp.Caching.Core;
+using PubComp.Caching.Core.CacheUtils;
 
 namespace PubComp.Caching.SystemRuntime
 {
@@ -9,12 +9,13 @@ namespace PubComp.Caching.SystemRuntime
     {
         private readonly String name;
         private System.Runtime.Caching.ObjectCache innerCache;
-        private readonly SemaphoreSlim sync = new SemaphoreSlim(1, 1);
+        private readonly MultiLock locks;
         private readonly InMemoryPolicy policy;
         
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly string notiferName;
 
+        // ReSharper disable once NotAccessedField.Local - reference isn't necessary, but it makes debugging easier
         private readonly CacheSynchronizer synchronizer;
 
         protected ObjectCache(
@@ -23,6 +24,15 @@ namespace PubComp.Caching.SystemRuntime
             this.name = name;
             this.policy = policy;
             this.innerCache = innerCache;
+
+            this.locks = !this.policy.DoNotLock
+                ? new MultiLock(
+                    this.policy.NumberOfLocks ?? 50,
+                    this.policy.LockTimeoutMilliseconds != null && this.policy.LockTimeoutMilliseconds > 0
+                        ? this.policy.LockTimeoutMilliseconds
+                        : null,
+                    this.policy.DoThrowExceptionOnTimeout ?? true)
+                : null;
 
             this.notiferName = this.policy?.SyncProvider;
             this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.notiferName);
@@ -114,26 +124,22 @@ namespace PubComp.Caching.SystemRuntime
 
         public TValue Get<TValue>(String key, Func<TValue> getter)
         {
-            TValue value;
-
-            if (TryGetInner(key, out value))
+            if (TryGetInner(key, out TValue value))
                 return value;
 
-            sync.Wait();
-            try
+            TValue OnCacheMiss()
             {
-                if (TryGetInner(key, out value))
-                    return value;
+                if (TryGetInner(key, out value)) return value;
 
                 value = getter();
                 Add(key, value);
-            }
-            finally
-            {
-                sync.Release();
+                return value;
             }
 
-            return value;
+            if (policy.DoNotLock)
+                return OnCacheMiss();
+
+            return this.locks.LockAndLoad(key, OnCacheMiss);
         }
 
         public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
@@ -141,21 +147,19 @@ namespace PubComp.Caching.SystemRuntime
             if (TryGetInner(key, out TValue value))
                 return value;
 
-            await sync.WaitAsync().ConfigureAwait(false); //This will deadlock if reentered recursively -- should not happen
-            try
+            async Task<TValue> OnCacheMiss()
             {
-                if (TryGetInner(key, out value))
-                    return value;
+                if (TryGetInner(key, out value)) return value;
 
                 value = await getter().ConfigureAwait(false);
                 Add(key, value);
-            }
-            finally
-            {
-                sync.Release();
+                return value;
             }
 
-            return value;
+            if (policy.DoNotLock)
+                return await OnCacheMiss().ConfigureAwait(false);
+
+            return await this.locks.LockAndLoadAsync(key, OnCacheMiss).ConfigureAwait(false);
         }
 
         public void Clear(String key)

@@ -89,7 +89,7 @@ namespace PubComp.Caching.AopCaching
         {
             if (Interlocked.Read(ref initialized) == 0L)
             {
-                this.cache = await CacheManager.GetCacheAsync(this.cacheName);
+                this.cache = CacheManager.GetCache(this.cacheName);
                 Interlocked.Exchange(ref initialized, 1L);
             }
 

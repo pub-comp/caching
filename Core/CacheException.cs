@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Serialization;
 
 namespace PubComp.Caching.Core
 {
@@ -15,6 +16,12 @@ namespace PubComp.Caching.Core
 
         public CacheException(string message, Exception innerException)
             : base(message, innerException)
+        {
+        }
+
+        protected CacheException(
+            SerializationInfo info,
+            StreamingContext context) : base(info, context)
         {
         }
     }

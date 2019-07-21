@@ -18,23 +18,16 @@ namespace PubComp.Caching.AopCaching.UnitTests
         [ClassInitialize]
         public static void ClassInitialize(TestContext testContext)
         {
+            // The following caches are set in the Assembly Initialize
+
             const string cache1Name = "PubComp.Caching.AopCaching.UnitTests.Mocks.Service*";
             cache1 = CacheManager.GetCache(cache1Name) as MockCache;
-            if (cache1 == null || cache1.Name != cache1Name)
-                cache1 = new MockCache(cache1Name);
-            CacheManager.SetCache(cache1.Name, cache1);
 
             const string cache2Name = "localCache";
             cache2 = CacheManager.GetCache(cache2Name) as MockCache;
-            if (cache2 == null || cache2.Name != cache2Name)
-                cache2 = new MockCache(cache2Name);
-            CacheManager.SetCache(cache2.Name, cache2);
 
             const string cache3Name = "PubComp.Caching.AopCaching.UnitTests.Mocks.Generic*";
             cache3 = CacheManager.GetCache(cache3Name) as MockCache;
-            if (cache3 == null || cache3.Name != cache3Name)
-                cache3 = new MockCache(cache3Name);
-            CacheManager.SetCache(cache3.Name, cache3);
         }
 
         [TestInitialize]
