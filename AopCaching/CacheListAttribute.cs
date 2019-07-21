@@ -20,6 +20,7 @@ namespace PubComp.Caching.AopCaching
         private string className;
         private string methodName;
         private string[] parameterTypeNames;
+        private string[] genericArgumentTypeNames;
         private int[] indexesNotToCache;
         private Type dataKeyConverterType;
         private int keyParameterNumber;
@@ -169,6 +170,7 @@ namespace PubComp.Caching.AopCaching
             this.methodName = method.Name;
             var parameters = method.GetParameters();
             this.parameterTypeNames = parameters.Select(p => p.ParameterType.FullName).ToArray();
+            this.genericArgumentTypeNames = method.GetGenericArguments().Select(a => a.FullName).ToArray();
 
             var indexes = new List<int>();
 
@@ -232,7 +234,7 @@ namespace PubComp.Caching.AopCaching
                 this.addKey.Invoke(keyList, new [] { k });
                 parameterValues[this.keyParameterNumber] = keyList;
 
-                var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues).ToString();
+                var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues, this.genericArgumentTypeNames).ToString();
                 object value;
                 if (cacheToUse.TryGet(key, out value))
                 {
@@ -295,7 +297,7 @@ namespace PubComp.Caching.AopCaching
                 this.addKey.Invoke(keyList, new [] { k });
                 parameterValues[this.keyParameterNumber] = keyList;
 
-                var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues).ToString();
+                var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues, genericArgumentTypeNames).ToString();
                 var result = await cacheToUse.TryGetAsync<object>(key).ConfigureAwait(false);
                 if (result.WasFound)
                 {
@@ -347,7 +349,7 @@ namespace PubComp.Caching.AopCaching
                 this.addKey.Invoke(keyList, new[] {k});
                 parameterValues[this.keyParameterNumber] = keyList;
 
-                var key = new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues)
+                var key = new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues, genericArgumentTypeNames)
                     .ToString();
                 values[key] = result;
             }
