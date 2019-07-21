@@ -54,7 +54,12 @@ namespace PubComp.Caching.Core.UnitTests
 
             int hits = 0;
 
-            Func<Task<string>> getter = async () => { hits++; return hits.ToString(); };
+            Func<Task<string>> getter = async () =>
+            {
+                await Task.Delay(10);
+                hits++;
+                return hits.ToString();
+            };
 
             string result;
 

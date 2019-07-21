@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using PubComp.Caching.Core.Exceptions;
 using PubComp.Caching.Core.Notifications;
 
 namespace PubComp.Caching.Core
@@ -26,19 +27,19 @@ namespace PubComp.Caching.Core
         {
             if (string.IsNullOrEmpty(cacheName))
             {
-                throw new CacheException("Cache not cleared - received undefined cacheName");
+                throw new CacheClearException("Cache not cleared - received undefined cacheName");
             }
 
             var cache = CacheManager.GetCache(cacheName);
             
             if (cache == null)
             {
-                throw new CacheException("Cache not cleared - cache not found: " + cacheName);
+                throw new CacheClearException("Cache not cleared - cache not found: " + cacheName);
             }
 
             if (cache.Name != cacheName)
             {
-                throw new CacheException("Cache not cleared - due to fallback to a general cache: " + cacheName);
+                throw new CacheClearException("Cache not cleared - due to fallback to a general cache: " + cacheName);
             }
 
             bool doEnableClear;
@@ -46,7 +47,7 @@ namespace PubComp.Caching.Core
             {
                 if (!doEnableClear)
                 {
-                    throw new CacheException("Cache not cleared - cache registered with doEnableClearEntireCache=False");
+                    throw new CacheClearException("Cache not cleared - cache registered with doEnableClearEntireCache=False");
                 }
             }
 
@@ -66,19 +67,19 @@ namespace PubComp.Caching.Core
         {
             if (string.IsNullOrEmpty(cacheName))
             {
-                throw new CacheException("Cache item not cleared - received undefined cacheName");
+                throw new CacheClearException("Cache item not cleared - received undefined cacheName");
             }
 
             if (string.IsNullOrEmpty(itemKey))
             {
-                throw new CacheException("Cache item not cleared - received undefined itemKey");
+                throw new CacheClearException("Cache item not cleared - received undefined itemKey");
             }
 
             var cache = CacheManager.GetCache(cacheName);
 
             if (cache == null)
             {
-                throw new CacheException("Cache item not cleared - cache not found: " + cacheName);
+                throw new CacheClearException("Cache item not cleared - cache not found: " + cacheName);
             }
 
             cache.Clear(itemKey);
@@ -110,7 +111,7 @@ namespace PubComp.Caching.Core
         {
             if (string.IsNullOrEmpty(cacheName))
             {
-                throw new CacheException("Cache not registered - received undefined cacheName");
+                throw new CacheClearException("Cache not registered - received undefined cacheName");
             }
 
             RegisteredCacheNames.AddOrUpdate(
@@ -130,7 +131,7 @@ namespace PubComp.Caching.Core
         {
             if (getterExpression == null)
             {
-                throw new CacheException("Cache item not registered - received undefined getterExpression");
+                throw new CacheClearException("Cache item not registered - received undefined getterExpression");
             }
 
             LambdaHelper.GetMethodInfoAndArguments(getterExpression, out var method, out _);
@@ -149,7 +150,7 @@ namespace PubComp.Caching.Core
 
             if (methodType == null)
             {
-                throw new CacheException("Cache item not registered - invalid getterExpression");
+                throw new CacheClearException("Cache item not registered - invalid getterExpression");
             }
 
             if (cacheName == null)
@@ -157,14 +158,14 @@ namespace PubComp.Caching.Core
 
             if (string.IsNullOrEmpty(cacheName))
             {
-                throw new CacheException("Cache item not registered - received undefined cacheName");
+                throw new CacheClearException("Cache item not registered - received undefined cacheName");
             }
 
             var itemKey = CacheKey.GetKey(getterExpression);
 
             if (string.IsNullOrEmpty(itemKey))
             {
-                throw new CacheException("Cache item not registered - received undefined itemKey");
+                throw new CacheClearException("Cache item not registered - received undefined itemKey");
             }
 
             RegisteredCacheNames.GetOrAdd(cacheName, false);
@@ -181,7 +182,7 @@ namespace PubComp.Caching.Core
             {
                 if (!TrySetCacheItem(cacheName, itemKey, getter))
                 {
-                    throw new CacheException("Cache item not initialized - cache not defined: " + cacheName);
+                    throw new CacheClearException("Cache item not initialized - cache not defined: " + cacheName);
                 }
             }
         }
@@ -212,12 +213,12 @@ namespace PubComp.Caching.Core
         {
             if (string.IsNullOrEmpty(cacheName))
             {
-                throw new CacheException("Cache item not registered - received undefined cacheName");
+                throw new CacheClearException("Cache item not registered - received undefined cacheName");
             }
 
             if (string.IsNullOrEmpty(itemKey))
             {
-                throw new CacheException("Cache item not registered - received undefined itemKey");
+                throw new CacheClearException("Cache item not registered - received undefined itemKey");
             }
 
             RegisteredCacheNames.GetOrAdd(cacheName, false);
@@ -232,7 +233,7 @@ namespace PubComp.Caching.Core
             {
                 if (!TrySetCacheItem(cacheName, itemKey, getter))
                 {
-                    throw new CacheException("Cache item not initialized - cache not defined: " + cacheName);
+                    throw new CacheClearException("Cache item not initialized - cache not defined: " + cacheName);
                 }
             }
         }
@@ -243,6 +244,14 @@ namespace PubComp.Caching.Core
         protected void ClearRegistrations()
         {
             RegisteredCacheItems.Clear();
+            RegisteredCacheNames.Clear();
+        }
+
+        /// <summary>
+        /// Clears all registrations of named caches
+        /// </summary>
+        internal void ClearRegisteredCacheNames()
+        {
             RegisteredCacheNames.Clear();
         }
 
@@ -262,7 +271,7 @@ namespace PubComp.Caching.Core
         {
             if (string.IsNullOrEmpty(cacheName))
             {
-                throw new CacheException("Received undefined cacheName");
+                throw new CacheClearException("Received undefined cacheName");
             }
 
             return RegisteredCacheItems.Keys.ToList()
@@ -280,12 +289,12 @@ namespace PubComp.Caching.Core
         {
             if (string.IsNullOrEmpty(cacheName))
             {
-                throw new CacheException("Cache item not refreshed - received undefined cacheName");
+                throw new CacheClearException("Cache item not refreshed - received undefined cacheName");
             }
 
             if (string.IsNullOrEmpty(itemKey))
             {
-                throw new CacheException("Cache item not refreshed - received undefined itemKey");
+                throw new CacheClearException("Cache item not refreshed - received undefined itemKey");
             }
 
             Func<object> registeredGetter;
@@ -294,19 +303,19 @@ namespace PubComp.Caching.Core
             {
                 if (registeredGetter == null)
                 {
-                    throw new CacheException(string.Concat(
+                    throw new CacheClearException(string.Concat(
                         "Cache item not refreshed - getter not defined: ", cacheName, "/", itemKey));
                 }
 
                 if (!TrySetCacheItem(cacheName, itemKey, registeredGetter))
                 {
-                    throw new CacheException("Cache item not refresh - cache not defined: " + cacheName);
+                    throw new CacheClearException("Cache item not refresh - cache not defined: " + cacheName);
                 }
 
                 return;
             }
 
-            throw new CacheException(string.Concat(
+            throw new CacheClearException(string.Concat(
                 "Cache item not refreshed - item is not registered: ", cacheName, "/", itemKey));
         }
 

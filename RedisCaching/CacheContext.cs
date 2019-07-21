@@ -37,7 +37,7 @@ namespace PubComp.Caching.RedisCaching
             if (cacheItem.ExpireIn.HasValue)
                 expiry = cacheItem.ExpireIn;
 
-            client.Database.StringSet(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always, CommandFlags.FireAndForget);
+            client.Database.StringSet(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always, CommandFlags.None);
         }
 
         internal Task SetItemAsync<TValue>(CacheItem<TValue> cacheItem)
@@ -47,7 +47,7 @@ namespace PubComp.Caching.RedisCaching
                 expiry = cacheItem.ExpireIn;
 
             return client.Database
-                .StringSetAsync(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always, CommandFlags.FireAndForget);
+                .StringSetAsync(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always, CommandFlags.None);
         }
 
         internal bool SetIfNotExists<TValue>(CacheItem<TValue> cacheItem)
@@ -100,38 +100,38 @@ namespace PubComp.Caching.RedisCaching
 
         private void ExpireById(string id, TimeSpan timeSpan)
         {
-            client.Database.KeyExpire(id, timeSpan, CommandFlags.FireAndForget);
+            client.Database.KeyExpire(id, timeSpan, CommandFlags.None);
         }
 
         private Task ExpireByIdAsync(string id, TimeSpan timeSpan)
         {
-            return client.Database.KeyExpireAsync(id, timeSpan, CommandFlags.FireAndForget);
+            return client.Database.KeyExpireAsync(id, timeSpan, CommandFlags.None);
         }
 
         internal void RemoveItem(String cacheName, String key)
         {
             var id = CacheItem<object>.GetId(cacheName, key);
-            client.Database.KeyDelete(id, CommandFlags.FireAndForget);
+            client.Database.KeyDelete(id, CommandFlags.None);
         }
 
         internal Task RemoveItemAsync(String cacheName, String key)
         {
             var id = CacheItem<object>.GetId(cacheName, key);
-            return client.Database.KeyDeleteAsync(id, CommandFlags.FireAndForget);
+            return client.Database.KeyDeleteAsync(id, CommandFlags.None);
         }
 
         internal void ClearItems(String cacheName)
         {
             var keyPrefix = CacheItem<object>.GetId(cacheName, string.Empty);
             var keys = client.MasterServer.Keys(0, string.Format("*{0}*", keyPrefix), 1000, CommandFlags.None).ToArray();
-            client.Database.KeyDelete(keys, CommandFlags.FireAndForget);
+            client.Database.KeyDelete(keys, CommandFlags.None);
         }
 
         internal Task ClearItemsAsync(String cacheName)
         {
             var keyPrefix = CacheItem<object>.GetId(cacheName, string.Empty);
             var keys = client.MasterServer.Keys(0, string.Format("*{0}*", keyPrefix), 1000, CommandFlags.None).ToArray();
-            return client.Database.KeyDeleteAsync(keys, CommandFlags.FireAndForget);
+            return client.Database.KeyDeleteAsync(keys, CommandFlags.None);
         }
 
         public void Dispose()
