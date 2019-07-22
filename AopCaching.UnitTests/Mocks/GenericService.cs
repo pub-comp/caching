@@ -80,6 +80,16 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
 
         public readonly double ConstValue = 4.0;
     }
+
+    public class GenericService1<TEnum> where TEnum : struct
+    {
+        [Cache]
+        public TEnum GenericMethodToCacheWithGenericReturnType(int value)
+        {
+            return new TEnum();
+        }
+    }
+
     public enum Enum1
     {
         Value = 1

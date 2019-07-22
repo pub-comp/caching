@@ -303,6 +303,29 @@ namespace PubComp.Caching.AopCaching.UnitTests
         }
 
         [TestMethod]
+        public void TestCacheWithGenericMethodAndWithoutGenericReturnValue()
+        {
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(0, cache3.Misses);
+
+            new GenericService1<Enum1>().GenericMethodToCacheWithGenericReturnType((int) Enum1.Value);
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            new GenericService1<Enum1>().GenericMethodToCacheWithGenericReturnType((int)Enum1.Value);
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            new GenericService1<Enum2>().GenericMethodToCacheWithGenericReturnType((int)Enum1.Value);
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(4, cache3.Misses);
+
+            new GenericService1<Enum2>().GenericMethodToCacheWithGenericReturnType((int)Enum2.Value);
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(6, cache3.Misses);
+        }
+
+        [TestMethod]
         public async Task TestCacheWithGenericAsyncClass()
         {
             Assert.AreEqual(0, cache3.Hits);
