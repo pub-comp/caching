@@ -8,17 +8,62 @@ namespace PubComp.Caching.RedisCaching
     public class RedisClient : IDisposable
     {
         private readonly ConfigurationOptions config;
+        private readonly Action<bool> connectionStateChangedCallback;
         private readonly NLog.ILogger log;
         private IConnectionMultiplexer innerContext;
         private IRedisMonitor redisMonitor;
 
-        public RedisClient(String connectionString, String clusterType, int monitorPort, int monitorIntervalMilliseconds)
+        public RedisClient(String connectionString, String clusterType, int monitorPort, int monitorIntervalMilliseconds, Action<bool> connectionStateChangedCallback)
         {
             this.config = ConfigurationOptions.Parse(connectionString);
             this.log = NLog.LogManager.GetLogger(nameof(RedisClient));
+            this.connectionStateChangedCallback = connectionStateChangedCallback;
 
             RedisConnect();
             RedisMonitor(clusterType, monitorPort, monitorIntervalMilliseconds);
+        }
+
+        public RedisClient(String connectionString, String clusterType, int monitorPort,
+            int monitorIntervalMilliseconds)
+            : this(connectionString, clusterType, monitorPort, monitorIntervalMilliseconds, null)
+        {
+        }
+
+        
+
+        private void OnConnectionStateChanged(object sender, EventArgs eventArgs) 
+            => InvokeConnectionStateChangedCallback(this.innerContext.IsConnected);
+
+        private void InvokeConnectionStateChangedCallback(bool newState)
+        {
+            try
+            {
+                connectionStateChangedCallback?.Invoke(newState);
+            }
+            catch (Exception e)
+            {
+                log.Error(e, "Failed to invoke ConnectionStateChanged");
+            }
+        }
+
+        public void RegisterConnectionEvents(IConnectionMultiplexer connectionMultiplexer)
+        {
+            if (connectionStateChangedCallback == null) return;
+
+            connectionMultiplexer.ConnectionFailed += OnConnectionStateChanged;
+            connectionMultiplexer.ConnectionRestored += OnConnectionStateChanged;
+
+            InvokeConnectionStateChangedCallback(false);
+        }
+
+        public void DeregisterConnectionEvents(IConnectionMultiplexer connectionMultiplexer)
+        {
+            if (connectionStateChangedCallback == null) return;
+
+            connectionMultiplexer.ConnectionFailed -= OnConnectionStateChanged;
+            connectionMultiplexer.ConnectionRestored -= OnConnectionStateChanged;
+
+            InvokeConnectionStateChangedCallback(true);
         }
 
         private void RedisConnect()
@@ -27,6 +72,7 @@ namespace PubComp.Caching.RedisCaching
             {
                 if (this.innerContext != null)
                 {
+                    DeregisterConnectionEvents(this.innerContext);
                     this.innerContext.Close();
                     this.innerContext.Dispose();
                     this.innerContext = null;
@@ -37,6 +83,7 @@ namespace PubComp.Caching.RedisCaching
                 log.Debug("Redis Reconnect: {0}", config.ToString(false));
                 config.AbortOnConnectFail = false;
                 this.innerContext = ConnectionMultiplexer.Connect(config);
+                RegisterConnectionEvents(this.innerContext);
             }
         }
 

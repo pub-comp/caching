@@ -23,8 +23,9 @@ namespace TestHost.WebApi.Service
 
         public string Get(int id)
         {
-            var num = DateTime.Now.Ticks % id;
-            return GetInner(num);
+            return GetInner(id);
+            //var num = DateTime.Now.Ticks % id;
+            //return GetInner(num);
         }
 
         public Task<string> GetAsync(int id)
@@ -36,7 +37,8 @@ namespace TestHost.WebApi.Service
         [Cache(CacheName)]
         private string GetInner(long id)
         {
-            return FileHelper.ReadLine($"{dbPath}\\{id}.txt");
+            return DateTime.Now.ToString();
+            //return FileHelper.ReadLine($"{dbPath}\\{id}.txt");
         }
         
         [Cache(CacheName)]

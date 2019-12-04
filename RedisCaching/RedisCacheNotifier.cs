@@ -62,28 +62,33 @@ namespace PubComp.Caching.RedisCaching
 
         public string Name { get { return this.name; } }
 
-        private RedisClient GetSubClient(string cacheName, Func<CacheItemNotification, bool> callback)
+        private RedisClient GetSubClient(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback, Action<bool> notifierStateChangedCallback)
         {
-            if (callback != null)
-                this.cacheCallbacks.AddOrUpdate(cacheName, callback, (k, c) => callback);
+            if (cacheUpdatedCallback != null)
+                this.cacheCallbacks.AddOrUpdate(cacheName, cacheUpdatedCallback, (k, c) => cacheUpdatedCallback);
 
-            var client = this.cacheSubClients.GetOrAdd(cacheName, cn => CreateClient());
+            var client = this.cacheSubClients.GetOrAdd(cacheName, cn => CreateClient(notifierStateChangedCallback));
             return client;
         }
 
-        private RedisClient CreateClient()
+        private RedisClient CreateClient(Action<bool> notifierStateChangedCallback)
         {
             var client = new RedisClient(
                 this.connectionString, this.policy.ClusterType, this.policy.MonitorPort,
-                this.policy.MonitorIntervalMilliseconds);
+                this.policy.MonitorIntervalMilliseconds, notifierStateChangedCallback);
             return client;
         }
 
-        // ReSharper disable once ParameterHidesMember
         public void Subscribe(string cacheName, Func<CacheItemNotification, bool> callback)
         {
+            Subscribe(cacheName, callback, null);
+        }
+
+        // ReSharper disable once ParameterHidesMember
+        public void Subscribe(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback, Action<bool> notifierStateChangedCallback)
+        {
             // Subscribe to Redis
-            GetSubClient(cacheName, callback).Subscriber.Subscribe(cacheName, (channel, message) =>
+            GetSubClient(cacheName, cacheUpdatedCallback, notifierStateChangedCallback).Subscriber.Subscribe(cacheName, (channel, message) =>
             {
                 var notificationInfo = convert.FromRedis(message);
                 OnCacheUpdated(notificationInfo);

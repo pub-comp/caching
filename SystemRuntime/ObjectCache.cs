@@ -1,7 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
-using PubComp.Caching.Core;
+﻿using PubComp.Caching.Core;
 using PubComp.Caching.Core.CacheUtils;
+using System;
+using System.Threading.Tasks;
 
 namespace PubComp.Caching.SystemRuntime
 {
@@ -42,8 +42,13 @@ namespace PubComp.Caching.SystemRuntime
 
         protected System.Runtime.Caching.ObjectCache InnerCache { get { return this.innerCache; } }
 
-        protected InMemoryPolicy Policy { get { return this.policy; } }
-        
+        protected InMemoryExpirationPolicy ExpirationPolicy
+        {
+            get => (synchronizer?.IsActive ?? true)
+                    ? policy
+                    : policy.OnSyncProviderFailure ?? policy;
+        }
+
         public bool TryGet<TValue>(string key, out TValue value)
         {
             return TryGetInner(key, out value);
@@ -85,28 +90,28 @@ namespace PubComp.Caching.SystemRuntime
 
         protected virtual void Add<TValue>(String key, TValue value)
         {
-            innerCache.Set(key, new CacheItem(value), ToRuntimePolicy(policy), null);
+            innerCache.Set(key, new CacheItem(value), GetRuntimePolicy(), null);
         }
 
         // ReSharper disable once ParameterHidesMember
-        protected System.Runtime.Caching.CacheItemPolicy ToRuntimePolicy(InMemoryPolicy policy)
+        protected System.Runtime.Caching.CacheItemPolicy GetRuntimePolicy()
         {
             TimeSpan slidingExpiration;
             DateTimeOffset absoluteExpiration;
 
-            if (policy.SlidingExpiration != null && policy.SlidingExpiration.Value < TimeSpan.MaxValue)
+            if (ExpirationPolicy.SlidingExpiration != null && ExpirationPolicy.SlidingExpiration.Value < TimeSpan.MaxValue)
             {
                 absoluteExpiration = System.Runtime.Caching.ObjectCache.InfiniteAbsoluteExpiration;
-                slidingExpiration = policy.SlidingExpiration.Value;                
+                slidingExpiration = ExpirationPolicy.SlidingExpiration.Value;                
             }
-            else if (policy.ExpirationFromAdd != null && policy.ExpirationFromAdd.Value < TimeSpan.MaxValue)
+            else if (ExpirationPolicy.ExpirationFromAdd != null && ExpirationPolicy.ExpirationFromAdd.Value < TimeSpan.MaxValue)
             {
-                absoluteExpiration = DateTimeOffset.Now.Add(policy.ExpirationFromAdd.Value);
+                absoluteExpiration = DateTimeOffset.Now.Add(ExpirationPolicy.ExpirationFromAdd.Value);
                 slidingExpiration = System.Runtime.Caching.ObjectCache.NoSlidingExpiration;
             }
-            else if (policy.AbsoluteExpiration != null && policy.AbsoluteExpiration.Value < DateTimeOffset.MaxValue)
+            else if (ExpirationPolicy.AbsoluteExpiration != null && ExpirationPolicy.AbsoluteExpiration.Value < DateTimeOffset.MaxValue)
             {
-                absoluteExpiration = policy.AbsoluteExpiration.Value;
+                absoluteExpiration = ExpirationPolicy.AbsoluteExpiration.Value;
                 slidingExpiration = System.Runtime.Caching.ObjectCache.NoSlidingExpiration;
             }
             else
@@ -118,7 +123,7 @@ namespace PubComp.Caching.SystemRuntime
             return new System.Runtime.Caching.CacheItemPolicy
             {
                 AbsoluteExpiration = absoluteExpiration,
-                SlidingExpiration = slidingExpiration,
+                SlidingExpiration = slidingExpiration
             };
         }
 

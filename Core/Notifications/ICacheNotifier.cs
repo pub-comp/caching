@@ -8,6 +8,8 @@ namespace PubComp.Caching.Core.Notifications
 
         void Subscribe(string cacheName, Func<CacheItemNotification, bool> callback);
 
+        void Subscribe(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback, Action<bool> notifierStateChangedCallback);
+
         void UnSubscribe(string cacheName);
 
         void Publish(string cacheName, string key, CacheItemActionTypes action);

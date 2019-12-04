@@ -1,6 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Web.Http;
 using PubComp.Caching.Core;
+using PubComp.Caching.Core.Notifications;
 using TestHost.WebApi.Service;
 
 namespace TestHost.WebApi.Controllers
@@ -36,6 +40,39 @@ namespace TestHost.WebApi.Controllers
             if(result!=null)
                 return Ok(result);
             return NotFound();
+        }
+
+        [HttpGet]
+        [Route("cache/Numbers/syncclear")]
+        public IHttpActionResult InMemorySyncClear()
+        {
+            var cacheName = "Numbers";
+
+            var cacheManager = CacheManager.GetCache(cacheName);
+            var cacheNotifier = CacheManager.GetAssociatedNotifier(cacheManager);
+
+            cacheNotifier.Publish(cacheName, null, CacheItemActionTypes.RemoveAll);
+
+            var notifiers = CacheManager.GetNotifierNames().ToList();
+            return Ok(notifiers);
+        }
+
+        [HttpGet]
+        [Route("cache/redis/timestamp")]
+        public IHttpActionResult GetRedisCacheTimestamp()
+        {
+            var cacheName = "RedisTest";
+            var cacheKey = "redis-timestamp";
+
+            var cacheManager = CacheManager.GetCache(cacheName);
+
+            if (!cacheManager.TryGet(cacheKey, out DateTime timestamp))
+            {
+                timestamp = DateTime.Now;
+                cacheManager.Set(cacheKey, timestamp);
+            }
+
+            return Ok(timestamp);
         }
 
         /// <summary>

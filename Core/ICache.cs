@@ -3,6 +3,13 @@ using System.Threading.Tasks;
 
 namespace PubComp.Caching.Core
 {
+    public interface ICacheWithFallback
+    {
+        bool IsActive { get; }
+
+        string FallbackCacheName { get; }
+    }
+
     public interface ICache
     {
         string Name { get; }

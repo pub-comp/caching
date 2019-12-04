@@ -6,13 +6,23 @@ namespace PubComp.Caching.Core
     public class CacheSynchronizer
     {
         private readonly ICache cache;
+        private readonly ICacheNotifier notifier;
+
+        public bool IsActive { get => this.notifier.IsActive }
 
         public CacheSynchronizer(ICache cache, ICacheNotifier notifier)
         {
             this.cache = cache;
-            notifier.Subscribe(cache.Name, OnCacheUpdated);
+            this.notifier = notifier;
+
+            notifier.Subscribe(cache.Name, OnCacheUpdated, OnNotifierStateChanged);
         }
-        
+
+        private void OnNotifierStateChanged(bool newState)
+        {
+            OnCacheUpdated(new CacheItemNotification("self", this.cache.Name, null, CacheItemActionTypes.RemoveAll));
+        }
+
         private bool OnCacheUpdated(CacheItemNotification notification)
         {
             if (notification.CacheName != this.cache.Name)

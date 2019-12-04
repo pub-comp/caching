@@ -14,7 +14,7 @@ namespace PubComp.Caching.RedisCaching
         public CacheContext(String connectionString, String converterType, String clusterType, int monitorPort, int monitorIntervalMilliseconds)
         {
             this.convert = RedisConverterFactory.CreateConverter(converterType);
-            this.client = new RedisClient(connectionString, clusterType, monitorPort,monitorIntervalMilliseconds);
+            this.client = new RedisClient(connectionString, clusterType, monitorPort, monitorIntervalMilliseconds);
         }
 
         internal CacheItem<TValue> GetItem<TValue>(String cacheName, String key)
