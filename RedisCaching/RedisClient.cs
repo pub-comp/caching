@@ -29,13 +29,19 @@ namespace PubComp.Caching.RedisCaching
         {
         }
 
-        
+        public bool IsConnected => this.innerContext?.IsConnected ?? false;
 
         private void OnConnectionStateChanged(object sender, EventArgs eventArgs) 
             => InvokeConnectionStateChangedCallback(this.innerContext.IsConnected);
 
+        private bool? lastConnectionStateChangedValue = null;
         private void InvokeConnectionStateChangedCallback(bool newState)
         {
+            if ((lastConnectionStateChangedValue ?? !newState) == newState)
+                return;
+
+            lastConnectionStateChangedValue = newState;
+
             try
             {
                 connectionStateChangedCallback?.Invoke(newState);
@@ -53,7 +59,7 @@ namespace PubComp.Caching.RedisCaching
             connectionMultiplexer.ConnectionFailed += OnConnectionStateChanged;
             connectionMultiplexer.ConnectionRestored += OnConnectionStateChanged;
 
-            InvokeConnectionStateChangedCallback(false);
+            InvokeConnectionStateChangedCallback(this.innerContext.IsConnected);
         }
 
         public void DeregisterConnectionEvents(IConnectionMultiplexer connectionMultiplexer)

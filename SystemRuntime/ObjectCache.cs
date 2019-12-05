@@ -43,11 +43,9 @@ namespace PubComp.Caching.SystemRuntime
         protected System.Runtime.Caching.ObjectCache InnerCache { get { return this.innerCache; } }
 
         protected InMemoryExpirationPolicy ExpirationPolicy
-        {
-            get => (synchronizer?.IsActive ?? true)
-                    ? policy
-                    : policy.OnSyncProviderFailure ?? policy;
-        }
+            => (synchronizer?.IsActive ?? true) 
+                ? policy
+                : (policy.OnSyncProviderFailure ?? policy);
 
         public bool TryGet<TValue>(string key, out TValue value)
         {

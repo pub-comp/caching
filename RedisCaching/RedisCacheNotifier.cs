@@ -97,17 +97,17 @@ namespace PubComp.Caching.RedisCaching
 
         public void UnSubscribe(string cacheName)
         {
-            this.cacheCallbacks.TryRemove(cacheName, out Func<CacheItemNotification, bool> callback);
+            this.cacheCallbacks.TryRemove(cacheName, out _);
             
             // Unsubscribe from Redis
-            GetSubClient(cacheName, null).Subscriber.Unsubscribe(cacheName, null, CommandFlags.None);
+            GetSubClient(cacheName, null, null).Subscriber.Unsubscribe(cacheName, null, CommandFlags.None);
         }
 
         public void Publish(string cacheName, string key, CacheItemActionTypes action)
         {
             var message = new CacheItemNotification(sender, cacheName, key, action);
             var messageToSend = convert.ToRedis(message);
-            GetSubClient(cacheName, null).Subscriber.Publish(cacheName, messageToSend, CommandFlags.None);
+            GetSubClient(cacheName, null, null).Subscriber.Publish(cacheName, messageToSend, CommandFlags.None);
         }
 
         private void OnCacheUpdated(CacheItemNotification notification)

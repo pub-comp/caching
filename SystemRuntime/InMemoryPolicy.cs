@@ -9,6 +9,9 @@ namespace PubComp.Caching.SystemRuntime
         /// </summary>
         public string SyncProvider { get; set; }
 
+        /// <summary>
+        /// If set, override expiration policy in case where the sync provider is down
+        /// </summary>
         public InMemoryExpirationPolicy OnSyncProviderFailure { get; set; }
 
         /// <summary>
