@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using PubComp.Caching.AopCaching;
 
@@ -23,9 +23,8 @@ namespace TestHost.WebApi.Service
 
         public string Get(int id)
         {
-            return GetInner(id);
-            //var num = DateTime.Now.Ticks % id;
-            //return GetInner(num);
+            var num = DateTime.Now.Ticks % id;
+            return GetInner(num);
         }
 
         public Task<string> GetAsync(int id)
@@ -37,8 +36,7 @@ namespace TestHost.WebApi.Service
         [Cache(CacheName)]
         private string GetInner(long id)
         {
-            return DateTime.Now.ToString();
-            //return FileHelper.ReadLine($"{dbPath}\\{id}.txt");
+            return FileHelper.ReadLine($"{dbPath}\\{id}.txt");
         }
         
         [Cache(CacheName)]
