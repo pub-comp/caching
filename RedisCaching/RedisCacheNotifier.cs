@@ -58,6 +58,8 @@ namespace PubComp.Caching.RedisCaching
 
             this.sender = Guid.NewGuid().ToString();
             this.convert = RedisConverterFactory.CreateConverter(policy.Converter);
+
+            SubscribeToGeneralInvalidationMessage(policy.GeneralInvalidationChannel);
         }
 
         public string Name { get { return this.name; } }
@@ -82,6 +84,21 @@ namespace PubComp.Caching.RedisCaching
         public void Subscribe(string cacheName, Func<CacheItemNotification, bool> callback)
         {
             Subscribe(cacheName, callback, null);
+        }
+
+        public void SubscribeToGeneralInvalidationMessage(string generalInvalidationChannel)
+        {
+            if (string.IsNullOrWhiteSpace(generalInvalidationChannel))
+                return;
+
+            var client = CreateClient(null);
+            client.Subscriber.Subscribe(generalInvalidationChannel, (channel, message) =>
+            {
+                var allCacheNames = CacheManager.GetCacheNames();
+                log.Info("General-Invalidation has been invoked");
+                foreach (var cacheName in allCacheNames)
+                    CacheManager.GetCache(cacheName).ClearAll();
+            });
         }
 
         // ReSharper disable once ParameterHidesMember

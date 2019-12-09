@@ -31,7 +31,12 @@
         /// The interval in milliseconds for monitoring the master-replica.
         /// </summary>
         public int MonitorIntervalMilliseconds { get; set; }
-        
+
+        /// <summary>
+        /// Optional - subscribe to a general invalidation channel for cluster invalidation requests
+        /// </summary>
+        public string GeneralInvalidationChannel { get; set; }
+
         public RedisCacheNotifierPolicy()
         {
             ConnectionString = @"127.0.0.1:6379,serviceName=mymaster";
