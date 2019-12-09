@@ -16,7 +16,8 @@ namespace PubComp.Caching.RedisCaching
         private readonly IRedisConverter convert;
         private readonly string sender;
         private readonly NLog.ILogger log;
-        
+
+        private RedisClient generalInvalidationRedisClient = null;
         private ConcurrentDictionary<string, RedisClient> cacheSubClients;
         private ConcurrentDictionary<string, Func<CacheItemNotification, bool>> cacheCallbacks;
 
@@ -91,8 +92,8 @@ namespace PubComp.Caching.RedisCaching
             if (string.IsNullOrWhiteSpace(generalInvalidationChannel))
                 return;
 
-            var client = CreateClient(null);
-            client.Subscriber.Subscribe(generalInvalidationChannel, (channel, message) =>
+            generalInvalidationRedisClient = CreateClient(null);
+            generalInvalidationRedisClient.Subscriber.Subscribe(generalInvalidationChannel, (channel, message) =>
             {
                 var allCacheNames = CacheManager.GetCacheNames();
                 log.Info("General-Invalidation has been invoked");
@@ -157,6 +158,8 @@ namespace PubComp.Caching.RedisCaching
             {
                 redisClient.Dispose();
             }
+
+            generalInvalidationRedisClient?.Dispose();
 
             this.cacheCallbacks = new ConcurrentDictionary<string, Func<CacheItemNotification, bool>>();
         }

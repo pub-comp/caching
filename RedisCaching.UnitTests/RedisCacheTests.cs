@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PubComp.Caching.AopCaching;
@@ -451,6 +452,71 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             Assert.AreEqual(typeof(string), field.FieldType);
 
             return field.GetValue(obj) as string;
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierGeneralInvalidation()
+        {
+            const string localCache = "localCache";
+
+            var cache = CacheManager.GetCache(localCache);
+            cache.Get("key1", () => "value1");
+
+            // key1, key2 should be in cache1, cache2
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+
+            var secondProcess = Process.Start(
+                new ProcessStartInfo
+                {
+                    CreateNoWindow = false,
+                    FileName = typeof(DemoProgram).Assembly.Location,
+                    Arguments = "general-invalidation",
+                    WindowStyle = ProcessWindowStyle.Normal,
+                });
+            Assert.IsNotNull(secondProcess);
+            secondProcess.WaitForExit();
+
+            Thread.Sleep(100);
+            Assert.IsFalse(cache.TryGet("key1", out value1));
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierFallback()
+        {
+            const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback";
+            const string localCacheWithNotifierAndFallbackInvalidConnection = "MyApp.LocalCacheWithNotifierAndFallbackInvalidConnection";
+
+            var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
+            var cacheInvalidConnection = CacheManager.GetCache(localCacheWithNotifierAndFallbackInvalidConnection);
+
+            cache.Get("key1", () => "value1");
+            cacheInvalidConnection.Get("key2", () => "value2");
+
+            // key1, key2 should be in cache1, cache2
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+            Assert.IsTrue(cacheInvalidConnection.TryGet("key2", out value1));
+
+            Thread.Sleep(1000);
+
+            Assert.IsTrue(cache.TryGet("key1", out value1));
+            Assert.IsFalse(cacheInvalidConnection.TryGet("key2", out value1));
+        }
+
+        [TestMethod][Ignore]
+        public void TestRedisNotifierFallbackOnConnectionFailure()
+        {
+            const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback";
+
+            var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
+
+            cache.Get("key1", () => "value1");
+
+            // key1, key2 should be in cache1, cache2
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+
+            throw new NotImplementedException("a way to mimic Redis connection failure");
+
+            Assert.IsFalse(cache.TryGet("key1", out  value1));
         }
 
         [TestMethod]

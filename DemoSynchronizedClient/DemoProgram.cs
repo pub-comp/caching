@@ -4,6 +4,7 @@ using System.Threading;
 using NLog;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.Notifications;
+using StackExchange.Redis;
 
 namespace PubComp.Caching.DemoSynchronizedClient
 {
@@ -11,6 +12,9 @@ namespace PubComp.Caching.DemoSynchronizedClient
     {
         const string NotifierName = "redisNotifier";
         const string LocalCacheWithNotifier = "MyApp.LocalCacheWithNotifier";
+
+        private static readonly string connectionString = @"127.0.0.1:6379,serviceName=mymaster";
+        private static object config;
 
         static void Main(string[] args)
         {
@@ -48,6 +52,12 @@ namespace PubComp.Caching.DemoSynchronizedClient
             {
                 Console.WriteLine("Clearing key2 from cache.");
                 ClearCache(cache, "key2");
+            }
+
+            if (args.Any(a => a.ToLowerInvariant() == "general-invalidation"))
+            {
+                using (var connection = ConnectionMultiplexer.Connect(connectionString))
+                    connection.GetSubscriber().Publish("+general-invalidation", "test");
             }
 
             // Otherwise clear all
