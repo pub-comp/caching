@@ -65,21 +65,19 @@ namespace PubComp.Caching.RedisCaching
 
         public string Name { get { return this.name; } }
 
-        private RedisClient GetSubClient(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback, Action<bool> notifierStateChangedCallback)
+        private RedisClient GetSubClient(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback,
+            EventHandler<Core.Events.ProviderStateChangedEventArgs> notifierProviderStateChangedCallback)
         {
             if (cacheUpdatedCallback != null)
                 this.cacheCallbacks.AddOrUpdate(cacheName, cacheUpdatedCallback, (k, c) => cacheUpdatedCallback);
 
-            var client = this.cacheSubClients.GetOrAdd(cacheName, cn => CreateClient(notifierStateChangedCallback));
+            var client = this.cacheSubClients.GetOrAdd(cacheName, cn => CreateClient(notifierProviderStateChangedCallback));
             return client;
         }
 
-        private RedisClient CreateClient(Action<bool> notifierStateChangedCallback)
+        private RedisClient CreateClient(EventHandler<Core.Events.ProviderStateChangedEventArgs> providerStateChangedCallback)
         {
-            var client = new RedisClient(
-                this.connectionString, this.policy.ClusterType, this.policy.MonitorPort,
-                this.policy.MonitorIntervalMilliseconds, notifierStateChangedCallback);
-            return client;
+            return RedisClient.GetNamedRedisClient(this.policy.ConnectionName, providerStateChangedCallback);
         }
 
         public void Subscribe(string cacheName, Func<CacheItemNotification, bool> callback)
@@ -103,10 +101,11 @@ namespace PubComp.Caching.RedisCaching
         }
 
         // ReSharper disable once ParameterHidesMember
-        public void Subscribe(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback, Action<bool> notifierStateChangedCallback)
+        public void Subscribe(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback, 
+            EventHandler<Core.Events.ProviderStateChangedEventArgs> notifierProviderStateChangedCallback)
         {
             // Subscribe to Redis
-            GetSubClient(cacheName, cacheUpdatedCallback, notifierStateChangedCallback).Subscriber.Subscribe(cacheName, (channel, message) =>
+            GetSubClient(cacheName, cacheUpdatedCallback, notifierProviderStateChangedCallback).Subscriber.Subscribe(cacheName, (channel, message) =>
             {
                 var notificationInfo = convert.FromRedis(message);
                 OnCacheUpdated(notificationInfo);

@@ -15,9 +15,9 @@ namespace PubComp.Caching.Core
             notifier.Subscribe(cache.Name, OnCacheUpdated, OnNotifierStateChanged);
         }
 
-        private void OnNotifierStateChanged(bool newState)
+        private void OnNotifierStateChanged(object sender, Events.ProviderStateChangedEventArgs args)
         {
-            IsActive = newState;
+            IsActive = args.NewState;
             OnCacheUpdated(new CacheItemNotification("self", this.cache.Name, null, CacheItemActionTypes.RemoveAll));
         }
 

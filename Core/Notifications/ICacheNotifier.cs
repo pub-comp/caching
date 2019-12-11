@@ -1,4 +1,5 @@
 ﻿using System;
+using PubComp.Caching.Core.Events;
 
 namespace PubComp.Caching.Core.Notifications
 {
@@ -8,7 +9,7 @@ namespace PubComp.Caching.Core.Notifications
 
         void Subscribe(string cacheName, Func<CacheItemNotification, bool> callback);
 
-        void Subscribe(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback, Action<bool> notifierStateChangedCallback);
+        void Subscribe(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback, EventHandler<ProviderStateChangedEventArgs> notifierProviderStateChangedCallback);
 
         void UnSubscribe(string cacheName);
 

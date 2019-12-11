@@ -92,8 +92,15 @@ namespace PubComp.Caching.RedisCaching
 
             this.useSlidingExpiration = (policy.SlidingExpiration < TimeSpan.MaxValue);
 
-            this.innerCache = new CacheContext(
-                this.connectionString, this.converterType, this.clusterType, this.monitorPort, this.monitorIntervalMilliseconds);
+            if (string.IsNullOrEmpty(policy.ConnectionName))
+            {
+                this.innerCache = new CacheContext(
+                    this.connectionString, this.converterType, this.clusterType, this.monitorPort, this.monitorIntervalMilliseconds);
+            }
+            else
+            {
+                this.innerCache = new CacheContext(policy.ConnectionName, this.converterType);
+            }
 
             this.notiferName = policy.SyncProvider;
 

@@ -7,9 +7,11 @@ namespace PubComp.Caching.RedisCaching
     {
         public string ConnectionString { get; set; }
 
+        public RedisClientPolicy Policy { get; set; }
+
         public override ICacheConnectionString CreateConnectionString()
         {
-            return new RedisConnectionString(this.Name, this.ConnectionString);
+            return new RedisConnectionString(this.Name, this.ConnectionString, this.Policy);
         }
     }
 }

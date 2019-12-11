@@ -46,7 +46,7 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
 
         public void Subscribe(string cacheName, 
             Func<CacheItemNotification, bool> cacheUpdatedCallback,
-            Action<bool> notifierStateChangedCallback)
+            EventHandler<Core.Events.ProviderStateChangedEventArgs> notifierProviderStateChangedCallback)
         {
         }
 
