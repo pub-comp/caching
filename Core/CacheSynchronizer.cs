@@ -6,13 +6,29 @@ namespace PubComp.Caching.Core
     public class CacheSynchronizer
     {
         private readonly ICache cache;
+        private readonly ICacheNotifier notifier;
 
         public bool IsActive { get; private set; }
-
+        public bool IsInvalidateOnUpdateEnabled => notifier.IsInvalidateOnUpdateEnabled;
+        
         public CacheSynchronizer(ICache cache, ICacheNotifier notifier)
         {
             this.cache = cache;
+            this.notifier = notifier;
+
             notifier.Subscribe(cache.Name, OnCacheUpdated, OnNotifierStateChanged);
+        }
+
+        public void TryPublishCacheItemUpdated(string key)
+        {
+            try
+            {
+                notifier.Publish(cache.Name, key, CacheItemActionTypes.Updated);
+            }
+            catch (Exception ex)
+            {
+                // Log ? (for that we'll need to add NLog in Core as well)
+            }
         }
 
         private void OnNotifierStateChanged(object sender, Events.ProviderStateChangedEventArgs args)

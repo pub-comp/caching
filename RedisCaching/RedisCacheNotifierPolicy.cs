@@ -37,6 +37,11 @@
         /// </summary>
         public string GeneralInvalidationChannel { get; set; }
 
+        /// <summary>
+        /// Optional - Automatic publish CacheItemActionTypes.Updated when overriding cache item with new value
+        /// </summary>
+        public bool InvalidateOnUpdate { get; set; }
+
         public RedisCacheNotifierPolicy()
         {
             ConnectionString = @"127.0.0.1:6379,serviceName=mymaster";
@@ -44,6 +49,7 @@
             ClusterType = "none";
             Converter = "json";
             MonitorPort = 26379;
+            InvalidateOnUpdate = false;
         }
     }
 }

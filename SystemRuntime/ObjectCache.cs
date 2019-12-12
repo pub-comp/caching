@@ -63,12 +63,16 @@ namespace PubComp.Caching.SystemRuntime
 
         public void Set<TValue>(string key, TValue value)
         {
+            if (synchronizer.IsInvalidateOnUpdateEnabled && innerCache.Contains(key))
+            {
+                synchronizer.TryPublishCacheItemUpdated(key);
+            }
             Add(key, value);
         }
 
         public Task SetAsync<TValue>(string key, TValue value)
         {
-            Add(key, value);
+            Set(key, value);
             return Task.FromResult<object>(null);
         }
 
@@ -135,7 +139,7 @@ namespace PubComp.Caching.SystemRuntime
                 if (TryGetInner(key, out value)) return value;
 
                 value = getter();
-                Add(key, value);
+                Set(key, value);
                 return value;
             }
 
@@ -155,7 +159,7 @@ namespace PubComp.Caching.SystemRuntime
                 if (TryGetInner(key, out value)) return value;
 
                 value = await getter().ConfigureAwait(false);
-                Add(key, value);
+                Set(key, value);
                 return value;
             }
 

@@ -7,6 +7,8 @@ namespace PubComp.Caching.Core.Notifications
     {
         string Name { get; }
 
+        public bool IsInvalidateOnUpdateEnabled { get; }
+
         void Subscribe(string cacheName, Func<CacheItemNotification, bool> callback);
 
         void Subscribe(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback, EventHandler<ProviderStateChangedEventArgs> notifierProviderStateChangedCallback);

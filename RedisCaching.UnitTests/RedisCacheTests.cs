@@ -1,4 +1,10 @@
-﻿using System;
+﻿using PubComp.Caching.AopCaching;
+using PubComp.Caching.Core;
+using PubComp.Caching.Core.UnitTests;
+using PubComp.Caching.DemoSynchronizedClient;
+using PubComp.Caching.RedisCaching.UnitTests.Mocks;
+using PubComp.Caching.SystemRuntime;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -6,12 +12,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PubComp.Caching.AopCaching;
-using PubComp.Caching.Core;
-using PubComp.Caching.Core.UnitTests;
-using PubComp.Caching.DemoSynchronizedClient;
-using PubComp.Caching.RedisCaching.UnitTests.Mocks;
-using PubComp.Caching.SystemRuntime;
 
 namespace PubComp.Caching.RedisCaching.UnitTests
 {
@@ -462,7 +462,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             var cache = CacheManager.GetCache(localCache);
             cache.Get("key1", () => "value1");
 
-            // key1, key2 should be in cache1, cache2
+            // key1 should be in cache1
             Assert.IsTrue(cache.TryGet("key1", out string value1));
 
             var secondProcess = Process.Start(
@@ -478,6 +478,44 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             Thread.Sleep(100);
             Assert.IsFalse(cache.TryGet("key1", out value1));
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierAutomaticInvalidationOnUpdate()
+        {
+            const string localCacheWithNotifier = "MyApp.LocalCacheWithNotifier";
+            const string localCacheWithNotifierAndAutomaticInvalidationOnUpdate = "MyApp.LocalCacheWithNotifierAndAutomaticInvalidationOnUpdate";
+
+            var cache = CacheManager.GetCache(localCacheWithNotifier);
+            var cacheWithAutomaticInvalidationOnUpdate = CacheManager.GetCache(localCacheWithNotifierAndAutomaticInvalidationOnUpdate);
+
+            cache.Get("keyA1", () => "value1");
+            cache.Get("keyA2", () => "value2");
+            cacheWithAutomaticInvalidationOnUpdate.Get("keyB1", () => "value1");
+            cacheWithAutomaticInvalidationOnUpdate.Get("keyB2", () => "value2");
+
+            // key1, key2 should be in cache1, cache2
+            Assert.IsTrue(cache.TryGet<string>("keyA1", out _));
+            Assert.IsTrue(cache.TryGet<string>("keyA2", out _));
+            Assert.IsTrue(cacheWithAutomaticInvalidationOnUpdate.TryGet<string>("keyB1", out _));
+            Assert.IsTrue(cacheWithAutomaticInvalidationOnUpdate.TryGet<string>("keyB2", out _));
+
+            var secondProcess = Process.Start(
+                new ProcessStartInfo
+                {
+                    CreateNoWindow = false,
+                    FileName = typeof(DemoProgram).Assembly.Location,
+                    Arguments = "invalidateOnUpdate_key1once_key2twice",
+                    WindowStyle = ProcessWindowStyle.Normal,
+                });
+            Assert.IsNotNull(secondProcess);
+            secondProcess.WaitForExit();
+
+            Thread.Sleep(100);
+            Assert.IsTrue(cache.TryGet<string>("keyA1", out _));
+            Assert.IsTrue(cache.TryGet<string>("keyA2", out _));
+            Assert.IsTrue(cacheWithAutomaticInvalidationOnUpdate.TryGet<string>("keyB1", out _));
+            Assert.IsFalse(cacheWithAutomaticInvalidationOnUpdate.TryGet<string>("keyB2", out _));
         }
 
         [TestMethod]

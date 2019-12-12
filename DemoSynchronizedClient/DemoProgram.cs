@@ -12,6 +12,7 @@ namespace PubComp.Caching.DemoSynchronizedClient
     {
         const string NotifierName = "redisNotifier";
         const string LocalCacheWithNotifier = "MyApp.LocalCacheWithNotifier";
+        const string LocalCacheWithNotifierAndAutomaticInvalidationOnUpdate = "MyApp.LocalCacheWithNotifierAndAutomaticInvalidationOnUpdate";
 
         private static readonly string connectionString = @"127.0.0.1:6379,serviceName=mymaster";
         private static object config;
@@ -58,6 +59,18 @@ namespace PubComp.Caching.DemoSynchronizedClient
             {
                 using (var connection = ConnectionMultiplexer.Connect(connectionString))
                     connection.GetSubscriber().Publish("+general-invalidation", "test");
+            }
+
+            if (args.Any(a=> a.ToLowerInvariant() == "invalidateOnUpdate_key1once_key2twice"))
+            {
+                var cacheWithNotifierAndAutomaticInvalidationOnUpdate = CacheManager.GetCache(LocalCacheWithNotifierAndAutomaticInvalidationOnUpdate);
+                cache.Set("keyA1", "valueA1");
+                cache.Set("keyA2", "valueA2");
+                cache.Set("keyB1", "valueB1");
+                cache.Set("keyB2", "valueB2");
+
+                cache.Set("keyA2", "valueA1.2");
+                cache.Set("keyB2", "valueB2.2");
             }
 
             // Otherwise clear all
