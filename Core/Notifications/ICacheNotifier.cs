@@ -1,5 +1,5 @@
-﻿using System;
-using PubComp.Caching.Core.Events;
+﻿using PubComp.Caching.Core.Events;
+using System;
 
 namespace PubComp.Caching.Core.Notifications
 {
@@ -7,7 +7,7 @@ namespace PubComp.Caching.Core.Notifications
     {
         string Name { get; }
 
-        public bool IsInvalidateOnUpdateEnabled { get; }
+        bool IsInvalidateOnUpdateEnabled { get; }
 
         void Subscribe(string cacheName, Func<CacheItemNotification, bool> callback);
 

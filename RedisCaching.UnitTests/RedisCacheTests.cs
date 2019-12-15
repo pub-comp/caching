@@ -505,13 +505,14 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 {
                     CreateNoWindow = false,
                     FileName = typeof(DemoProgram).Assembly.Location,
-                    Arguments = "invalidateOnUpdate_key1once_key2twice",
+                    Arguments = "invalidate-on-update",
                     WindowStyle = ProcessWindowStyle.Normal,
                 });
             Assert.IsNotNull(secondProcess);
             secondProcess.WaitForExit();
 
-            Thread.Sleep(100);
+            Thread.Sleep(200);
+
             Assert.IsTrue(cache.TryGet<string>("keyA1", out _));
             Assert.IsTrue(cache.TryGet<string>("keyA2", out _));
             Assert.IsTrue(cacheWithAutomaticInvalidationOnUpdate.TryGet<string>("keyB1", out _));

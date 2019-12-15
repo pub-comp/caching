@@ -31,7 +31,8 @@ namespace PubComp.Caching.RedisCaching
             if (providerStateChangedCallback != null)
             {
                 client.OnRedisConnectionStateChanged += providerStateChangedCallback;
-                providerStateChangedCallback(client, new Core.Events.ProviderStateChangedEventArgs(client.IsConnected));
+                if (!client.IsConnected)
+                    providerStateChangedCallback(client, new Core.Events.ProviderStateChangedEventArgs(client.IsConnected));
             }
 
             return client;

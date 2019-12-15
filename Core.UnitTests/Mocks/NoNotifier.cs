@@ -6,13 +6,16 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
     public class NoNotifier : ICacheNotifier
     {
         private readonly string name;
-
+        private readonly NoNotifierPolicy policy;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly string connectionString;
+
+        public bool IsInvalidateOnUpdateEnabled { get { return policy.InvalidateOnUpdate; } }
 
         public NoNotifier(string name, NoNotifierPolicy policy)
         {
             this.name = name;
+            this.policy = policy;
 
             if (policy == null)
                 throw new ArgumentNullException(nameof(policy));

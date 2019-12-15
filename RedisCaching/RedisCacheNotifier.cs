@@ -65,7 +65,7 @@ namespace PubComp.Caching.RedisCaching
 
         public string Name { get { return this.name; } }
 
-        public bool IsInvalidateOnUpdateEnabled { get { return policy.InvalidateOnUpdate } }
+        public bool IsInvalidateOnUpdateEnabled { get { return policy.InvalidateOnUpdate; } }
 
         private RedisClient GetSubClient(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback,
             EventHandler<Core.Events.ProviderStateChangedEventArgs> notifierProviderStateChangedCallback)

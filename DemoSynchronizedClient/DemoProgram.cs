@@ -61,16 +61,18 @@ namespace PubComp.Caching.DemoSynchronizedClient
                     connection.GetSubscriber().Publish("+general-invalidation", "test");
             }
 
-            if (args.Any(a=> a.ToLowerInvariant() == "invalidateOnUpdate_key1once_key2twice"))
+            if (args.Any(a=> a.ToLowerInvariant() == "invalidate-on-update"))
             {
+                Console.WriteLine("Implicitly updating keyB2 InMemory with SyncProvider.InvalidateOnUpdate = true");
+
                 var cacheWithNotifierAndAutomaticInvalidationOnUpdate = CacheManager.GetCache(LocalCacheWithNotifierAndAutomaticInvalidationOnUpdate);
                 cache.Set("keyA1", "valueA1");
                 cache.Set("keyA2", "valueA2");
-                cache.Set("keyB1", "valueB1");
-                cache.Set("keyB2", "valueB2");
+                cacheWithNotifierAndAutomaticInvalidationOnUpdate.Set("keyB1", "valueB1");
+                cacheWithNotifierAndAutomaticInvalidationOnUpdate.Set("keyB2", "valueB2");
 
                 cache.Set("keyA2", "valueA1.2");
-                cache.Set("keyB2", "valueB2.2");
+                cacheWithNotifierAndAutomaticInvalidationOnUpdate.Set("keyB2", "valueB2.2");
             }
 
             // Otherwise clear all
