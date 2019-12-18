@@ -58,6 +58,11 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
         {
         }
 
+        public bool TryPublish(string cacheName, string key, CacheItemActionTypes action)
+        {
+            return true;
+        }
+
         public void Publish(string cacheName, string key, CacheItemActionTypes action)
         {
         }

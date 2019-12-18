@@ -122,6 +122,20 @@ namespace PubComp.Caching.RedisCaching
             GetSubClient(cacheName, null, null).Subscriber.Unsubscribe(cacheName, null, CommandFlags.None);
         }
 
+        public bool TryPublish(string cacheName, string key, CacheItemActionTypes action)
+        {
+            try
+            {
+                Publish(cacheName, key, action);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                log.Warn(ex, $"Failed to publish {action} for {cacheName}.{key}");
+                return false;
+            }
+        }
+
         public void Publish(string cacheName, string key, CacheItemActionTypes action)
         {
             var message = new CacheItemNotification(sender, cacheName, key, action);

@@ -541,22 +541,100 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             Assert.IsFalse(cacheInvalidConnection.TryGet("key2", out value1));
         }
 
-        [TestMethod][Ignore]
-        public void TestRedisNotifierFallbackOnConnectionFailure()
+        [TestMethod]
+        public void TestRedisNotifierFallbackInvalidationOnConnectionFailure()
+        {
+            const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback";
+
+            var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
+            cache.Get("key1", () => "value1");
+
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+
+            FakeRedisClientsNewState(newState: false);
+
+            // OnRedisConnectionStateChanged should invalidate cache items
+            Assert.IsFalse(cache.TryGet("key1", out value1));
+
+            FakeRedisClientsNewState(newState: true);
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierFallbackInvalidationOnConnectionResumed()
         {
             const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback";
 
             var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
 
             cache.Get("key1", () => "value1");
-
-            // key1, key2 should be in cache1, cache2
             Assert.IsTrue(cache.TryGet("key1", out string value1));
 
-            throw new NotImplementedException("a way to mimic Redis connection failure");
+            FakeRedisClientsNewState(newState: true);
 
-            Assert.IsFalse(cache.TryGet("key1", out  value1));
+            // OnRedisConnectionStateChanged should invalidate cache items
+            Assert.IsFalse(cache.TryGet("key1", out value1));
         }
+
+        [TestMethod]
+        public void TestRedisNotifierFallbackExpirationOnConnectionFailure()
+        {
+            const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback";
+
+            var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
+
+            FakeRedisClientsNewState(newState: false);
+
+            cache.Get("key1", () => "value1");
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+
+            Thread.Sleep(4000);
+
+            // Fallback expiry policy should be 3s
+            Assert.IsFalse(cache.TryGet("key1", out value1));
+
+            FakeRedisClientsNewState(newState: true);
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierFallbackExpirationOnConnectionResumed()
+        {
+            const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback";
+
+            var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
+
+            FakeRedisClientsNewState(newState: false);
+            FakeRedisClientsNewState(newState: true);
+
+            cache.Get("key1", () => "value1");
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+
+            Thread.Sleep(4000);
+
+            // Default expiry policy should be 10m
+            Assert.IsTrue(cache.TryGet("key1", out value1));
+        }
+
+        private void FakeRedisClientsNewState(bool newState)
+        {
+            foreach (var client in RedisClient.ActiveRedisClients.Values.Where(x => x.IsValueCreated && x.Value.IsConnected))
+            {
+                var providerStateChangedEventArgs = new Core.Events.ProviderStateChangedEventArgs(newState: newState);
+                Raise(client.Value, nameof(client.Value.OnRedisConnectionStateChanged), providerStateChangedEventArgs);
+            }
+        }
+
+        internal static void Raise<TEventArgs>(object source, string eventName, TEventArgs eventArgs) where TEventArgs : EventArgs
+        {
+            var eventDelegate = (MulticastDelegate)source.GetType().GetField(eventName, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(source);
+            if (eventDelegate != null)
+            {
+                foreach (var handler in eventDelegate.GetInvocationList())
+                {
+                    handler.Method.Invoke(handler.Target, new object[] { source, eventArgs });
+                }
+            }
+        }
+
 
         [TestMethod]
         public void TestRedisNotifier()

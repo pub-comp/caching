@@ -11,7 +11,8 @@ namespace PubComp.Caching.SystemRuntime
         private System.Runtime.Caching.ObjectCache innerCache;
         private readonly MultiLock locks;
         private readonly InMemoryPolicy policy;
-        
+        private readonly bool InvalidateOnUpdate;
+
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly string notiferName;
 
@@ -36,16 +37,27 @@ namespace PubComp.Caching.SystemRuntime
 
             this.notiferName = this.policy?.SyncProvider;
             this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.notiferName);
+            InvalidateOnUpdate = this.synchronizer?.IsInvalidateOnUpdateEnabled ?? false;
         }
-        
+
         public string Name { get { return this.name; } }
 
         protected System.Runtime.Caching.ObjectCache InnerCache { get { return this.innerCache; } }
 
         protected InMemoryExpirationPolicy ExpirationPolicy
-            => (synchronizer?.IsActive ?? true) 
-                ? policy
-                : (policy.OnSyncProviderFailure ?? policy);
+        {
+            get
+            {
+                if (synchronizer?.IsActive ?? true)
+                {
+                    return policy;
+                }
+                else
+                {
+                    return policy.OnSyncProviderFailure ?? policy;
+                }
+            }
+        }
 
         public bool TryGet<TValue>(string key, out TValue value)
         {
@@ -63,9 +75,9 @@ namespace PubComp.Caching.SystemRuntime
 
         public void Set<TValue>(string key, TValue value)
         {
-            if (synchronizer.IsInvalidateOnUpdateEnabled && innerCache.Contains(key))
+            if (InvalidateOnUpdate && innerCache.Contains(key))
             {
-                synchronizer.TryPublishCacheItemUpdated(key);
+                synchronizer?.TryPublishCacheItemUpdated(key);
             }
             Add(key, value);
         }
@@ -97,23 +109,31 @@ namespace PubComp.Caching.SystemRuntime
 
         // ReSharper disable once ParameterHidesMember
         protected System.Runtime.Caching.CacheItemPolicy GetRuntimePolicy()
+            => ToRuntimePolicy(ExpirationPolicy);
+
+        // ReSharper disable once ParameterHidesMember
+        protected System.Runtime.Caching.CacheItemPolicy ToRuntimePolicy(InMemoryPolicy policy) 
+            => ToRuntimePolicy((InMemoryExpirationPolicy)policy);
+        
+        // ReSharper disable once ParameterHidesMember
+        protected System.Runtime.Caching.CacheItemPolicy ToRuntimePolicy(InMemoryExpirationPolicy expirationPolicy)
         {
             TimeSpan slidingExpiration;
             DateTimeOffset absoluteExpiration;
 
-            if (ExpirationPolicy.SlidingExpiration != null && ExpirationPolicy.SlidingExpiration.Value < TimeSpan.MaxValue)
+            if (expirationPolicy.SlidingExpiration != null && expirationPolicy.SlidingExpiration.Value < TimeSpan.MaxValue)
             {
                 absoluteExpiration = System.Runtime.Caching.ObjectCache.InfiniteAbsoluteExpiration;
-                slidingExpiration = ExpirationPolicy.SlidingExpiration.Value;                
+                slidingExpiration = expirationPolicy.SlidingExpiration.Value;
             }
-            else if (ExpirationPolicy.ExpirationFromAdd != null && ExpirationPolicy.ExpirationFromAdd.Value < TimeSpan.MaxValue)
+            else if (expirationPolicy.ExpirationFromAdd != null && expirationPolicy.ExpirationFromAdd.Value < TimeSpan.MaxValue)
             {
-                absoluteExpiration = DateTimeOffset.Now.Add(ExpirationPolicy.ExpirationFromAdd.Value);
+                absoluteExpiration = DateTimeOffset.Now.Add(expirationPolicy.ExpirationFromAdd.Value);
                 slidingExpiration = System.Runtime.Caching.ObjectCache.NoSlidingExpiration;
             }
-            else if (ExpirationPolicy.AbsoluteExpiration != null && ExpirationPolicy.AbsoluteExpiration.Value < DateTimeOffset.MaxValue)
+            else if (expirationPolicy.AbsoluteExpiration != null && expirationPolicy.AbsoluteExpiration.Value < DateTimeOffset.MaxValue)
             {
-                absoluteExpiration = ExpirationPolicy.AbsoluteExpiration.Value;
+                absoluteExpiration = expirationPolicy.AbsoluteExpiration.Value;
                 slidingExpiration = System.Runtime.Caching.ObjectCache.NoSlidingExpiration;
             }
             else

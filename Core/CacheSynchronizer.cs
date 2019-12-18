@@ -1,5 +1,5 @@
-﻿using System;
-using PubComp.Caching.Core.Notifications;
+﻿using PubComp.Caching.Core.Notifications;
+using System;
 
 namespace PubComp.Caching.Core
 {
@@ -14,22 +14,13 @@ namespace PubComp.Caching.Core
         public CacheSynchronizer(ICache cache, ICacheNotifier notifier)
         {
             this.cache = cache;
-            this.notifier = notifier;
+            this.notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
 
             notifier.Subscribe(cache.Name, OnCacheUpdated, OnNotifierStateChanged);
         }
 
-        public void TryPublishCacheItemUpdated(string key)
-        {
-            try
-            {
-                notifier.Publish(cache.Name, key, CacheItemActionTypes.Updated);
-            }
-            catch (Exception ex)
-            {
-                // Log ? (for that we'll need to add NLog in Core as well)
-            }
-        }
+        public bool TryPublishCacheItemUpdated(string key)
+            => notifier.TryPublish(cache.Name, key, CacheItemActionTypes.Updated);
 
         private void OnNotifierStateChanged(object sender, Events.ProviderStateChangedEventArgs args)
         {

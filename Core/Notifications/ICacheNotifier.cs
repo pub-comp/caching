@@ -16,5 +16,6 @@ namespace PubComp.Caching.Core.Notifications
         void UnSubscribe(string cacheName);
 
         void Publish(string cacheName, string key, CacheItemActionTypes action);
+        bool TryPublish(string cacheName, string key, CacheItemActionTypes action);
     }
 }
