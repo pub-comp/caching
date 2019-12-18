@@ -52,7 +52,7 @@ namespace PubComp.Caching.SystemRuntime
                     Culture = System.Globalization.CultureInfo.InvariantCulture,
                 });
 
-            InnerCache.Add(key, val, ToRuntimePolicy(Policy), null);
+            InnerCache.Add(key, val, GetRuntimePolicy(), null);
         }
     }
 }

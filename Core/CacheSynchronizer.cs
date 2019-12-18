@@ -1,18 +1,33 @@
-﻿using System;
-using PubComp.Caching.Core.Notifications;
+﻿using PubComp.Caching.Core.Notifications;
+using System;
 
 namespace PubComp.Caching.Core
 {
     public class CacheSynchronizer
     {
         private readonly ICache cache;
+        private readonly ICacheNotifier notifier;
 
+        public bool IsActive { get; private set; }
+        public bool IsInvalidateOnUpdateEnabled => notifier.IsInvalidateOnUpdateEnabled;
+        
         public CacheSynchronizer(ICache cache, ICacheNotifier notifier)
         {
             this.cache = cache;
-            notifier.Subscribe(cache.Name, OnCacheUpdated);
+            this.notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
+
+            notifier.Subscribe(cache.Name, OnCacheUpdated, OnNotifierStateChanged);
         }
-        
+
+        public bool TryPublishCacheItemUpdated(string key)
+            => notifier.TryPublish(cache.Name, key, CacheItemActionTypes.Updated);
+
+        private void OnNotifierStateChanged(object sender, Events.ProviderStateChangedEventArgs args)
+        {
+            IsActive = args.NewState;
+            OnCacheUpdated(new CacheItemNotification("self", this.cache.Name, null, CacheItemActionTypes.RemoveAll));
+        }
+
         private bool OnCacheUpdated(CacheItemNotification notification)
         {
             if (notification.CacheName != this.cache.Name)

@@ -1,7 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
-using PubComp.Caching.Core;
+﻿using PubComp.Caching.Core;
 using PubComp.Caching.Core.CacheUtils;
+using System;
+using System.Threading.Tasks;
 
 namespace PubComp.Caching.SystemRuntime
 {
@@ -11,7 +11,8 @@ namespace PubComp.Caching.SystemRuntime
         private System.Runtime.Caching.ObjectCache innerCache;
         private readonly MultiLock locks;
         private readonly InMemoryPolicy policy;
-        
+        private readonly bool InvalidateOnUpdate;
+
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly string notiferName;
 
@@ -36,14 +37,28 @@ namespace PubComp.Caching.SystemRuntime
 
             this.notiferName = this.policy?.SyncProvider;
             this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.notiferName);
+            InvalidateOnUpdate = this.synchronizer?.IsInvalidateOnUpdateEnabled ?? false;
         }
-        
+
         public string Name { get { return this.name; } }
 
         protected System.Runtime.Caching.ObjectCache InnerCache { get { return this.innerCache; } }
 
-        protected InMemoryPolicy Policy { get { return this.policy; } }
-        
+        protected InMemoryExpirationPolicy ExpirationPolicy
+        {
+            get
+            {
+                if (synchronizer?.IsActive ?? true)
+                {
+                    return policy;
+                }
+                else
+                {
+                    return policy.OnSyncProviderFailure ?? policy;
+                }
+            }
+        }
+
         public bool TryGet<TValue>(string key, out TValue value)
         {
             return TryGetInner(key, out value);
@@ -60,12 +75,16 @@ namespace PubComp.Caching.SystemRuntime
 
         public void Set<TValue>(string key, TValue value)
         {
+            if (InvalidateOnUpdate && innerCache.Contains(key))
+            {
+                synchronizer?.TryPublishCacheItemUpdated(key);
+            }
             Add(key, value);
         }
 
         public Task SetAsync<TValue>(string key, TValue value)
         {
-            Add(key, value);
+            Set(key, value);
             return Task.FromResult<object>(null);
         }
 
@@ -85,28 +104,36 @@ namespace PubComp.Caching.SystemRuntime
 
         protected virtual void Add<TValue>(String key, TValue value)
         {
-            innerCache.Set(key, new CacheItem(value), ToRuntimePolicy(policy), null);
+            innerCache.Set(key, new CacheItem(value), GetRuntimePolicy(), null);
         }
 
         // ReSharper disable once ParameterHidesMember
-        protected System.Runtime.Caching.CacheItemPolicy ToRuntimePolicy(InMemoryPolicy policy)
+        protected System.Runtime.Caching.CacheItemPolicy GetRuntimePolicy()
+            => ToRuntimePolicy(ExpirationPolicy);
+
+        // ReSharper disable once ParameterHidesMember
+        protected System.Runtime.Caching.CacheItemPolicy ToRuntimePolicy(InMemoryPolicy policy) 
+            => ToRuntimePolicy((InMemoryExpirationPolicy)policy);
+        
+        // ReSharper disable once ParameterHidesMember
+        protected System.Runtime.Caching.CacheItemPolicy ToRuntimePolicy(InMemoryExpirationPolicy expirationPolicy)
         {
             TimeSpan slidingExpiration;
             DateTimeOffset absoluteExpiration;
 
-            if (policy.SlidingExpiration != null && policy.SlidingExpiration.Value < TimeSpan.MaxValue)
+            if (expirationPolicy.SlidingExpiration != null && expirationPolicy.SlidingExpiration.Value < TimeSpan.MaxValue)
             {
                 absoluteExpiration = System.Runtime.Caching.ObjectCache.InfiniteAbsoluteExpiration;
-                slidingExpiration = policy.SlidingExpiration.Value;                
+                slidingExpiration = expirationPolicy.SlidingExpiration.Value;
             }
-            else if (policy.ExpirationFromAdd != null && policy.ExpirationFromAdd.Value < TimeSpan.MaxValue)
+            else if (expirationPolicy.ExpirationFromAdd != null && expirationPolicy.ExpirationFromAdd.Value < TimeSpan.MaxValue)
             {
-                absoluteExpiration = DateTimeOffset.Now.Add(policy.ExpirationFromAdd.Value);
+                absoluteExpiration = DateTimeOffset.Now.Add(expirationPolicy.ExpirationFromAdd.Value);
                 slidingExpiration = System.Runtime.Caching.ObjectCache.NoSlidingExpiration;
             }
-            else if (policy.AbsoluteExpiration != null && policy.AbsoluteExpiration.Value < DateTimeOffset.MaxValue)
+            else if (expirationPolicy.AbsoluteExpiration != null && expirationPolicy.AbsoluteExpiration.Value < DateTimeOffset.MaxValue)
             {
-                absoluteExpiration = policy.AbsoluteExpiration.Value;
+                absoluteExpiration = expirationPolicy.AbsoluteExpiration.Value;
                 slidingExpiration = System.Runtime.Caching.ObjectCache.NoSlidingExpiration;
             }
             else
@@ -118,7 +145,7 @@ namespace PubComp.Caching.SystemRuntime
             return new System.Runtime.Caching.CacheItemPolicy
             {
                 AbsoluteExpiration = absoluteExpiration,
-                SlidingExpiration = slidingExpiration,
+                SlidingExpiration = slidingExpiration
             };
         }
 
@@ -132,7 +159,7 @@ namespace PubComp.Caching.SystemRuntime
                 if (TryGetInner(key, out value)) return value;
 
                 value = getter();
-                Add(key, value);
+                Set(key, value);
                 return value;
             }
 
@@ -152,7 +179,7 @@ namespace PubComp.Caching.SystemRuntime
                 if (TryGetInner(key, out value)) return value;
 
                 value = await getter().ConfigureAwait(false);
-                Add(key, value);
+                Set(key, value);
                 return value;
             }
 
