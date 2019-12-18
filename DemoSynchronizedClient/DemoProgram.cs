@@ -4,6 +4,7 @@ using System.Threading;
 using NLog;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.Notifications;
+using StackExchange.Redis;
 
 namespace PubComp.Caching.DemoSynchronizedClient
 {
@@ -11,6 +12,10 @@ namespace PubComp.Caching.DemoSynchronizedClient
     {
         const string NotifierName = "redisNotifier";
         const string LocalCacheWithNotifier = "MyApp.LocalCacheWithNotifier";
+        const string LocalCacheWithNotifierAndAutomaticInvalidationOnUpdate = "MyApp.LocalCacheWithNotifierAndAutomaticInvalidationOnUpdate";
+
+        private static readonly string connectionString = @"127.0.0.1:6379,serviceName=mymaster";
+        private static object config;
 
         static void Main(string[] args)
         {
@@ -48,6 +53,26 @@ namespace PubComp.Caching.DemoSynchronizedClient
             {
                 Console.WriteLine("Clearing key2 from cache.");
                 ClearCache(cache, "key2");
+            }
+
+            if (args.Any(a => a.ToLowerInvariant() == "general-invalidation"))
+            {
+                using (var connection = ConnectionMultiplexer.Connect(connectionString))
+                    connection.GetSubscriber().Publish("+general-invalidation", "test");
+            }
+
+            if (args.Any(a=> a.ToLowerInvariant() == "invalidate-on-update"))
+            {
+                Console.WriteLine("Implicitly updating keyB2 InMemory with SyncProvider.InvalidateOnUpdate = true");
+
+                var cacheWithNotifierAndAutomaticInvalidationOnUpdate = CacheManager.GetCache(LocalCacheWithNotifierAndAutomaticInvalidationOnUpdate);
+                cache.Set("keyA1", "valueA1");
+                cache.Set("keyA2", "valueA2");
+                cacheWithNotifierAndAutomaticInvalidationOnUpdate.Set("keyB1", "valueB1");
+                cacheWithNotifierAndAutomaticInvalidationOnUpdate.Set("keyB2", "valueB2");
+
+                cache.Set("keyA2", "valueA1.2");
+                cacheWithNotifierAndAutomaticInvalidationOnUpdate.Set("keyB2", "valueB2.2");
             }
 
             // Otherwise clear all

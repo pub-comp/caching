@@ -10,11 +10,17 @@ namespace PubComp.Caching.RedisCaching
     {
         private readonly RedisClient client;
         private readonly IRedisConverter convert;
-        
+
         public CacheContext(String connectionString, String converterType, String clusterType, int monitorPort, int monitorIntervalMilliseconds)
         {
             this.convert = RedisConverterFactory.CreateConverter(converterType);
-            this.client = new RedisClient(connectionString, clusterType, monitorPort,monitorIntervalMilliseconds);
+            this.client = new RedisClient(connectionString, clusterType, monitorPort, monitorIntervalMilliseconds);
+        }
+
+        public CacheContext(String connectionName, String converterType)
+        {
+            this.convert = RedisConverterFactory.CreateConverter(converterType);
+            this.client = RedisClient.GetNamedRedisClient(connectionName);
         }
 
         internal CacheItem<TValue> GetItem<TValue>(String cacheName, String key)

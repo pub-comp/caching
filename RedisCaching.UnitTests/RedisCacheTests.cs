@@ -1,16 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PubComp.Caching.AopCaching;
+﻿using PubComp.Caching.AopCaching;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.UnitTests;
 using PubComp.Caching.DemoSynchronizedClient;
 using PubComp.Caching.RedisCaching.UnitTests.Mocks;
 using PubComp.Caching.SystemRuntime;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace PubComp.Caching.RedisCaching.UnitTests
 {
@@ -452,6 +453,188 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             return field.GetValue(obj) as string;
         }
+
+        [TestMethod]
+        public void TestRedisNotifierGeneralInvalidation()
+        {
+            const string localCache = "localCache";
+
+            var cache = CacheManager.GetCache(localCache);
+            cache.Get("key1", () => "value1");
+
+            // key1 should be in cache1
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+
+            var secondProcess = Process.Start(
+                new ProcessStartInfo
+                {
+                    CreateNoWindow = false,
+                    FileName = typeof(DemoProgram).Assembly.Location,
+                    Arguments = "general-invalidation",
+                    WindowStyle = ProcessWindowStyle.Normal,
+                });
+            Assert.IsNotNull(secondProcess);
+            secondProcess.WaitForExit();
+
+            Thread.Sleep(100);
+            Assert.IsFalse(cache.TryGet("key1", out value1));
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierAutomaticInvalidationOnUpdate()
+        {
+            const string localCacheWithNotifier = "MyApp.LocalCacheWithNotifier";
+            const string localCacheWithNotifierAndAutomaticInvalidationOnUpdate = "MyApp.LocalCacheWithNotifierAndAutomaticInvalidationOnUpdate";
+
+            var cache = CacheManager.GetCache(localCacheWithNotifier);
+            var cacheWithAutomaticInvalidationOnUpdate = CacheManager.GetCache(localCacheWithNotifierAndAutomaticInvalidationOnUpdate);
+
+            cache.Get("keyA1", () => "value1");
+            cache.Get("keyA2", () => "value2");
+            cacheWithAutomaticInvalidationOnUpdate.Get("keyB1", () => "value1");
+            cacheWithAutomaticInvalidationOnUpdate.Get("keyB2", () => "value2");
+
+            // key1, key2 should be in cache1, cache2
+            Assert.IsTrue(cache.TryGet<string>("keyA1", out _));
+            Assert.IsTrue(cache.TryGet<string>("keyA2", out _));
+            Assert.IsTrue(cacheWithAutomaticInvalidationOnUpdate.TryGet<string>("keyB1", out _));
+            Assert.IsTrue(cacheWithAutomaticInvalidationOnUpdate.TryGet<string>("keyB2", out _));
+
+            var secondProcess = Process.Start(
+                new ProcessStartInfo
+                {
+                    CreateNoWindow = false,
+                    FileName = typeof(DemoProgram).Assembly.Location,
+                    Arguments = "invalidate-on-update",
+                    WindowStyle = ProcessWindowStyle.Normal,
+                });
+            Assert.IsNotNull(secondProcess);
+            secondProcess.WaitForExit();
+
+            Thread.Sleep(200);
+
+            Assert.IsTrue(cache.TryGet<string>("keyA1", out _));
+            Assert.IsTrue(cache.TryGet<string>("keyA2", out _));
+            Assert.IsTrue(cacheWithAutomaticInvalidationOnUpdate.TryGet<string>("keyB1", out _));
+            Assert.IsFalse(cacheWithAutomaticInvalidationOnUpdate.TryGet<string>("keyB2", out _));
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierFallback()
+        {
+            const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback";
+            const string localCacheWithNotifierAndFallbackInvalidConnection = "MyApp.LocalCacheWithNotifierAndFallbackInvalidConnection";
+
+            var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
+            var cacheInvalidConnection = CacheManager.GetCache(localCacheWithNotifierAndFallbackInvalidConnection);
+
+            cache.Get("key1", () => "value1");
+            cacheInvalidConnection.Get("key2", () => "value2");
+
+            // key1, key2 should be in cache1, cache2
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+            Assert.IsTrue(cacheInvalidConnection.TryGet("key2", out value1));
+
+            Thread.Sleep(1000);
+
+            Assert.IsTrue(cache.TryGet("key1", out value1));
+            Assert.IsFalse(cacheInvalidConnection.TryGet("key2", out value1));
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierFallbackInvalidationOnConnectionFailure()
+        {
+            const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback";
+
+            var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
+            cache.Get("key1", () => "value1");
+
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+
+            FakeRedisClientsNewState(newState: false);
+
+            // OnRedisConnectionStateChanged should invalidate cache items
+            Assert.IsFalse(cache.TryGet("key1", out value1));
+
+            FakeRedisClientsNewState(newState: true);
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierFallbackInvalidationOnConnectionResumed()
+        {
+            const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback";
+
+            var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
+
+            cache.Get("key1", () => "value1");
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+
+            FakeRedisClientsNewState(newState: true);
+
+            // OnRedisConnectionStateChanged should invalidate cache items
+            Assert.IsFalse(cache.TryGet("key1", out value1));
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierFallbackExpirationOnConnectionFailure()
+        {
+            const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback";
+
+            var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
+
+            FakeRedisClientsNewState(newState: false);
+
+            cache.Get("key1", () => "value1");
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+
+            Thread.Sleep(4000);
+
+            // Fallback expiry policy should be 3s
+            Assert.IsFalse(cache.TryGet("key1", out value1));
+
+            FakeRedisClientsNewState(newState: true);
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierFallbackExpirationOnConnectionResumed()
+        {
+            const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback";
+
+            var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
+
+            FakeRedisClientsNewState(newState: false);
+            FakeRedisClientsNewState(newState: true);
+
+            cache.Get("key1", () => "value1");
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+
+            Thread.Sleep(4000);
+
+            // Default expiry policy should be 10m
+            Assert.IsTrue(cache.TryGet("key1", out value1));
+        }
+
+        private void FakeRedisClientsNewState(bool newState)
+        {
+            foreach (var client in RedisClient.ActiveRedisClients.Values.Where(x => x.IsValueCreated && x.Value.IsConnected))
+            {
+                var providerStateChangedEventArgs = new Core.Events.ProviderStateChangedEventArgs(newState: newState);
+                Raise(client.Value, nameof(client.Value.OnRedisConnectionStateChanged), providerStateChangedEventArgs);
+            }
+        }
+
+        internal static void Raise<TEventArgs>(object source, string eventName, TEventArgs eventArgs) where TEventArgs : EventArgs
+        {
+            var eventDelegate = (MulticastDelegate)source.GetType().GetField(eventName, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(source);
+            if (eventDelegate != null)
+            {
+                foreach (var handler in eventDelegate.GetInvocationList())
+                {
+                    handler.Method.Invoke(handler.Target, new object[] { source, eventArgs });
+                }
+            }
+        }
+
 
         [TestMethod]
         public void TestRedisNotifier()
