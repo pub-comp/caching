@@ -10,8 +10,6 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly string connectionString;
 
-        public bool IsInvalidateOnUpdateEnabled { get { return policy.InvalidateOnUpdate; } }
-
         public NoNotifier(string name, NoNotifierPolicy policy)
         {
             this.name = name;

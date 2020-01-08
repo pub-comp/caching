@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using PubComp.Caching.Core.Notifications;
 
 namespace PubComp.Caching.Core
 {
@@ -13,6 +14,7 @@ namespace PubComp.Caching.Core
         private ICache level2;
         private readonly LayeredCachePolicy policy;
         private readonly CacheSynchronizer synchronizer;
+        private readonly ICacheNotifier level1Notifier;
 
         public LayeredCache(String name, LayeredCachePolicy policy)
             : this(name, policy?.Level1CacheName, policy?.Level2CacheName)
@@ -35,6 +37,13 @@ namespace PubComp.Caching.Core
             if (level1 == null)
                 throw new ApplicationException("Cache is not registered: level1CacheName=" + level1CacheName);
 
+            if (policy.InvalidateLevel1OnLevel2Update)
+            {
+                level1Notifier = CacheManager.GetNotifier(level1CacheName);
+                if (level1Notifier == null)
+                    throw new ApplicationException("SyncProvider is not registered for automatic invalidation policy: level1CacheName=" + level1CacheName);
+            }
+
             // ReSharper disable once LocalVariableHidesMember
             var level2 = CacheManager.GetCache(level2CacheName);
             if (level2 == null)
@@ -53,7 +62,7 @@ namespace PubComp.Caching.Core
             this.policy = new LayeredCachePolicy { Level1CacheName = level1CacheName, Level2CacheName = level1CacheName };
             this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy?.SyncProvider);
         }
-        
+
         /// <summary>
         /// Creates a layered cache
         /// </summary>
@@ -91,15 +100,32 @@ namespace PubComp.Caching.Core
         protected ICache Level2 { get { return this.level2; } }
 
         protected LayeredCachePolicy Policy { get { return this.policy; } }
-
+        
         private TValue GetterWrapper<TValue>(String key, Func<TValue> getter)
         {
-            return this.level2.Get(key, getter);
+            if (!this.policy.InvalidateLevel1OnLevel2Update) 
+                return this.level2.Get(key, getter);
+
+            if (this.level2.TryGet(key, out TValue value))
+                return value;
+
+            value = getter();
+            this.level2.Set(key, value);
+            return value;
         }
 
-        private Task<TValue> GetterWrapperAsync<TValue>(String key, Func<Task<TValue>> getter)
+        private async Task<TValue> GetterWrapperAsync<TValue>(String key, Func<Task<TValue>> getter)
         {
-            return this.level2.GetAsync(key, getter);
+            if (!this.policy.InvalidateLevel1OnLevel2Update) 
+                return await this.level2.GetAsync(key, getter);
+
+            var result = await this.level2.TryGetAsync<TValue>(key);
+            if (result.WasFound)
+                return result.Value;
+
+            var value = await getter();
+            await this.level2.SetAsync(key, value);
+            return value;
         }
         
         public bool TryGet<TValue>(string key, out TValue value)
@@ -137,12 +163,18 @@ namespace PubComp.Caching.Core
         {
             this.level2.Set(key, value);
             this.level1.Set(key, value);
+
+            if (this.policy.InvalidateLevel1OnLevel2Update)
+                level1Notifier.Publish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
         }
 
         public async Task SetAsync<TValue>(string key, TValue value)
         {
             await this.level2.SetAsync(key, value);
             await this.level1.SetAsync(key, value);
+
+            if (this.policy.InvalidateLevel1OnLevel2Update)
+                level1Notifier.Publish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
         }
 
         public TValue Get<TValue>(String key, Func<TValue> getter)

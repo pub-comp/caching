@@ -13,6 +13,11 @@
         public string Level2CacheName { get; set; }
 
         /// <summary>
+        /// Use SyncProvider to notify level1 when using updating level2
+        /// </summary>
+        public bool InvalidateLevel1OnLevel2Update { get; set; }
+
+        /// <summary>
         /// Notifications provider name. Default is null/undefined.
         /// </summary>
         public string SyncProvider { get; set; }

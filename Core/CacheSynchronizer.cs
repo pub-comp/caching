@@ -9,8 +9,7 @@ namespace PubComp.Caching.Core
         private readonly ICacheNotifier notifier;
 
         public bool IsActive { get; private set; }
-        public bool IsInvalidateOnUpdateEnabled => notifier.IsInvalidateOnUpdateEnabled;
-        
+
         public CacheSynchronizer(ICache cache, ICacheNotifier notifier)
         {
             this.cache = cache;
@@ -18,9 +17,6 @@ namespace PubComp.Caching.Core
 
             notifier.Subscribe(cache.Name, OnCacheUpdated, OnNotifierStateChanged);
         }
-
-        public bool TryPublishCacheItemUpdated(string key)
-            => notifier.TryPublish(cache.Name, key, CacheItemActionTypes.Updated);
 
         private void OnNotifierStateChanged(object sender, Events.ProviderStateChangedEventArgs args)
         {
