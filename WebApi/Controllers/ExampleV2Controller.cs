@@ -1,6 +1,8 @@
 using PubComp.Caching.Core;
+using PubComp.Caching.WebApiExtended;
 using System.Threading.Tasks;
 using System.Web.Http;
+using Swashbuckle.Swagger.Annotations;
 using TestHost.WebApi.Service;
 
 namespace TestHost.WebApi.Controllers
@@ -8,17 +10,18 @@ namespace TestHost.WebApi.Controllers
     /// <summary>
     /// Example
     /// </summary>
-    [RoutePrefix("api/example/v1")]
-    public class ExampleV1Controller : ApiController
+    [RoutePrefix("api/example/v2")]
+    [SwaggerOperationFilter(typeof(CacheableSwaggerOperationalFilter))]
+    public class ExampleV2Controller : ApiController
     {
-        private readonly ExampleService exampleService;
+        private readonly ExampleV2Service exampleService;
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public ExampleV1Controller()
+        public ExampleV2Controller()
         {
-            this.exampleService = new ExampleService();
+            this.exampleService = new ExampleV2Service();
         }
 
         /// <summary>
@@ -30,6 +33,7 @@ namespace TestHost.WebApi.Controllers
         /// <response code= "404">Not Found</response>
         [HttpGet]
         [Route("{id}")]
+        [CacheableActionFilter]
         public IHttpActionResult Get(int id)
         {
             var result = exampleService.Get(id);
