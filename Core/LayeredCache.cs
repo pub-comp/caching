@@ -20,6 +20,13 @@ namespace PubComp.Caching.Core
             : this(name, policy?.Level1CacheName, policy?.Level2CacheName)
         {
             this.policy = policy;
+
+            if (policy?.InvalidateLevel1OnLevel2Update ?? false)
+            {
+                level1Notifier = CacheManager.GetNotifier(policy.Level1CacheName);
+                if (level1Notifier == null)
+                    throw new ApplicationException("SyncProvider is not registered for automatic invalidation policy: level1CacheName=" + policy.Level1CacheName);
+            }
         }
 
         /// <summary>
@@ -36,13 +43,6 @@ namespace PubComp.Caching.Core
             var level1 = CacheManager.GetCache(level1CacheName);
             if (level1 == null)
                 throw new ApplicationException("Cache is not registered: level1CacheName=" + level1CacheName);
-
-            if (policy.InvalidateLevel1OnLevel2Update)
-            {
-                level1Notifier = CacheManager.GetNotifier(level1CacheName);
-                if (level1Notifier == null)
-                    throw new ApplicationException("SyncProvider is not registered for automatic invalidation policy: level1CacheName=" + level1CacheName);
-            }
 
             // ReSharper disable once LocalVariableHidesMember
             var level2 = CacheManager.GetCache(level2CacheName);

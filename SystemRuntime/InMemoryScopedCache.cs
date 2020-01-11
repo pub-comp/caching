@@ -29,43 +29,18 @@ namespace PubComp.Caching.SystemRuntime
         {
         }
 
-        protected override bool TryGetInner<TValue>(string key, out TValue value)
-        {
-            var outcome = TryGetScopedInner(key, out value);
-            return outcome.MethodTaken.HasFlag(CacheMethodTaken.Get);
-        }
-
-        private CacheDirectivesOutcome TryGetScopedInner<TValue>(string key, out TValue value)
-        {
-            var directives = ScopedContext<CacheDirectives>.CurrentOrDefault;
-            if (!directives.Method.HasFlag(CacheMethod.Get))
-            {
-                value = default(TValue);
-                return new CacheDirectivesOutcome(CacheMethodTaken.None);
-            }
-
-            if (InnerCache.Get(key, regionName: null) is ScopedCacheItem item 
-                && item.ValueTimestamp > directives.MinimumValueTimestamp)
-            {
-                value = item.Value is TValue itemValue ? itemValue : default;
-                return new CacheDirectivesOutcome(CacheMethodTaken.Get);
-            }
-            
-            value = default;
-            return new CacheDirectivesOutcome(CacheMethodTaken.GetMiss);
-        }
-
         protected override void Add<TValue>(string key, TValue value)
         {
-            AddScoped(key, value, DateTimeOffset.UtcNow);
+            var valueTimestamp = ScopedContext<CacheDirectives>.CurrentTimestamp;
+            AddScoped(key, value, valueTimestamp);
         }
 
         private CacheDirectivesOutcome AddScoped<TValue>(string key, TValue value, DateTimeOffset valueTimestamp)
         {
-            var directives = ScopedContext<CacheDirectives>.CurrentOrDefault;
+            var directives = ScopedContext<CacheDirectives>.CurrentContext;
             if (directives.Method.HasFlag(CacheMethod.Set))
             {
-                InnerCache.Add(key, new ScopedCacheItem(value, valueTimestamp), GetRuntimePolicy(), regionName: null);
+                InnerCache.Set(key, new ScopedCacheItem(value, valueTimestamp), GetRuntimePolicy(), regionName: null);
                 return new CacheDirectivesOutcome(CacheMethodTaken.Set, valueTimestamp);
             }
 
@@ -81,6 +56,32 @@ namespace PubComp.Caching.SystemRuntime
         {
             var outcome = SetScoped(key, value, valueTimestamp);
             return Task.FromResult(outcome);
+        }
+
+        protected override bool TryGetInner<TValue>(string key, out TValue value)
+        {
+            var outcome = TryGetScopedInner(key, out value);
+            return outcome.MethodTaken.HasFlag(CacheMethodTaken.Get);
+        }
+
+        private CacheDirectivesOutcome TryGetScopedInner<TValue>(string key, out TValue value)
+        {
+            var directives = ScopedContext<CacheDirectives>.CurrentContext;
+            if (!directives.Method.HasFlag(CacheMethod.Get))
+            {
+                value = default(TValue);
+                return new CacheDirectivesOutcome(CacheMethodTaken.None);
+            }
+
+            if (InnerCache.Get(key, regionName: null) is ScopedCacheItem item
+                && item.ValueTimestamp > directives.MinimumValueTimestamp)
+            {
+                value = item.Value is TValue itemValue ? itemValue : default;
+                return new CacheDirectivesOutcome(CacheMethodTaken.Get);
+            }
+
+            value = default;
+            return new CacheDirectivesOutcome(CacheMethodTaken.GetMiss);
         }
 
         public CacheDirectivesOutcome TryGetScoped<TValue>(string key, out TValue value)

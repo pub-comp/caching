@@ -27,10 +27,10 @@ namespace PubComp.Caching.WebApiExtended
             var parameters = operation.parameters;
 
             var example = JsonConvert.SerializeObject(
-                new CacheDirectives
+                new Dictionary<string, object>
                 {
-                    Method = CacheMethod.None,
-                    MinimumValueTimestamp = DateTimeOffset.UtcNow
+                    { nameof(CacheDirectives.Method) , CacheMethod.None.ToString() },
+                    { nameof(CacheDirectives.MinimumValueTimestamp), DateTimeOffset.UtcNow }
                 });
 
             var cacheDirectivesParameter = new Parameter()

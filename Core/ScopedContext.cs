@@ -8,7 +8,7 @@ namespace PubComp.Caching.Core
     {
         private static readonly AsyncLocal<ImmutableStack<DisposableScopedContext>> ContextsStack = new AsyncLocal<ImmutableStack<DisposableScopedContext>>();
 
-        public static TContext CurrentOrDefault
+        public static TContext CurrentContext
         {
             get
             {
@@ -16,8 +16,21 @@ namespace PubComp.Caching.Core
                 {
                     return new TContext();
                 }
-                
+
                 return ContextsStack.Value.Peek().Context;
+            }
+        }
+
+        public static DateTimeOffset CurrentTimestamp
+        {
+            get
+            {
+                if (ContextsStack.Value?.IsEmpty ?? true)
+                {
+                    return DateTimeOffset.UtcNow;
+                }
+
+                return ContextsStack.Value.Peek().ScopeTimestamp;
             }
         }
 
@@ -35,9 +48,12 @@ namespace PubComp.Caching.Core
         {
             public TContext Context { get; }
 
+            public DateTimeOffset ScopeTimestamp { get; }
+
             public DisposableScopedContext(TContext context)
             {
                 Context = context;
+                ScopeTimestamp = DateTimeOffset.UtcNow;
             }
 
             public void Dispose()
