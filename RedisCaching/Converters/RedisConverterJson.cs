@@ -22,7 +22,7 @@ namespace PubComp.Caching.RedisCaching.Converters
         {
             return To(notification);
         }
-        
+
         private RedisValue To<TValue>(TValue data)
         {
             if (data == null)
@@ -75,6 +75,19 @@ namespace PubComp.Caching.RedisCaching.Converters
                 return null;
 
             return From<CacheItemNotification>(cacheNotificationString);
+        }
+
+        public RedisValue ToScopedRedis<TValue>(ScopedCacheItem<TValue> scopedCacheItem)
+        {
+            return To(scopedCacheItem);
+        }
+
+        public ScopedCacheItem<TValue> FromScopedRedis<TValue>(RedisValue scopedCacheItemString)
+        {
+            if (string.IsNullOrEmpty(scopedCacheItemString))
+                return null;
+
+            return From<ScopedCacheItem<TValue>>(scopedCacheItemString);
         }
 
         public TValue From<TValue>(RedisValue stringValue)

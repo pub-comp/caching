@@ -22,10 +22,10 @@ namespace PubComp.Caching.RedisCaching
 
         public string Name { get { return this.name; } }
 
-        private CacheContext InnerCache
-        {
-            get { return innerCache; }
-        }
+        internal bool UseSlidingExpiration => useSlidingExpiration;
+        internal TimeSpan? ExpireWithin => expireWithin;
+        internal DateTime? ExpireAt => expireAt;
+        internal CacheContext InnerCache => innerCache;
 
         public RedisCache(String name, RedisCachePolicy policy)
         {

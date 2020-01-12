@@ -35,7 +35,7 @@ namespace PubComp.Caching.SystemRuntime
             AddScoped(key, value, valueTimestamp);
         }
 
-        private CacheDirectivesOutcome AddScoped<TValue>(string key, TValue value, DateTimeOffset valueTimestamp)
+        private CacheDirectivesOutcome AddScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
             var directives = ScopedContext<CacheDirectives>.CurrentContext;
             if (directives.Method.HasFlag(CacheMethod.Set))
@@ -47,12 +47,12 @@ namespace PubComp.Caching.SystemRuntime
             return new CacheDirectivesOutcome(CacheMethodTaken.None);
         }
 
-        public CacheDirectivesOutcome SetScoped<TValue>(string key, TValue value, DateTimeOffset valueTimestamp)
+        public CacheDirectivesOutcome SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
             return AddScoped(key, value, valueTimestamp);
         }
 
-        public Task<CacheDirectivesOutcome> SetScopedAsync<TValue>(string key, TValue value, DateTimeOffset valueTimestamp)
+        public Task<CacheDirectivesOutcome> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
             var outcome = SetScoped(key, value, valueTimestamp);
             return Task.FromResult(outcome);
@@ -84,12 +84,12 @@ namespace PubComp.Caching.SystemRuntime
             return new CacheDirectivesOutcome(CacheMethodTaken.GetMiss);
         }
 
-        public CacheDirectivesOutcome TryGetScoped<TValue>(string key, out TValue value)
+        public CacheDirectivesOutcome TryGetScoped<TValue>(String key, out TValue value)
         {
             return TryGetScopedInner(key, out value);
         }
 
-        public Task<TryGetScopedResult<TValue>> TryGetScopedAsync<TValue>(string key)
+        public Task<TryGetScopedResult<TValue>> TryGetScopedAsync<TValue>(String key)
         {
             return Task.FromResult(new TryGetScopedResult<TValue>
             {
