@@ -237,8 +237,9 @@ namespace PubComp.Caching.RedisCaching
             if (TryGetInner(key, out value))
                 return value;
 
+            var valueTimestamp = DateTimeOffset.UtcNow;
             value = getter();
-            Add(key, value);
+            AddScoped(key, value, valueTimestamp);
             return value;
         }
 
@@ -248,8 +249,9 @@ namespace PubComp.Caching.RedisCaching
             if (result.WasFound)
                 return result.Value;
 
+            var valueTimestamp = DateTimeOffset.UtcNow;
             TValue value = await getter().ConfigureAwait(false);
-            await AddAsync(key, value).ConfigureAwait(false);
+            await AddScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
             return value;
         }
 

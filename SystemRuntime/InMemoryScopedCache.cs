@@ -97,5 +97,47 @@ namespace PubComp.Caching.SystemRuntime
                 Value = value
             });
         }
+
+        public override TValue Get<TValue>(string key, Func<TValue> getter)
+        {
+            if (TryGetInner(key, out TValue value))
+                return value;
+
+            TValue OnCacheMiss()
+            {
+                if (TryGetInner(key, out value)) return value;
+
+                var valueTimestamp = DateTimeOffset.UtcNow;
+                value = getter();
+                SetScoped(key, value, valueTimestamp);
+                return value;
+            }
+
+            if (Policy.DoNotLock)
+                return OnCacheMiss();
+
+            return this.Locks.LockAndLoad(key, OnCacheMiss);
+        }
+
+        public override async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        {
+            if (TryGetInner(key, out TValue value))
+                return value;
+
+            async Task<TValue> OnCacheMiss()
+            {
+                if (TryGetInner(key, out value)) return value;
+
+                var valueTimestamp = DateTimeOffset.UtcNow;
+                value = await getter().ConfigureAwait(false);
+                SetScoped(key, value, valueTimestamp);
+                return value;
+            }
+
+            if (Policy.DoNotLock)
+                return await OnCacheMiss().ConfigureAwait(false);
+
+            return await this.Locks.LockAndLoadAsync(key, OnCacheMiss).ConfigureAwait(false);
+        }
     }
 }

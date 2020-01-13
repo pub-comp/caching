@@ -9,8 +9,9 @@ namespace PubComp.Caching.SystemRuntime
     {
         private readonly String name;
         private System.Runtime.Caching.ObjectCache innerCache;
-        private readonly MultiLock locks;
-        private readonly InMemoryPolicy policy;
+        
+        protected readonly MultiLock Locks;
+        protected readonly InMemoryPolicy Policy;
 
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly string notiferName;
@@ -22,19 +23,19 @@ namespace PubComp.Caching.SystemRuntime
             String name, System.Runtime.Caching.ObjectCache innerCache, InMemoryPolicy policy)
         {
             this.name = name;
-            this.policy = policy;
+            this.Policy = policy;
             this.innerCache = innerCache;
 
-            this.locks = !this.policy.DoNotLock
+            this.Locks = !this.Policy.DoNotLock
                 ? new MultiLock(
-                    this.policy.NumberOfLocks ?? 50,
-                    this.policy.LockTimeoutMilliseconds != null && this.policy.LockTimeoutMilliseconds > 0
-                        ? this.policy.LockTimeoutMilliseconds
+                    this.Policy.NumberOfLocks ?? 50,
+                    this.Policy.LockTimeoutMilliseconds != null && this.Policy.LockTimeoutMilliseconds > 0
+                        ? this.Policy.LockTimeoutMilliseconds
                         : null,
-                    this.policy.DoThrowExceptionOnTimeout ?? true)
+                    this.Policy.DoThrowExceptionOnTimeout ?? true)
                 : null;
 
-            this.notiferName = this.policy?.SyncProvider;
+            this.notiferName = this.Policy?.SyncProvider;
             this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.notiferName);
         }
 
@@ -48,11 +49,11 @@ namespace PubComp.Caching.SystemRuntime
             {
                 if (synchronizer?.IsActive ?? true)
                 {
-                    return policy;
+                    return Policy;
                 }
                 else
                 {
-                    return policy.OnSyncProviderFailure ?? policy;
+                    return Policy.OnSyncProviderFailure ?? Policy;
                 }
             }
         }
@@ -143,7 +144,7 @@ namespace PubComp.Caching.SystemRuntime
             };
         }
 
-        public TValue Get<TValue>(String key, Func<TValue> getter)
+        public virtual TValue Get<TValue>(String key, Func<TValue> getter)
         {
             if (TryGetInner(key, out TValue value))
                 return value;
@@ -157,13 +158,13 @@ namespace PubComp.Caching.SystemRuntime
                 return value;
             }
 
-            if (policy.DoNotLock)
+            if (Policy.DoNotLock)
                 return OnCacheMiss();
 
-            return this.locks.LockAndLoad(key, OnCacheMiss);
+            return this.Locks.LockAndLoad(key, OnCacheMiss);
         }
 
-        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        public virtual async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
             if (TryGetInner(key, out TValue value))
                 return value;
@@ -177,10 +178,10 @@ namespace PubComp.Caching.SystemRuntime
                 return value;
             }
 
-            if (policy.DoNotLock)
+            if (Policy.DoNotLock)
                 return await OnCacheMiss().ConfigureAwait(false);
 
-            return await this.locks.LockAndLoadAsync(key, OnCacheMiss).ConfigureAwait(false);
+            return await this.Locks.LockAndLoadAsync(key, OnCacheMiss).ConfigureAwait(false);
         }
 
         public void Clear(String key)

@@ -213,7 +213,7 @@ namespace PubComp.Caching.AopCaching
             }
 
             var cacheToUse = this.cache;
-
+            
             if (cacheToUse == null)
             {
                 base.OnInvoke(args);
@@ -252,6 +252,8 @@ namespace PubComp.Caching.AopCaching
                 return;
             }
 
+            var newValuesTimestamp = DateTimeOffset.UtcNow;
+
             args.Arguments[this.keyParameterNumber] = missingKeys;
             base.OnInvoke(args);
             var resultsFromerInner = args.ReturnValue;
@@ -259,9 +261,19 @@ namespace PubComp.Caching.AopCaching
 
             var values = GetKeyValues(args, resultsFromerInner, parameterValues);
 
-            foreach (var value in values)
+            if (cacheToUse is IScopedCache scopedCacheToUse)
             {
-                cacheToUse.Set(value.Key, value.Value);
+                foreach (var value in values)
+                {
+                    scopedCacheToUse.SetScoped(value.Key, value.Value, newValuesTimestamp);
+                }
+            }
+            else
+            {
+                foreach (var value in values)
+                {
+                    cacheToUse.Set(value.Key, value.Value);
+                }
             }
 
             args.ReturnValue = resultList;
@@ -315,6 +327,8 @@ namespace PubComp.Caching.AopCaching
                 return;
             }
 
+            var newValuesTimestamp = DateTimeOffset.UtcNow;
+
             args.Arguments[this.keyParameterNumber] = missingKeys;
             await base.OnInvokeAsync(args).ConfigureAwait(false);
             var resultsFromerInner = args.ReturnValue;
@@ -322,8 +336,18 @@ namespace PubComp.Caching.AopCaching
 
             var values = GetKeyValues(args, resultsFromerInner, parameterValues);
 
-            var tasks = values.Select(async x => await cacheToUse.SetAsync(x.Key, x.Value).ConfigureAwait(false));
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+            if (cacheToUse is IScopedCache scopedCacheToUse)
+            {
+                var tasks = values.Select(async x => await scopedCacheToUse
+                    .SetScopedAsync(x.Key, x.Value, newValuesTimestamp).ConfigureAwait(false));
+                await Task.WhenAll(tasks).ConfigureAwait(false);
+            }
+            else
+            {
+                var tasks = values.Select(async x => await cacheToUse
+                    .SetAsync(x.Key, x.Value).ConfigureAwait(false));
+                await Task.WhenAll(tasks).ConfigureAwait(false);
+            }
 
             args.ReturnValue = resultList;
         }

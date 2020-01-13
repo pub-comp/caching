@@ -69,12 +69,12 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             using (CacheDirectives.SetScope(CacheMethod.GetOrSet, DateTimeOffset.UtcNow))
             {
                 result = cache.Get("key", getter);
-                CollectionAssert.AreEqual(new object[] {"1"}, result.ToArray());
+                CollectionAssert.AreEqual(new object[] { "1" }, result.ToArray());
 
                 value.Add("2");
 
                 result = cache.Get("key", getter);
-                CollectionAssert.AreEqual(new object[] {"1"}, result.ToArray());
+                CollectionAssert.AreEqual(new object[] { "1" }, result.ToArray());
             }
         }
 

@@ -153,9 +153,10 @@ namespace PubComp.Caching.Core
             if (this.level1.TryGet(key, out value))
                 return true;
 
-            if (this.level2.TryGet(key, out value))
+            var level2Outcome = this.level2.TryGetScoped(key, out value);
+            if (level2Outcome.MethodTaken.HasFlag(CacheMethodTaken.Get))
             {
-                this.level1.Set(key, value);
+                this.level1.SetScoped(key, value, level2Outcome.ValueTimestamp);
                 return true;
             }
 
@@ -173,11 +174,15 @@ namespace PubComp.Caching.Core
             if (level1Result.WasFound)
                 return level1Result;
 
-            var level2Result = await this.level2.TryGetAsync<TValue>(key).ConfigureAwait(false);
-            if (level2Result.WasFound)
+            var level2Result = await this.level2.TryGetScopedAsync<TValue>(key).ConfigureAwait(false);
+            if (level2Result.Outcome.MethodTaken.HasFlag(CacheMethod.Get))
             {
-                this.level1.Set(key, level2Result.Value);
-                return level2Result;
+                await this.level1.SetScopedAsync(key, level2Result.Value, level2Result.Outcome.ValueTimestamp)
+                    .ConfigureAwait(false);
+                return new TryGetResult<TValue> { 
+                    WasFound = true, 
+                    Value = level2Result.Value
+                };
             }
 
             return new TryGetResult<TValue> {WasFound = false};
