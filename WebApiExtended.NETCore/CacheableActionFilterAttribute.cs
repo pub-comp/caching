@@ -1,17 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.Mvc.Filters;
+using Newtonsoft.Json;
+using PubComp.Caching.Core;
 using System;
 using System.Linq;
-using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Web.Http.Controllers;
-using System.Web.Http.Filters;
-using PubComp.Caching.Core;
 
-namespace PubComp.Caching.WebApiExtended
+namespace PubComp.Caching.WebApiExtended.Net.Core
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-    public class CacheableActionFilterAttribute : FilterAttribute, IActionFilter, ICacheable
+    public class CacheableActionFilterAttribute : IAsyncActionFilter, ICacheable
     {
         private readonly NLog.ILogger log;
 
@@ -20,24 +17,20 @@ namespace PubComp.Caching.WebApiExtended
             log = NLog.LogManager.GetLogger(typeof(CacheableActionFilterAttribute).FullName);
         }
 
-        public async Task<HttpResponseMessage> ExecuteActionFilterAsync(
-            HttpActionContext actionContext,
-            CancellationToken cancellationToken,
-            Func<Task<HttpResponseMessage>> continuation)
+        public async Task OnActionExecutionAsync(
+            ActionExecutingContext context,
+            ActionExecutionDelegate next)
         {
-            var definedCacheDirectives = GetCacheDirectives(actionContext);
+            var definedCacheDirectives = GetCacheDirectives(context);
             using (ScopedContext<CacheDirectives>.CreateNewScope(definedCacheDirectives))
             {
-                var response = await continuation().ConfigureAwait(false);
-                return response;
+                await next().ConfigureAwait(false);
             }
         }
 
-        private CacheDirectives GetCacheDirectives(HttpActionContext actionContext)
+        private CacheDirectives GetCacheDirectives(ActionExecutingContext actionContext)
         {
-            var cacheDirectivesJson = actionContext.Request.Headers
-                .FirstOrDefault(x => x.Key == CacheDirectives.HeadersKey)
-                .Value?.First();
+            var cacheDirectivesJson = actionContext.HttpContext.Request.Headers[CacheDirectives.HeadersKey].FirstOrDefault();
 
             if (string.IsNullOrEmpty(cacheDirectivesJson))
                 return new CacheDirectives { Method = CacheMethod.None };
