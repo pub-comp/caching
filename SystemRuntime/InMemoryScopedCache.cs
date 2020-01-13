@@ -74,7 +74,7 @@ namespace PubComp.Caching.SystemRuntime
             }
 
             if (InnerCache.Get(key, regionName: null) is ScopedCacheItem item
-                && item.ValueTimestamp > directives.MinimumValueTimestamp)
+                && item.ValueTimestamp >= directives.MinimumValueTimestamp)
             {
                 value = item.Value is TValue itemValue ? itemValue : default;
                 return new CacheDirectivesOutcome(CacheMethodTaken.Get);

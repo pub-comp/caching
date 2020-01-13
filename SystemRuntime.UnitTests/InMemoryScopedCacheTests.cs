@@ -56,29 +56,6 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
         }
 
         [TestMethod]
-        public void TestInMemoryScopedCacheObjectMutated()
-        {
-            var cache = new InMemoryScopedCache("cache1", new TimeSpan(0, 2, 0));
-
-            List<string> value = new List<string> { "1" };
-
-            Func<IEnumerable<object>> getter = () => { return value; };
-
-            IEnumerable<object> result;
-
-            using (CacheDirectives.SetScope(CacheMethod.GetOrSet, DateTimeOffset.UtcNow))
-            {
-                result = cache.Get("key", getter);
-                CollectionAssert.AreEqual(new object[] { "1" }, result.ToArray());
-
-                value.Add("2");
-
-                result = cache.Get("key", getter);
-                CollectionAssert.AreEqual(new object[] { "1" }, result.ToArray());
-            }
-        }
-
-        [TestMethod]
         public void TestInMemoryScopedCacheNull()
         {
             var cache = new InMemoryScopedCache("cache1", new TimeSpan(0, 2, 0));
