@@ -1,12 +1,12 @@
-﻿using System;
+﻿using PubComp.Caching.Core.Config;
+using PubComp.Caching.Core.Notifications;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
-using PubComp.Caching.Core.Config;
-using PubComp.Caching.Core.Notifications;
 
 namespace PubComp.Caching.Core
 {
@@ -70,11 +70,25 @@ namespace PubComp.Caching.Core
             return GetCache(typeof(TClass));
         }
 
+        /// <summary>Gets a scoped cache instance using full name of given class</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public IScopedCache GetScopedCache<TClass>()
+        {
+            return GetScopedCache(typeof(TClass));
+        }
+
         /// <summary>Gets a cache instance using full name of given class</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
         public ICache GetCache(Type type)
         {
             return GetCache(type.FullName);
+        }
+
+        /// <summary>Gets a scoped cache instance using full name of given class</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public IScopedCache GetScopedCache(Type type)
+        {
+            return GetScopedCache(type.FullName);
         }
 
         /// <summary>Gets a list of all cache names</summary>
@@ -93,11 +107,22 @@ namespace PubComp.Caching.Core
                 throw new ArgumentNullException(nameof(name));
 
             var cachesArray = GetCaches();
-            
+
             var cachesSorted = cachesArray.OrderByDescending(c => c.Key.GetMatchLevel(name));
             var cache = cachesSorted.FirstOrDefault();
 
             return (cache.Key.Prefix != null && cache.Key.GetMatchLevel(name) >= cache.Key.Prefix.Length) ? cache.Value : null;
+        }
+
+        /// <summary>Gets a scoped cache by name</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public IScopedCache GetScopedCache(string name)
+        {
+            var cache = GetCache(name);
+            if (cache is IScopedCache scopedCache)
+                return scopedCache;
+
+            throw new ApplicationException($"Cache {name} does not implement IScopedCache");
         }
 
         /// <summary>Gets a cache by name</summary>

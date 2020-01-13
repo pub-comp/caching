@@ -1,9 +1,9 @@
-﻿using System;
+﻿using PubComp.Caching.Core.Config.Loaders;
+using PubComp.Caching.Core.Notifications;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using PubComp.Caching.Core.Config.Loaders;
-using PubComp.Caching.Core.Notifications;
 
 [assembly: InternalsVisibleTo("PubComp.Caching.Core.UnitTests")]
 namespace PubComp.Caching.Core
@@ -82,11 +82,25 @@ namespace PubComp.Caching.Core
             return CacheManagerInternals.GetCache<TClass>();
         }
 
+        /// <summary>Gets a scoped cache instance using full name of given class</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public static IScopedCache GetScopedCache<TClass>()
+        {
+            return CacheManagerInternals.GetScopedCache<TClass>();
+        }
+
         /// <summary>Gets a cache instance using full name of given class</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
         public static ICache GetCache(Type type)
         {
             return CacheManagerInternals.GetCache(type);
+        }
+
+        /// <summary>Gets a scoped cache instance using full name of given class</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public static IScopedCache GetScopedCache(Type type)
+        {
+            return CacheManagerInternals.GetScopedCache(type);
         }
 
         /// <summary>Gets a list of all cache names</summary>
@@ -101,6 +115,13 @@ namespace PubComp.Caching.Core
         public static ICache GetCache(string name)
         {
             return CacheManagerInternals.GetCache(name);
+        }
+
+        /// <summary>Gets a scoped cache by name</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public static IScopedCache GetScopedCache(string name)
+        {
+            return CacheManagerInternals.GetScopedCache(name);
         }
 
         /// <summary>Gets a cache by name</summary>
