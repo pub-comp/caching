@@ -20,13 +20,16 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
 
             int result;
 
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, hits);
-            Assert.AreEqual(1, result);
+            using (CacheDirectives.SetScope(CacheMethod.GetOrSet, DateTimeOffset.UtcNow))
+            {
+                result = cache.Get("key", getter);
+                Assert.AreEqual(1, hits);
+                Assert.AreEqual(1, result);
 
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, hits);
-            Assert.AreEqual(1, result);
+                result = cache.Get("key", getter);
+                Assert.AreEqual(1, hits);
+                Assert.AreEqual(1, result);
+            }
         }
 
         [TestMethod]
@@ -40,13 +43,16 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
 
             string result;
 
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, hits);
-            Assert.AreEqual("1", result);
+            using (CacheDirectives.SetScope(CacheMethod.GetOrSet, DateTimeOffset.UtcNow))
+            {
+                result = cache.Get("key", getter);
+                Assert.AreEqual(1, hits);
+                Assert.AreEqual("1", result);
 
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, hits);
-            Assert.AreEqual("1", result);
+                result = cache.Get("key", getter);
+                Assert.AreEqual(1, hits);
+                Assert.AreEqual("1", result);
+            }
         }
 
         [TestMethod]
@@ -60,13 +66,16 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
 
             IEnumerable<object> result;
 
-            result = cache.Get("key", getter);
-            CollectionAssert.AreEqual(new object[] { "1" }, result.ToArray());
+            using (CacheDirectives.SetScope(CacheMethod.GetOrSet, DateTimeOffset.UtcNow))
+            {
+                result = cache.Get("key", getter);
+                CollectionAssert.AreEqual(new object[] {"1"}, result.ToArray());
 
-            value.Add("2");
+                value.Add("2");
 
-            result = cache.Get("key", getter);
-            CollectionAssert.AreEqual(new object[] { "1" }, result.ToArray());
+                result = cache.Get("key", getter);
+                CollectionAssert.AreEqual(new object[] {"1"}, result.ToArray());
+            }
         }
 
         [TestMethod]
