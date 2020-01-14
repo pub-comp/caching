@@ -23,7 +23,7 @@ namespace PubComp.Caching.Core
 
         public bool TryGet<TValue>(string key, out TValue value)
         {
-            value = default(TValue);
+            value = default;
             return false;
         }
 

@@ -97,7 +97,7 @@ namespace PubComp.Caching.RedisCaching.Converters
         private TValue From<TValue>(RedisValue stringValue)
         {
             if (!stringValue.HasValue)
-                return default(TValue);
+                return default;
 
             byte[] buffer = stringValue;
             return FromBson<TValue>(buffer);

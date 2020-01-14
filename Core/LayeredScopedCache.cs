@@ -3,6 +3,7 @@ using System;
 using System.Threading.Tasks;
 // ReSharper disable NotAccessedField.Local
 // ReSharper disable LocalVariableHidesMember
+// ReSharper disable UseStringInterpolation
 
 namespace PubComp.Caching.Core
 {

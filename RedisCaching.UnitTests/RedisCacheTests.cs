@@ -864,7 +864,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             cache.ClearAll();
             cache.Set("key", "1");
 
-            var result = await cache.TryGetAsync<string>("key");
+            var result = await cache.TryGetAsync<string>("key").ConfigureAwait(false);
             Assert.AreEqual("1", result.Value);
             Assert.IsTrue(result.WasFound);
         }
@@ -881,7 +881,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             cache.ClearAll();
             cache.Set("key", "1");
 
-            var result = await cache.TryGetAsync<string>("wrongKey");
+            var result = await cache.TryGetAsync<string>("wrongKey").ConfigureAwait(false);
             Assert.AreEqual(null, result.Value);
             Assert.IsFalse(result.WasFound);
         }

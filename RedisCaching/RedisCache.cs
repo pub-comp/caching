@@ -131,12 +131,12 @@ namespace PubComp.Caching.RedisCaching
         {
             var newItem = CreateCacheItem(key, newValue);
 
-            if (await context.SetIfNotExistsAsync(newItem))
+            if (await context.SetIfNotExistsAsync(newItem).ConfigureAwait(false))
             {
                 return newValue;
             }
 
-            var prevValue = await GetCacheItemAsync<TValue>(context, key);
+            var prevValue = await GetCacheItemAsync<TValue>(context, key).ConfigureAwait(false);
             if (!doForceOverride && prevValue != null && prevValue.Value is TValue)
                 return prevValue.Value;
             
@@ -167,7 +167,7 @@ namespace PubComp.Caching.RedisCaching
 
         private async Task<CacheItem<TValue>> GetCacheItemAsync<TValue>(CacheContext context, string key)
         {
-            var cacheItem = await context.GetItemAsync<TValue>(Name, key);
+            var cacheItem = await context.GetItemAsync<TValue>(Name, key).ConfigureAwait(false);
             return cacheItem;
         }
 
@@ -185,9 +185,9 @@ namespace PubComp.Caching.RedisCaching
         {
             if (expireWithin.HasValue && useSlidingExpiration)
             {
-                await context.SetIfNotExistsAsync(cacheItem);
+                await context.SetIfNotExistsAsync(cacheItem).ConfigureAwait(false);
                 cacheItem.ExpireIn = expireWithin.Value;
-                await context.SetExpirationTimeAsync(cacheItem);
+                await context.SetExpirationTimeAsync(cacheItem).ConfigureAwait(false);
             }
         }
 
@@ -198,11 +198,11 @@ namespace PubComp.Caching.RedisCaching
 
         public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
         {
-            var cacheItem = await GetCacheItemAsync<TValue>(InnerCache, key);
+            var cacheItem = await GetCacheItemAsync<TValue>(InnerCache, key).ConfigureAwait(false);
 
             if (cacheItem != null)
             {
-                await ResetExpirationTimeAsync(InnerCache, cacheItem);
+                await ResetExpirationTimeAsync(InnerCache, cacheItem).ConfigureAwait(false);
                 return new TryGetResult<TValue>
                 {
                     Value = cacheItem.Value,
@@ -212,7 +212,7 @@ namespace PubComp.Caching.RedisCaching
 
             return new TryGetResult<TValue>
             {
-                Value = default(TValue),
+                Value = default,
                 WasFound = false
             };
         }
@@ -238,7 +238,7 @@ namespace PubComp.Caching.RedisCaching
                 return true;
             }
 
-            value = default(TValue);
+            value = default;
             return false;
         }
 
@@ -265,12 +265,12 @@ namespace PubComp.Caching.RedisCaching
 
         public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
-            var result = await TryGetAsync<TValue>(key);
+            var result = await TryGetAsync<TValue>(key).ConfigureAwait(false);
             if (result.WasFound)
                 return result.Value;
 
-            result.Value = await getter();
-            return await GetOrAddAsync(InnerCache, key, result.Value);
+            result.Value = await getter().ConfigureAwait(false);
+            return await GetOrAddAsync(InnerCache, key, result.Value).ConfigureAwait(false);
         }
 
         public void Clear(String key)

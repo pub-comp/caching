@@ -37,7 +37,7 @@ namespace PubComp.Caching.SystemRuntime
                 return true;
             }
 
-            value = default(TValue);
+            value = default;
             return false;
         }
 

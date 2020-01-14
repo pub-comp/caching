@@ -416,7 +416,9 @@ namespace PubComp.Caching.Core.UnitTests
 
             try
             {
-                await locks.LockAndLoadAsync(key, async () => await ExternalIncPosZero(locks, key, counter));
+                await locks
+                    .LockAndLoadAsync(key, async () => await ExternalIncPosZero(locks, key, counter).ConfigureAwait(false))
+                    .ConfigureAwait(false);
             }
             finally
             {
@@ -432,19 +434,23 @@ namespace PubComp.Caching.Core.UnitTests
 
             var locks = new MultiLock(1, 10, true);
 
-            await locks.LockAndLoadAsync(key, async () => await ExternalIncPosZero(locks, key, counter));
+            await locks
+                .LockAndLoadAsync(key, async () => await ExternalIncPosZero(locks, key, counter).ConfigureAwait(false))
+                .ConfigureAwait(false);
             Assert.AreEqual(2L, Interlocked.Read(ref counter[0]));
         }
 
         private async Task<long> ExternalIncPosZero(MultiLock locks, string key, long[] counter)
         {
-            await locks.LockAndLoadAsync(key, async () => await InternalIncPosZero(counter));
+            await locks
+                .LockAndLoadAsync(key, async () => await InternalIncPosZero(counter).ConfigureAwait(false))
+                .ConfigureAwait(false);
             return Interlocked.Increment(ref counter[0]);
         }
 
         private async Task<long> InternalIncPosZero(long[] counter)
         {
-            await Task.Delay(0);
+            await Task.Delay(0).ConfigureAwait(false);
             return Interlocked.Increment(ref counter[0]);
         }
 

@@ -195,9 +195,7 @@ namespace PubComp.Caching.RedisCaching
 
         public TValue Get<TValue>(string key, Func<TValue> getter)
         {
-            // ReSharper disable once InlineOutVariableDeclaration
-            TValue value;
-            if (TryGetInner(key, out value))
+            if (TryGetInner(key, out TValue value))
                 return value;
 
             var valueTimestamp = DateTimeOffset.UtcNow;

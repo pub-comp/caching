@@ -78,11 +78,11 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
 
             string result;
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(1, hits);
             Assert.AreEqual("1", result);
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(1, hits);
             Assert.AreEqual("1", result);
         }

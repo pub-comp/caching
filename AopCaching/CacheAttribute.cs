@@ -97,12 +97,14 @@ namespace PubComp.Caching.AopCaching
 
             if (cacheToUse == null)
             {
-                await base.OnInvokeAsync(args);
+                await base.OnInvokeAsync(args).ConfigureAwait(false);
             }
             else
             {
                 var key = GetCacheKey(args);
-                var result = await cacheToUse.GetAsync(key, async () => { await base.OnInvokeAsync(args); return args.ReturnValue; });
+                var result = await cacheToUse
+                    .GetAsync(key, async () => { await base.OnInvokeAsync(args).ConfigureAwait(false); return args.ReturnValue; })
+                    .ConfigureAwait(false);
                 var returnType = GetReturnType(args.Method);
                 args.ReturnValue = SafeCasting.CastTo(returnType, result);
             }

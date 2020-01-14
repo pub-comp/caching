@@ -56,18 +56,18 @@ namespace PubComp.Caching.Core.UnitTests
 
             Func<Task<string>> getter = async () =>
             {
-                await Task.Delay(10);
+                await Task.Delay(10).ConfigureAwait(false);
                 hits++;
                 return hits.ToString();
             };
 
             string result;
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(1, hits);
             Assert.AreEqual("1", result);
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(2, hits);
             Assert.AreEqual("2", result);
         }

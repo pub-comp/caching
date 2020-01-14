@@ -135,17 +135,17 @@ namespace PubComp.Caching.MongoDbCaching.UnitTests
                 {
                     DatabaseName = "TestCacheDb",
                 });
-            await cache.ClearAllAsync();
+            await cache.ClearAllAsync().ConfigureAwait(false);
 
             int misses = 0;
 
             Func<Task<string>> getter = () => Task.Run(() => { misses++; return misses.ToString(); });
 
-            var result = await cache.GetAsync("key", getter);
+            var result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(1, misses);
             Assert.AreEqual("1", result);
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(1, misses);
             Assert.AreEqual("1", result);
         }

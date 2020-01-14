@@ -71,7 +71,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual(0, cache2.Misses);
 
             var service = new Service2();
-            var result = await service.MethodToCache1Async();
+            var result = await service.MethodToCache1Async().ConfigureAwait(false);
 
             Assert.AreEqual(0, cache2.Hits);
             Assert.AreEqual(2, cache2.Misses);
@@ -156,22 +156,22 @@ namespace PubComp.Caching.AopCaching.UnitTests
             var service = new Service1();
             string result;
 
-            result = await service.MethodToCache1Async(11, new MockObject { Data = 1111 });
+            result = await service.MethodToCache1Async(11, new MockObject { Data = 1111 }).ConfigureAwait(false);
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(2, cache1.Misses);
             Assert.AreEqual("111111", result);
 
-            result = await service.MethodToCache1Async(11, new MockObject { Data = 2222 });
+            result = await service.MethodToCache1Async(11, new MockObject { Data = 2222 }).ConfigureAwait(false);
             Assert.AreEqual(1, cache1.Hits);
             Assert.AreEqual(2, cache1.Misses);
             Assert.AreEqual("111111", result);
 
-            result = await service.MethodToCache1Async(22, new MockObject { Data = 2222 });
+            result = await service.MethodToCache1Async(22, new MockObject { Data = 2222 }).ConfigureAwait(false);
             Assert.AreEqual(1, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual("222222", result);
 
-            result = await service.MethodToCache1Async(11, new MockObject { Data = 2222 });
+            result = await service.MethodToCache1Async(11, new MockObject { Data = 2222 }).ConfigureAwait(false);
             Assert.AreEqual(2, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual("111111", result);
@@ -216,22 +216,22 @@ namespace PubComp.Caching.AopCaching.UnitTests
             var service = new Service1();
             string result;
 
-            result = await service.MethodToCache1Async(new ClassA(11, "1111"));
+            result = await service.MethodToCache1Async(new ClassA(11, "1111")).ConfigureAwait(false);
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(2, cache1.Misses);
             Assert.AreEqual("111111", result);
 
-            result = await service.MethodToCache1Async(new ClassA(11, "2222"));
+            result = await service.MethodToCache1Async(new ClassA(11, "2222")).ConfigureAwait(false);
             Assert.AreEqual(1, cache1.Hits);
             Assert.AreEqual(2, cache1.Misses);
             Assert.AreEqual("111111", result);
 
-            result = await service.MethodToCache1Async(new ClassA(22, "2222"));
+            result = await service.MethodToCache1Async(new ClassA(22, "2222")).ConfigureAwait(false);
             Assert.AreEqual(1, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual("222222", result);
 
-            result = await service.MethodToCache1Async(new ClassA(11, "2222"));
+            result = await service.MethodToCache1Async(new ClassA(11, "2222")).ConfigureAwait(false);
             Assert.AreEqual(2, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual("111111", result);
@@ -331,15 +331,15 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual(0, cache3.Hits);
             Assert.AreEqual(0, cache3.Misses);
 
-            var result1 = await new GenericService<int>().MethodToCache1Async("5");
+            var result1 = await new GenericService<int>().MethodToCache1Async("5").ConfigureAwait(false);
             Assert.AreEqual(0, cache3.Hits);
             Assert.AreEqual(2, cache3.Misses);
 
-            var result2 = await new GenericService<int>().MethodToCache1Async("5");
+            var result2 = await new GenericService<int>().MethodToCache1Async("5").ConfigureAwait(false);
             Assert.AreEqual(1, cache3.Hits);
             Assert.AreEqual(2, cache3.Misses);
 
-            var result3 = await new GenericService<byte>().MethodToCache1Async("5");
+            var result3 = await new GenericService<byte>().MethodToCache1Async("5").ConfigureAwait(false);
             Assert.AreEqual(1, cache3.Hits);
             Assert.AreEqual(4, cache3.Misses);
         }
@@ -369,15 +369,15 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual(0, cache3.Hits);
             Assert.AreEqual(0, cache3.Misses);
 
-            var result1 = await new GenericService<int>().MethodToCache2Async<string>("5");
+            var result1 = await new GenericService<int>().MethodToCache2Async<string>("5").ConfigureAwait(false);
             Assert.AreEqual(0, cache3.Hits);
             Assert.AreEqual(2, cache3.Misses);
 
-            var result2 = await new GenericService<int>().MethodToCache2Async<string>("5");
+            var result2 = await new GenericService<int>().MethodToCache2Async<string>("5").ConfigureAwait(false);
             Assert.AreEqual(1, cache3.Hits);
             Assert.AreEqual(2, cache3.Misses);
 
-            var result3 = await new GenericService<int>().MethodToCache2Async<int>(5);
+            var result3 = await new GenericService<int>().MethodToCache2Async<int>(5).ConfigureAwait(false);
             Assert.AreEqual(1, cache3.Hits);
             Assert.AreEqual(4, cache3.Misses);
         }

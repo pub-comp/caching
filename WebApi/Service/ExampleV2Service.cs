@@ -30,7 +30,7 @@ namespace TestHost.WebApi.Service
         public async Task<string> GetAsync(int id)
         {
             var num = DateTime.Now.Ticks % id;
-            return $"{id}>{num} - " + await GetAsyncInner(num);
+            return $"{id}>{num} - " + await GetAsyncInner(num).ConfigureAwait(false);
         }
 
         [Cache(CacheName)]
@@ -42,7 +42,9 @@ namespace TestHost.WebApi.Service
         [Cache(CacheName)]
         private async Task<string> GetAsyncInner(long id)
         {
-            return $"{id} - {DateTimeOffset.UtcNow} - " + await FileHelper.ReadLineAsync($"{dbPath}\\{id}.txt");
+            return $"{id} - {DateTimeOffset.UtcNow} - " + await FileHelper
+                       .ReadLineAsync($"{dbPath}\\{id}.txt")
+                       .ConfigureAwait(false);
         }
     }
 }

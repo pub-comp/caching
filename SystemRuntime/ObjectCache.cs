@@ -89,11 +89,11 @@ namespace PubComp.Caching.SystemRuntime
             {
                 // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
                 // ReSharper disable once MergeConditionalExpression
-                value = item.Value is TValue ? (TValue)item.Value : default(TValue);
+                value = item.Value is TValue ? (TValue)item.Value : default;
                 return true;
             }
 
-            value = default(TValue);
+            value = default;
             return false;
         }
 

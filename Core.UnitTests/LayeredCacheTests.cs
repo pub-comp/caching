@@ -133,7 +133,7 @@ namespace PubComp.Caching.Core.UnitTests
 
             int result;
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(1, hits);
             Assert.AreEqual(1, result);
             Assert.AreEqual(2, l1.Misses);
@@ -141,7 +141,7 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.AreEqual(0, l1.Hits);
             Assert.AreEqual(0, l2.Hits);
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(1, hits);
             Assert.AreEqual(1, result);
             Assert.AreEqual(2, l1.Misses);
@@ -151,7 +151,7 @@ namespace PubComp.Caching.Core.UnitTests
 
             l1.ClearAll(false);
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(1, hits);
             Assert.AreEqual(1, result);
             Assert.AreEqual(4, l1.Misses);
@@ -159,7 +159,7 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.AreEqual(1, l1.Hits);
             Assert.AreEqual(1, l2.Hits);
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(1, hits);
             Assert.AreEqual(1, result);
             Assert.AreEqual(4, l1.Misses);
@@ -169,7 +169,7 @@ namespace PubComp.Caching.Core.UnitTests
 
             l2.ClearAll(false);
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(1, hits);
             Assert.AreEqual(1, result);
             Assert.AreEqual(4, l1.Misses);
@@ -177,7 +177,7 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.AreEqual(3, l1.Hits);
             Assert.AreEqual(1, l2.Hits);
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(1, hits);
             Assert.AreEqual(1, result);
             Assert.AreEqual(4, l1.Misses);
@@ -188,7 +188,7 @@ namespace PubComp.Caching.Core.UnitTests
             l2.ClearAll(false);
             l1.ClearAll(false);
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(2, hits);
             Assert.AreEqual(2, result);
             Assert.AreEqual(6, l1.Misses);
@@ -196,7 +196,7 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.AreEqual(4, l1.Hits);
             Assert.AreEqual(1, l2.Hits);
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(2, hits);
             Assert.AreEqual(2, result);
             Assert.AreEqual(6, l1.Misses);
@@ -207,7 +207,7 @@ namespace PubComp.Caching.Core.UnitTests
             // Clears counters too
             cache.ClearAll();
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(3, hits);
             Assert.AreEqual(3, result);
             Assert.AreEqual(2, l1.Misses);
@@ -215,7 +215,7 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.AreEqual(0, l1.Hits);
             Assert.AreEqual(0, l2.Hits);
 
-            result = await cache.GetAsync("key", getter);
+            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
             Assert.AreEqual(3, hits);
             Assert.AreEqual(3, result);
             Assert.AreEqual(2, l1.Misses);

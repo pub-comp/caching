@@ -196,7 +196,7 @@ namespace PubComp.Caching.Core.CacheUtils
         public async Task<bool> TakeAsync(string key)
         {
             var lockNumber = GetLockNumber(key);
-            return await TakeAsync(lockNumber);
+            return await TakeAsync(lockNumber).ConfigureAwait(false);
         }
 
         private int Release(uint lockNumber)
@@ -285,7 +285,7 @@ namespace PubComp.Caching.Core.CacheUtils
             try
             {
                 // Wait for lock with or without timeout (depending on field)
-                var gotLock = await TakeAsync(lockNumber);
+                var gotLock = await TakeAsync(lockNumber).ConfigureAwait(false);
                 if (!gotLock && doThrowExceptionOnTimeout)
                     throw new CacheLockException($"Failed to obtain lock for {key}");
 

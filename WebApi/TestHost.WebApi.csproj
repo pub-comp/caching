@@ -259,10 +259,6 @@
       <Project>{f9ed87dd-4ac8-48d7-baf0-edb8992ec937}</Project>
       <Name>SystemRuntime</Name>
     </ProjectReference>
-    <ProjectReference Include="..\WebApiExtended.Swashbuckle\WebApiExtended.Swashbuckle.csproj">
-      <Project>{9271fab6-478a-4ced-9a25-86a1414417b3}</Project>
-      <Name>WebApiExtended.Swashbuckle</Name>
-    </ProjectReference>
     <ProjectReference Include="..\WebApiExtended\WebApiExtended.csproj">
       <Project>{71227afd-ad23-41f4-a888-795563f58b82}</Project>
       <Name>WebApiExtended</Name>

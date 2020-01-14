@@ -42,7 +42,7 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
             Func<object, string> f = o => (o ?? "null").ToString();
             var st = f(obj);
 
-            return await Task.FromResult(new[] { st, st, st });
+            return await Task.FromResult(new[] { st, st, st }).ConfigureAwait(false);
         }
 
         [Cache]
@@ -60,7 +60,7 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
             Func<object, string> f = o => (o ?? "null").ToString();
             var st = f(obj);
 
-            return await Task.FromResult(new[] { st, st, st });
+            return await Task.FromResult(new[] { st, st, st }).ConfigureAwait(false);
         }
 
         [Cache]

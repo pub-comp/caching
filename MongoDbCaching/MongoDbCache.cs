@@ -183,12 +183,12 @@ namespace PubComp.Caching.MongoDbCaching
                 if (cacheItem != null)
                 {
                     // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
-                    value = cacheItem.Value is TValue ? (TValue)cacheItem.Value : default(TValue);
+                    value = cacheItem.Value is TValue ? (TValue)cacheItem.Value : default;
                     UpdateExpirationTime(set, cacheItem);
                     return true;
                 }
 
-                value = default(TValue);
+                value = default;
                 return false;
             }
         }
