@@ -283,6 +283,20 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
         }
 
         [TestMethod]
+        public void TestInMemoryCacheUpdated()
+        {
+            var cache = new InMemoryCache("cache1", new TimeSpan(0, 2, 0));
+
+            cache.Set("key", 1);
+            var result = cache.Get("key", () => 0);
+            Assert.AreEqual(1, result);
+
+            cache.Set("key", 2);
+            result = cache.Get("key", () => 0);
+            Assert.AreEqual(2, result);
+        }
+
+        [TestMethod]
         public void Get_NestedGetWithoutLock_2Hits()
         {
             //Arrange

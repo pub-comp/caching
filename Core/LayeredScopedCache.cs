@@ -1,6 +1,8 @@
 ﻿using PubComp.Caching.Core.Notifications;
 using System;
 using System.Threading.Tasks;
+// ReSharper disable NotAccessedField.Local
+// ReSharper disable LocalVariableHidesMember
 
 namespace PubComp.Caching.Core
 {
@@ -15,7 +17,6 @@ namespace PubComp.Caching.Core
         private readonly LayeredCachePolicy policy;
         private readonly ICacheNotifier level1Notifier;
 
-        // ReSharper disable once NotAccessedField.Local
         private readonly CacheSynchronizer synchronizer;
 
         public LayeredScopedCache(String name, LayeredCachePolicy policy)
@@ -41,14 +42,12 @@ namespace PubComp.Caching.Core
         {
             this.name = name;
 
-            // ReSharper disable once LocalVariableHidesMember
             var level1 = CacheManager.GetCache(level1CacheName);
             if (level1 == null)
                 throw new ApplicationException("Cache is not registered: level1CacheName=" + level1CacheName);
             if (!(level1 is IScopedCache))
                 throw new ApplicationException($"Cache type does not implement {nameof(IScopedCache)}: level1CacheName={level1CacheName}");
 
-            // ReSharper disable once LocalVariableHidesMember
             var level2 = CacheManager.GetCache(level2CacheName);
             if (level2 == null)
                 throw new ApplicationException("Cache is not registered: level2CacheName=" + level2CacheName);
@@ -114,33 +113,6 @@ namespace PubComp.Caching.Core
 
         protected LayeredCachePolicy Policy { get { return this.policy; } }
         
-        private TValue GetterWrapper<TValue>(String key, Func<TValue> getter)
-        {
-            if (!this.policy.InvalidateLevel1OnLevel2Update) 
-                return this.level2.Get(key, getter);
-
-            if (this.level2.TryGet(key, out TValue value))
-                return value;
-
-            value = getter();
-            this.level2.Set(key, value);
-            return value;
-        }
-
-        private async Task<TValue> GetterWrapperAsync<TValue>(String key, Func<Task<TValue>> getter)
-        {
-            if (!this.policy.InvalidateLevel1OnLevel2Update) 
-                return await this.level2.GetAsync(key, getter);
-
-            var result = await this.level2.TryGetAsync<TValue>(key);
-            if (result.WasFound)
-                return result.Value;
-
-            var value = await getter();
-            await this.level2.SetAsync(key, value);
-            return value;
-        }
-        
         public bool TryGet<TValue>(String key, out TValue value)
         {
             var directives = ScopedContext<CacheDirectives>.CurrentContext;
@@ -177,7 +149,8 @@ namespace PubComp.Caching.Core
             var level2Result = await this.level2.TryGetScopedAsync<TValue>(key).ConfigureAwait(false);
             if (level2Result.Outcome.MethodTaken.HasFlag(CacheMethod.Get))
             {
-                await this.level1.SetScopedAsync(key, level2Result.Value, level2Result.Outcome.ValueTimestamp)
+                await this.level1
+                    .SetScopedAsync(key, level2Result.Value, level2Result.Outcome.ValueTimestamp)
                     .ConfigureAwait(false);
                 return new TryGetResult<TValue> { 
                     WasFound = true, 
@@ -202,18 +175,65 @@ namespace PubComp.Caching.Core
 
         public TValue Get<TValue>(String key, Func<TValue> getter)
         {
-            return this.level1.Get(key, () => GetterWrapper(key, getter));
+            if (this.level1.TryGet(key, out TValue value))
+                return value;
+
+            var level2Outcome = this.level2.TryGetScoped(key, out value);
+            if (level2Outcome.MethodTaken.HasFlag(CacheMethodTaken.Get))
+            {
+                this.level1.SetScoped(key, value, level2Outcome.ValueTimestamp);
+                return value;
+            }
+
+            var valueTimestamp = DateTimeOffset.UtcNow;
+            value = getter();
+
+            this.level1.SetScoped(key, value, valueTimestamp);
+            level2Outcome = this.level2.SetScoped(key, value, valueTimestamp);
+            if (this.policy.InvalidateLevel1OnLevel2Update && level2Outcome.MethodTaken.HasFlag(CacheMethodTaken.Set))
+                this.level1Notifier.Publish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
+
+            return value;
         }
 
-        public Task<TValue> GetAsync<TValue>(String key, Func<Task<TValue>> getter)
+        public async Task<TValue> GetAsync<TValue>(String key, Func<Task<TValue>> getter)
         {
-            return this.level1.GetAsync(key, () => GetterWrapperAsync(key, getter));
+            var level1Result = await this.level1
+                .TryGetAsync<TValue>(key)
+                .ConfigureAwait(false);
+            if (level1Result.WasFound)
+                return level1Result.Value;
+
+            var level2ScopedResult = await this.level2
+                .TryGetScopedAsync<TValue>(key)
+                .ConfigureAwait(false);
+            if (level2ScopedResult.Outcome.MethodTaken.HasFlag(CacheMethodTaken.Get))
+            {
+                await this.level1.SetScopedAsync(key, 
+                    level2ScopedResult.Value,
+                    level2ScopedResult.Outcome.ValueTimestamp).ConfigureAwait(false);
+                return level2ScopedResult.Value;
+            }
+
+            var valueTimestamp = DateTimeOffset.UtcNow;
+            var value = await getter().ConfigureAwait(false);
+
+            await this.level1.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
+            var level2Outcome = await this.level2
+                .SetScopedAsync(key, value, valueTimestamp)
+                .ConfigureAwait(false);
+            if (this.policy.InvalidateLevel1OnLevel2Update && level2Outcome.MethodTaken.HasFlag(CacheMethodTaken.Set))
+                await this.level1Notifier
+                    .PublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated)
+                    .ConfigureAwait(false);
+
+            return value;
         }
 
         public CacheDirectivesOutcome SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
-            var level2Outcome = this.level2.SetScoped(key, value, valueTimestamp);
             this.level1.SetScoped(key, value, valueTimestamp);
+            var level2Outcome = this.level2.SetScoped(key, value, valueTimestamp);
 
             if (this.policy.InvalidateLevel1OnLevel2Update && level2Outcome.MethodTaken.HasFlag(CacheMethodTaken.Set))
                 level1Notifier.Publish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
@@ -223,67 +243,39 @@ namespace PubComp.Caching.Core
 
         public async Task<CacheDirectivesOutcome> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
-            var level2Outcome = await this.level2.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
             await this.level1.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
+            var level2Outcome = await this.level2.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
 
             if (this.policy.InvalidateLevel1OnLevel2Update && level2Outcome.MethodTaken.HasFlag(CacheMethodTaken.Set))
-                level1Notifier.Publish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
+                await level1Notifier.PublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated).ConfigureAwait(false);
 
             return level2Outcome;
         }
 
         public CacheDirectivesOutcome TryGetScoped<TValue>(String key, out TValue value)
         {
-            var directives = ScopedContext<CacheDirectives>.CurrentContext;
-            if (!directives.Method.HasFlag(CacheMethod.Get))
-            {
-                value = default;
-                return new CacheDirectivesOutcome(CacheMethodTaken.None);
-            }
-
             var level1Outcome = this.level1.TryGetScoped(key, out value);
             if (level1Outcome.MethodTaken.HasFlag(CacheMethodTaken.Get))
                 return level1Outcome;
 
             var level2Outcome = this.level2.TryGetScoped(key, out value);
             if (level2Outcome.MethodTaken.HasFlag(CacheMethodTaken.Get))
-            {
                 this.level1.SetScoped(key, value, level2Outcome.ValueTimestamp);
-                return level2Outcome;
-            }
 
-            value = default;
-            return new CacheDirectivesOutcome(CacheMethodTaken.GetMiss, level2Outcome.ValueTimestamp);
+            return level2Outcome;
         }
 
         public async Task<TryGetScopedResult<TValue>> TryGetScopedAsync<TValue>(String key)
         {
-            var directives = ScopedContext<CacheDirectives>.CurrentContext;
-            if (!directives.Method.HasFlag(CacheMethod.Get))
-            {
-                return new TryGetScopedResult<TValue>
-                {
-                    Value = default,
-                    Outcome = new CacheDirectivesOutcome(CacheMethodTaken.None)
-                };
-            }
-
             var level1Result = await this.level1.TryGetScopedAsync<TValue>(key).ConfigureAwait(false);
             if (level1Result.Outcome.MethodTaken.HasFlag(CacheMethodTaken.Get))
                 return level1Result;
 
             var level2Result = await this.level2.TryGetScopedAsync<TValue>(key).ConfigureAwait(false);
             if (level2Result.Outcome.MethodTaken.HasFlag(CacheMethodTaken.Get))
-            {
                 this.level1.SetScoped(key, level2Result.Value, level2Result.Outcome.ValueTimestamp);
-                return level2Result;
-            }
 
-            return new TryGetScopedResult<TValue>
-            {
-                Value = default,
-                Outcome = new CacheDirectivesOutcome(CacheMethodTaken.GetMiss)
-            };
+            return level2Result;
         }
 
         public void Clear(String key)

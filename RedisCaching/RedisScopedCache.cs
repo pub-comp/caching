@@ -1,16 +1,16 @@
 ﻿using PubComp.Caching.Core;
 using System;
 using System.Threading.Tasks;
+// ReSharper disable NotAccessedField.Local
 
 namespace PubComp.Caching.RedisCaching
 {
-    public class RedisScopedCache : ICache, IScopedCache
+    public class RedisScopedCache : IScopedCache
     {
         private readonly bool useSlidingExpiration;
         private readonly TimeSpan? expireWithin;
         private readonly DateTime? expireAt;
 
-        // ReSharper disable once NotAccessedField.Local
         private readonly CacheSynchronizer synchronizer;
 
         public string Name { get; }
@@ -156,12 +156,14 @@ namespace PubComp.Caching.RedisCaching
 
         public void Set<TValue>(string key, TValue value)
         {
-            Add(key, value);
+            var valueTimestamp = ScopedContext<CacheDirectives>.CurrentTimestamp;
+            SetScoped(key, value, valueTimestamp);
         }
 
         public Task SetAsync<TValue>(string key, TValue value)
         {
-            return AddAsync(key, value);
+            var valueTimestamp = ScopedContext<CacheDirectives>.CurrentTimestamp;
+            return SetScopedAsync(key, value, valueTimestamp);
         }
 
         protected virtual bool TryGetInner<TValue>(String key, out TValue value)
@@ -172,11 +174,10 @@ namespace PubComp.Caching.RedisCaching
 
         private CacheDirectivesOutcome TryGetScopedInner<TValue>(String key, out TValue value)
         {
-
             var directives = ScopedContext<CacheDirectives>.CurrentContext;
             if (!directives.Method.HasFlag(CacheMethod.Get))
             {
-                value = default(TValue);
+                value = default;
                 return new CacheDirectivesOutcome(CacheMethodTaken.None);
             }
 
@@ -192,13 +193,32 @@ namespace PubComp.Caching.RedisCaching
             return new CacheDirectivesOutcome(CacheMethodTaken.GetMiss);
         }
 
-        protected virtual void Add<TValue>(String key, TValue value)
+        public TValue Get<TValue>(string key, Func<TValue> getter)
         {
-            var valueTimestamp = ScopedContext<CacheDirectives>.CurrentTimestamp;
-            AddScoped(key, value, valueTimestamp);
+            // ReSharper disable once InlineOutVariableDeclaration
+            TValue value;
+            if (TryGetInner(key, out value))
+                return value;
+
+            var valueTimestamp = DateTimeOffset.UtcNow;
+            value = getter();
+            SetScoped(key, value, valueTimestamp);
+            return value;
         }
 
-        private CacheDirectivesOutcome AddScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
+        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        {
+            var result = await TryGetAsync<TValue>(key).ConfigureAwait(false);
+            if (result.WasFound)
+                return result.Value;
+
+            var valueTimestamp = DateTimeOffset.UtcNow;
+            TValue value = await getter().ConfigureAwait(false);
+            await SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
+            return value;
+        }
+
+        public CacheDirectivesOutcome SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
             var directives = ScopedContext<CacheDirectives>.CurrentContext;
             if (directives.Method.HasFlag(CacheMethod.Set))
@@ -211,13 +231,7 @@ namespace PubComp.Caching.RedisCaching
             return new CacheDirectivesOutcome(CacheMethodTaken.None);
         }
 
-        protected virtual Task AddAsync<TValue>(String key, TValue value)
-        {
-            var valueTimestamp = ScopedContext<CacheDirectives>.CurrentTimestamp;
-            return AddScopedAsync(key, value, valueTimestamp);
-        }
-
-        protected virtual async Task<CacheDirectivesOutcome> AddScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
+        public async Task<CacheDirectivesOutcome> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
             var directives = ScopedContext<CacheDirectives>.CurrentContext;
             if (directives.Method.HasFlag(CacheMethod.Set))
@@ -228,41 +242,6 @@ namespace PubComp.Caching.RedisCaching
             }
 
             return new CacheDirectivesOutcome(CacheMethodTaken.None);
-        }
-
-        public TValue Get<TValue>(string key, Func<TValue> getter)
-        {
-            // ReSharper disable once InlineOutVariableDeclaration
-            TValue value;
-            if (TryGetInner(key, out value))
-                return value;
-
-            var valueTimestamp = DateTimeOffset.UtcNow;
-            value = getter();
-            AddScoped(key, value, valueTimestamp);
-            return value;
-        }
-
-        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
-        {
-            var result = await TryGetAsync<TValue>(key).ConfigureAwait(false);
-            if (result.WasFound)
-                return result.Value;
-
-            var valueTimestamp = DateTimeOffset.UtcNow;
-            TValue value = await getter().ConfigureAwait(false);
-            await AddScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
-            return value;
-        }
-
-        public CacheDirectivesOutcome SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
-        {
-            return AddScoped(key, value, valueTimestamp);
-        }
-
-        public Task<CacheDirectivesOutcome> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
-        {
-            return AddScopedAsync(key, value, valueTimestamp);
         }
 
         public CacheDirectivesOutcome TryGetScoped<TValue>(String key, out TValue value)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Threading.Tasks;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.Notifications;
 using PubComp.Caching.RedisCaching.Converters;
@@ -134,11 +135,34 @@ namespace PubComp.Caching.RedisCaching
             }
         }
 
+        public async Task<bool> TryPublishAsync(string cacheName, string key, CacheItemActionTypes action)
+        {
+            try
+            {
+                await PublishAsync(cacheName, key, action).ConfigureAwait(false);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                log.Warn(ex, $"Failed to publish {action} for {cacheName}.{key}");
+                return false;
+            }
+        }
+
         public void Publish(string cacheName, string key, CacheItemActionTypes action)
         {
             var message = new CacheItemNotification(sender, cacheName, key, action);
             var messageToSend = convert.ToRedis(message);
             GetSubClient(cacheName, null, null).Subscriber.Publish(cacheName, messageToSend, CommandFlags.None);
+        }
+
+        public async Task PublishAsync(string cacheName, string key, CacheItemActionTypes action)
+        {
+            var message = new CacheItemNotification(sender, cacheName, key, action);
+            var messageToSend = convert.ToRedis(message);
+            await GetSubClient(cacheName, null, null).Subscriber
+                .PublishAsync(cacheName, messageToSend, CommandFlags.None)
+                .ConfigureAwait(false);
         }
 
         private void OnCacheUpdated(CacheItemNotification notification)

@@ -10,11 +10,5 @@ namespace PubComp.Caching.Core
 
         CacheDirectivesOutcome TryGetScoped<TValue>(String key, out TValue value);
         Task<TryGetScopedResult<TValue>> TryGetScopedAsync<TValue>(String key);
-
-        void Clear(String key);
-        Task ClearAsync(String key);
-
-        void ClearAll();
-        Task ClearAllAsync();
     }
 }

@@ -87,5 +87,19 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             Assert.AreEqual(1, misses);
             Assert.AreEqual(null, result);
         }
+
+        [TestMethod]
+        public void TestInMemorySerializedCacheUpdated()
+        {
+            var cache = new InMemorySerializedCache("cache1", new TimeSpan(0, 2, 0));
+
+            cache.Set("key", 1);
+            var result = cache.Get("key", ()=> 0);
+            Assert.AreEqual(1, result);
+
+            cache.Set("key", 2);
+            result = cache.Get("key", ()=> 0);
+            Assert.AreEqual(2, result);
+        }
     }
 }
