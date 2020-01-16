@@ -88,7 +88,7 @@
       <HintPath>..\packages\StackExchange.Redis.2.0.505\lib\net461\StackExchange.Redis.dll</HintPath>
     </Reference>
     <Reference Include="Swashbuckle.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cd1bb07a5ac7c7bc, processorArchitecture=MSIL">
-      <HintPath>..\packages\Swashbuckle.Core.5.6.0\lib\net40\Swashbuckle.Core.dll</HintPath>
+      <HintPath>..\packages\Swashbuckle.Core.5.5.3\lib\net40\Swashbuckle.Core.dll</HintPath>
     </Reference>
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Buffers.4.5.0\lib\netstandard2.0\System.Buffers.dll</HintPath>
@@ -258,6 +258,10 @@
     <ProjectReference Include="..\SystemRuntime\SystemRuntime.csproj">
       <Project>{f9ed87dd-4ac8-48d7-baf0-edb8992ec937}</Project>
       <Name>SystemRuntime</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\WebApiExtended.Swashbuckle\WebApiExtended.Swashbuckle.csproj">
+      <Project>{c0f9b07a-f480-424f-af19-dca2fa288318}</Project>
+      <Name>WebApiExtended.Swashbuckle</Name>
     </ProjectReference>
     <ProjectReference Include="..\WebApiExtended\WebApiExtended.csproj">
       <Project>{71227afd-ad23-41f4-a888-795563f58b82}</Project>

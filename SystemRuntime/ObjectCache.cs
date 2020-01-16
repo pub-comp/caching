@@ -151,17 +151,21 @@ namespace PubComp.Caching.SystemRuntime
 
             TValue OnCacheMiss()
             {
-                if (TryGetInner(key, out value)) return value;
-
                 value = getter();
                 Set(key, value);
                 return value;
             }
 
+            TValue OnCacheMissWithLock()
+            {
+                if (TryGetInner(key, out value)) return value;
+                return OnCacheMiss();
+            }
+
             if (Policy.DoNotLock)
                 return OnCacheMiss();
 
-            return this.Locks.LockAndLoad(key, OnCacheMiss);
+            return this.Locks.LockAndLoad(key, OnCacheMissWithLock);
         }
 
         public virtual async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
@@ -171,17 +175,21 @@ namespace PubComp.Caching.SystemRuntime
 
             async Task<TValue> OnCacheMiss()
             {
-                if (TryGetInner(key, out value)) return value;
-
                 value = await getter().ConfigureAwait(false);
                 Set(key, value);
                 return value;
             }
 
+            async Task<TValue> OnCacheMissWithLock()
+            {
+                if (TryGetInner(key, out value)) return value;
+                return await OnCacheMiss().ConfigureAwait(false);
+            }
+
             if (Policy.DoNotLock)
                 return await OnCacheMiss().ConfigureAwait(false);
 
-            return await this.Locks.LockAndLoadAsync(key, OnCacheMiss).ConfigureAwait(false);
+            return await this.Locks.LockAndLoadAsync(key, OnCacheMissWithLock).ConfigureAwait(false);
         }
 
         public void Clear(String key)

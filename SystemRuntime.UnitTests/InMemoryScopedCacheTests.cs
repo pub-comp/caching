@@ -45,7 +45,7 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
 
             using (CacheDirectives.SetScope(CacheMethod.GetOrSet, DateTimeOffset.UtcNow))
             {
-                var resultr = cache.TryGetScoped("key", getter);
+                result = cache.Get("key", getter);
 
                 Assert.AreEqual(1, hits);
                 Assert.AreEqual("1", result);

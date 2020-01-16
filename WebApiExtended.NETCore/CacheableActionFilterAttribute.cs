@@ -39,7 +39,7 @@ namespace PubComp.Caching.WebApiExtended.Net.Core
 
                 var cacheDirectives = JsonConvert.DeserializeObject<CacheDirectives>(cacheDirectivesJson);
                 if (cacheDirectives.Method.HasFlag(CacheMethod.Get) &&
-                    (cacheDirectives.MinimumValueTimestamp == DateTimeOffset.MinValue ||
+                    (cacheDirectives.MinimumValueTimestamp == default ||
                      cacheDirectives.MinimumValueTimestamp > DateTimeOffset.UtcNow))
                 {
                     var newCacheMethod = cacheDirectives.Method ^ CacheMethod.Get;

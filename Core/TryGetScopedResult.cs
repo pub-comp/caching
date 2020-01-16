@@ -2,7 +2,7 @@
 {
     public class TryGetScopedResult<TValue>
     {
-        public CacheDirectivesOutcome Outcome { get; set; }
-        public TValue Value { get; set; }
+        public CacheMethodTaken MethodTaken { get; set; }
+        public ScopedCacheItem<TValue> ScopedCacheItem { get; set; }
     }
 }

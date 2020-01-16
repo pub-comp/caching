@@ -1,18 +1,17 @@
 ﻿using System;
 
-namespace PubComp.Caching.SystemRuntime
+namespace PubComp.Caching.Core
 {
-    public class ScopedCacheItem
+    public class ScopedCacheItem<TValue>
     {
-        public Object Value { get; set; }
-
+        public TValue Value { get; set; }
         public DateTimeOffset ValueTimestamp { get; set; }
 
         public ScopedCacheItem()
         {
         }
 
-        public ScopedCacheItem(Object value, DateTimeOffset valueTimestamp)
+        public ScopedCacheItem(TValue value, DateTimeOffset valueTimestamp)
         {
             this.Value = value;
             this.ValueTimestamp = valueTimestamp;

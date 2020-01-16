@@ -1,8 +1,8 @@
 using PubComp.Caching.Core;
 using PubComp.Caching.WebApiExtended;
+using Swashbuckle.Swagger.Annotations;
 using System.Threading.Tasks;
 using System.Web.Http;
-using Swashbuckle.Swagger.Annotations;
 using TestHost.WebApi.Service;
 
 namespace TestHost.WebApi.Controllers

@@ -31,16 +31,16 @@ namespace PubComp.Caching.Core.UnitTests
             result = cache.Get("key", getter);
             Assert.AreEqual(1, hits);
             Assert.AreEqual(1, result);
-            Assert.AreEqual(2, l1.Misses);
-            Assert.AreEqual(2, l2.Misses);
+            Assert.AreEqual(1, l1.Misses);
+            Assert.AreEqual(1, l2.Misses);
             Assert.AreEqual(0, l1.Hits);
             Assert.AreEqual(0, l2.Hits);
 
             result = cache.Get("key", getter);
             Assert.AreEqual(1, hits);
             Assert.AreEqual(1, result);
-            Assert.AreEqual(2, l1.Misses);
-            Assert.AreEqual(2, l2.Misses);
+            Assert.AreEqual(1, l1.Misses);
+            Assert.AreEqual(1, l2.Misses);
             Assert.AreEqual(1, l1.Hits);
             Assert.AreEqual(0, l2.Hits);
 
@@ -49,16 +49,16 @@ namespace PubComp.Caching.Core.UnitTests
             result = cache.Get("key", getter);
             Assert.AreEqual(1, hits);
             Assert.AreEqual(1, result);
-            Assert.AreEqual(4, l1.Misses);
-            Assert.AreEqual(2, l2.Misses);
+            Assert.AreEqual(2, l1.Misses);
+            Assert.AreEqual(1, l2.Misses);
             Assert.AreEqual(1, l1.Hits);
             Assert.AreEqual(1, l2.Hits);
 
             result = cache.Get("key", getter);
             Assert.AreEqual(1, hits);
             Assert.AreEqual(1, result);
-            Assert.AreEqual(4, l1.Misses);
-            Assert.AreEqual(2, l2.Misses);
+            Assert.AreEqual(2, l1.Misses);
+            Assert.AreEqual(1, l2.Misses);
             Assert.AreEqual(2, l1.Hits);
             Assert.AreEqual(1, l2.Hits);
 
@@ -67,16 +67,16 @@ namespace PubComp.Caching.Core.UnitTests
             result = cache.Get("key", getter);
             Assert.AreEqual(1, hits);
             Assert.AreEqual(1, result);
-            Assert.AreEqual(4, l1.Misses);
-            Assert.AreEqual(2, l2.Misses);
+            Assert.AreEqual(2, l1.Misses);
+            Assert.AreEqual(1, l2.Misses);
             Assert.AreEqual(3, l1.Hits);
             Assert.AreEqual(1, l2.Hits);
 
             result = cache.Get("key", getter);
             Assert.AreEqual(1, hits);
             Assert.AreEqual(1, result);
-            Assert.AreEqual(4, l1.Misses);
-            Assert.AreEqual(2, l2.Misses);
+            Assert.AreEqual(2, l1.Misses);
+            Assert.AreEqual(1, l2.Misses);
             Assert.AreEqual(4, l1.Hits);
             Assert.AreEqual(1, l2.Hits);
 
@@ -86,16 +86,16 @@ namespace PubComp.Caching.Core.UnitTests
             result = cache.Get("key", getter);
             Assert.AreEqual(2, hits);
             Assert.AreEqual(2, result);
-            Assert.AreEqual(6, l1.Misses);
-            Assert.AreEqual(4, l2.Misses);
+            Assert.AreEqual(3, l1.Misses);
+            Assert.AreEqual(2, l2.Misses);
             Assert.AreEqual(4, l1.Hits);
             Assert.AreEqual(1, l2.Hits);
 
             result = cache.Get("key", getter);
             Assert.AreEqual(2, hits);
             Assert.AreEqual(2, result);
-            Assert.AreEqual(6, l1.Misses);
-            Assert.AreEqual(4, l2.Misses);
+            Assert.AreEqual(3, l1.Misses);
+            Assert.AreEqual(2, l2.Misses);
             Assert.AreEqual(5, l1.Hits);
             Assert.AreEqual(1, l2.Hits);
             
@@ -105,16 +105,16 @@ namespace PubComp.Caching.Core.UnitTests
             result = cache.Get("key", getter);
             Assert.AreEqual(3, hits);
             Assert.AreEqual(3, result);
-            Assert.AreEqual(2, l1.Misses);
-            Assert.AreEqual(2, l2.Misses);
+            Assert.AreEqual(1, l1.Misses);
+            Assert.AreEqual(1, l2.Misses);
             Assert.AreEqual(0, l1.Hits);
             Assert.AreEqual(0, l2.Hits);
 
             result = cache.Get("key", getter);
             Assert.AreEqual(3, hits);
             Assert.AreEqual(3, result);
-            Assert.AreEqual(2, l1.Misses);
-            Assert.AreEqual(2, l2.Misses);
+            Assert.AreEqual(1, l1.Misses);
+            Assert.AreEqual(1, l2.Misses);
             Assert.AreEqual(1, l1.Hits);
             Assert.AreEqual(0, l2.Hits);
         }

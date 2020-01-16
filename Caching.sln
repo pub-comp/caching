@@ -49,7 +49,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestHost.WebApi", "WebApi\T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiExtended.NETCore", "WebApiExtended.NETCore\WebApiExtended.NETCore.csproj", "{FAF640A8-7284-4587-8908-560E3BBFB56F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExtended.Swashbuckle", "WebApiExtended.Swashbuckle\WebApiExtended.Swashbuckle.csproj", "{9271FAB6-478A-4CED-9A25-86A1414417B3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExtended.Swashbuckle", "WebApiExtended.Swashbuckle\WebApiExtended.Swashbuckle.csproj", "{C0F9B07A-F480-424F-AF19-DCA2FA288318}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -113,10 +113,10 @@ Global
 		{FAF640A8-7284-4587-8908-560E3BBFB56F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FAF640A8-7284-4587-8908-560E3BBFB56F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FAF640A8-7284-4587-8908-560E3BBFB56F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9271FAB6-478A-4CED-9A25-86A1414417B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9271FAB6-478A-4CED-9A25-86A1414417B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9271FAB6-478A-4CED-9A25-86A1414417B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9271FAB6-478A-4CED-9A25-86A1414417B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0F9B07A-F480-424F-AF19-DCA2FA288318}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0F9B07A-F480-424F-AF19-DCA2FA288318}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0F9B07A-F480-424F-AF19-DCA2FA288318}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0F9B07A-F480-424F-AF19-DCA2FA288318}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -38,8 +38,15 @@ namespace PubComp.Caching.SystemRuntime
 
         protected override bool TryGetInner<TValue>(string key, out TValue value)
         {
-            var outcome = TryGetScoped(key, out value);
-            return outcome.MethodTaken.HasFlag(CacheMethodTaken.Get);
+            var cacheMethodTaken = TryGetScoped(key, out ScopedCacheItem<TValue> scopedCacheItem);
+            if (cacheMethodTaken.HasFlag(CacheMethodTaken.Get))
+            {
+                value = scopedCacheItem.Value;
+                return true;
+            }
+
+            value = default;
+            return false;
         }
 
         public override TValue Get<TValue>(string key, Func<TValue> getter)
@@ -49,85 +56,160 @@ namespace PubComp.Caching.SystemRuntime
 
             TValue OnCacheMiss()
             {
-                if (TryGetInner(key, out value)) return value;
-
                 var valueTimestamp = DateTimeOffset.UtcNow;
                 value = getter();
                 SetScoped(key, value, valueTimestamp);
                 return value;
             }
 
+            TValue OnCacheMissWithLock()
+            {
+                if (TryGetInner(key, out value)) return value;
+                return OnCacheMiss();
+            }
+
             if (Policy.DoNotLock)
                 return OnCacheMiss();
 
-            return this.Locks.LockAndLoad(key, OnCacheMiss);
+            return this.Locks.LockAndLoad(key, OnCacheMissWithLock);
+        }
+
+        public ScopedCacheItem<TValue> GetScoped<TValue>(string key, Func<ScopedCacheItem<TValue>> getter)
+        {
+            var cacheMethodTaken = TryGetScoped<TValue>(key, out var scopedCacheItem);
+            if (cacheMethodTaken.HasFlag(CacheMethodTaken.Get))
+            {
+                return new TryGetScopedResult<TValue>
+                {
+                    ScopedCacheItem = scopedCacheItem,
+                    MethodTaken = CacheMethodTaken.Get
+                };
+            }
+
+            TryGetScopedResult<TValue> OnCacheMiss()
+            {
+                var getterScopedResult = getter(); 
+                var cacheMethodTakenOnMiss = SetScoped(key, getterScopedResult);
+                return new TryGetScopedResult<TValue>
+                {
+                    ScopedCacheItem = getterScopedResult,
+                    MethodTaken = cacheMethodTakenOnMiss | CacheMethodTaken.GetMiss
+                };
+            }
+
+            TryGetScopedResult<TValue> OnCacheMissWithLock()
+            {
+                var cacheMethodTakenOnMiss = TryGetScoped<TValue>(key, out var scopedCacheValueOnMiss);
+                if (cacheMethodTakenOnMiss.HasFlag(CacheMethodTaken.Get))
+                {
+                    return new TryGetScopedResult<TValue>
+                    {
+                        ScopedCacheItem = scopedCacheValueOnMiss,
+                        MethodTaken = CacheMethodTaken.Get
+                    };
+                }
+
+                return OnCacheMiss();
+            }
+
+            if (Policy.DoNotLock)
+                return OnCacheMiss();
+
+            return this.Locks.LockAndLoad(key, OnCacheMissWithLock);
         }
 
         public override async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
-            if (TryGetInner(key, out TValue value))
-                return value;
-
-            async Task<TValue> OnCacheMiss()
+            async Task<ScopedCacheItem<TValue>> GetterWrapper()
             {
-                if (TryGetInner(key, out value)) return value;
-
                 var valueTimestamp = DateTimeOffset.UtcNow;
-                value = await getter().ConfigureAwait(false);
-                SetScoped(key, value, valueTimestamp);
-                return value;
+                var value = await getter().ConfigureAwait(false);
+                return new ScopedCacheItem<TValue>
+                {
+                    Value = value,
+                    ValueTimestamp = valueTimestamp
+                };
+            }
+
+            var scopedCacheItem = await GetScopedAsync(key, GetterWrapper).ConfigureAwait(false);
+            return scopedCacheItem.Value;
+        }
+
+        public async Task<ScopedCacheItem<TValue>> GetScopedAsync<TValue>(string key, Func<Task<ScopedCacheItem<TValue>>> getter)
+        {
+            var cacheMethodTaken = TryGetScoped(key, out ScopedCacheItem<TValue> scopedCacheItem);
+            if (cacheMethodTaken.HasFlag(CacheMethodTaken.Get))
+                return scopedCacheItem;
+
+            async Task<ScopedCacheItem<TValue>> OnCacheMiss()
+            {
+                var getterScopedCacheItem = await getter().ConfigureAwait(false);
+                SetScoped(key, getterScopedCacheItem);
+                return getterScopedCacheItem;
+            }
+
+            async Task<ScopedCacheItem<TValue>> OnCacheMissWithLock()
+            {
+                var cacheMethodTakenOnMiss = TryGetScoped(key, out ScopedCacheItem<TValue> scopedCacheValueOnMiss);
+                if (cacheMethodTakenOnMiss.HasFlag(CacheMethodTaken.Get)) 
+                    return scopedCacheValueOnMiss;
+                return await OnCacheMiss().ConfigureAwait(false);
             }
 
             if (Policy.DoNotLock)
                 return await OnCacheMiss().ConfigureAwait(false);
 
-            return await this.Locks.LockAndLoadAsync(key, OnCacheMiss).ConfigureAwait(false);
+            return await this.Locks.LockAndLoadAsync(key, OnCacheMissWithLock).ConfigureAwait(false);
         }
 
-        public CacheDirectivesOutcome SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
+        public CacheMethodTaken SetScoped<TValue>(String key, ScopedCacheItem<TValue> scopedCacheItem)
+            => SetScoped(key, scopedCacheItem.Value, scopedCacheItem.ValueTimestamp);
+
+        public CacheMethodTaken SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
             var directives = ScopedContext<CacheDirectives>.CurrentContext;
             if (directives.Method.HasFlag(CacheMethod.Set))
             {
-                InnerCache.Set(key, new ScopedCacheItem(value, valueTimestamp), GetRuntimePolicy(), regionName: null);
-                return new CacheDirectivesOutcome(CacheMethodTaken.Set, valueTimestamp);
+                InnerCache.Set(key, new ScopedCacheItem<TValue>(value, valueTimestamp), GetRuntimePolicy(), regionName: null);
+                return CacheMethodTaken.Set;
             }
 
-            return new CacheDirectivesOutcome(CacheMethodTaken.None);
+            return CacheMethodTaken.None;
         }
 
-        public Task<CacheDirectivesOutcome> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
+        public Task<CacheMethodTaken> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
-            var outcome = SetScoped(key, value, valueTimestamp);
-            return Task.FromResult(outcome);
+            var cacheMethodTaken = SetScoped(key, value, valueTimestamp);
+            return Task.FromResult(cacheMethodTaken);
         }
 
-        public CacheDirectivesOutcome TryGetScoped<TValue>(String key, out TValue value)
+        public CacheMethodTaken TryGetScoped<TValue>(String key, out ScopedCacheItem<TValue> value)
         {
             var directives = ScopedContext<CacheDirectives>.CurrentContext;
             if (!directives.Method.HasFlag(CacheMethod.Get))
             {
                 value = default;
-                return new CacheDirectivesOutcome(CacheMethodTaken.None);
+                return CacheMethodTaken.None;
             }
 
-            if (InnerCache.Get(key, regionName: null) is ScopedCacheItem item
-                && item.ValueTimestamp >= directives.MinimumValueTimestamp)
+            if (InnerCache.Get(key, regionName: null) is ScopedCacheItem<TValue> scopedCacheItem
+                && scopedCacheItem.ValueTimestamp >= directives.MinimumValueTimestamp)
             {
-                value = item.Value is TValue itemValue ? itemValue : default;
-                return new CacheDirectivesOutcome(CacheMethodTaken.Get);
+                value = scopedCacheItem;
+                return CacheMethodTaken.Get;
             }
 
             value = default;
-            return new CacheDirectivesOutcome(CacheMethodTaken.GetMiss);
+            return CacheMethodTaken.GetMiss;
         }
 
         public Task<TryGetScopedResult<TValue>> TryGetScopedAsync<TValue>(String key)
         {
+            var cacheMethodTaken = TryGetScoped<TValue>(key, out var scopedCacheItem);
             return Task.FromResult(new TryGetScopedResult<TValue>
             {
-                Outcome = TryGetScoped<TValue>(key, out var value),
-                Value = value
+                ScopedCacheItem = scopedCacheItem,
+                MethodTaken = cacheMethodTaken
             });
         }
     }

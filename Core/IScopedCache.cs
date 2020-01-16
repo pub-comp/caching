@@ -5,10 +5,13 @@ namespace PubComp.Caching.Core
 {
     public interface IScopedCache : ICache
     {
-        CacheDirectivesOutcome SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp);
-        Task<CacheDirectivesOutcome> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp);
+        CacheMethodTaken SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp);
+        Task<CacheMethodTaken> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp);
 
-        CacheDirectivesOutcome TryGetScoped<TValue>(String key, out TValue value);
+        ScopedCacheItem<TValue> GetScoped<TValue>(string key, Func<ScopedCacheItem<TValue>> getter);
+        Task<ScopedCacheItem<TValue>> GetScopedAsync<TValue>(string key, Func<Task<ScopedCacheItem<TValue>>> getter);
+
+        CacheMethodTaken TryGetScoped<TValue>(String key, out ScopedCacheItem<TValue> value);
         Task<TryGetScopedResult<TValue>> TryGetScopedAsync<TValue>(String key);
     }
 }
