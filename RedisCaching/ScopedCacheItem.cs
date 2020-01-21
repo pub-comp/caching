@@ -2,16 +2,12 @@
 
 namespace PubComp.Caching.RedisCaching
 {
-    public class ScopedCacheItem<TValue>
+    public class ScopedCacheItem<TValue> : Core.ScopedValue<TValue>
     {
         private const string CacheNamePrefix = "sc=";
         private const string KeyPrefix = ":k=";
 
         public String Id { get; set; }
-
-        public TValue Value { get; set; }
-
-        public DateTimeOffset ValueTimestamp { get; set; }
 
         public TimeSpan? ExpireIn { get; set; }
 

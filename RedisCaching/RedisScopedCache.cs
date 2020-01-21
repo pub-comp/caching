@@ -19,7 +19,7 @@ namespace PubComp.Caching.RedisCaching
         public RedisScopedCache(String name, RedisCachePolicy policy)
         {
             this.Name = name;
-            
+
             var log = NLog.LogManager.GetLogger(typeof(RedisCache).FullName);
             log.Debug("Init Cache {0}", this.Name);
 
@@ -116,11 +116,11 @@ namespace PubComp.Caching.RedisCaching
 
         public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
         {
-            var outcome = await TryGetScopedInnerAsync<TValue>(key).ConfigureAwait(false);
+            var result = await TryGetScopedInnerAsync<TValue>(key).ConfigureAwait(false);
             return new TryGetResult<TValue>
             {
-                WasFound = outcome.Outcome.MethodTaken.HasFlag(CacheMethodTaken.Get),
-                Value = outcome.Value
+                WasFound = result.MethodTaken.HasFlag(CacheMethodTaken.Get),
+                Value = result.ScopedValue.Value
             };
         }
 
@@ -131,26 +131,26 @@ namespace PubComp.Caching.RedisCaching
             {
                 return new TryGetScopedResult<TValue>
                 {
-                    Value = default,
-                    Outcome = new CacheDirectivesOutcome(CacheMethodTaken.None)
+                    ScopedValue = default,
+                    MethodTaken = CacheMethodTaken.None
                 };
             }
 
-            var cacheItem = await InnerCache.GetItemAsync<TValue>(this.Name, key).ConfigureAwait(false);
-            if (cacheItem != null && cacheItem.ValueTimestamp >= directives.MinimumValueTimestamp)
+            var scopedCacheItem = await InnerCache.GetItemAsync<TValue>(this.Name, key).ConfigureAwait(false);
+            if (scopedCacheItem != null && scopedCacheItem.ValueTimestamp >= directives.MinimumValueTimestamp)
             {
-                await ResetExpirationTimeAsync(cacheItem).ConfigureAwait(false);
+                await ResetExpirationTimeAsync(scopedCacheItem).ConfigureAwait(false);
                 return new TryGetScopedResult<TValue>
                 {
-                    Value = cacheItem.Value,
-                    Outcome = new CacheDirectivesOutcome(CacheMethodTaken.Get)
+                    ScopedValue = scopedCacheItem,
+                    MethodTaken = CacheMethodTaken.Get
                 };
             }
 
             return new TryGetScopedResult<TValue>
             {
-                Value = default,
-                Outcome = new CacheDirectivesOutcome(CacheMethodTaken.GetMiss)
+                ScopedValue = default,
+                MethodTaken = CacheMethodTaken.GetMiss
             };
         }
 
@@ -168,17 +168,17 @@ namespace PubComp.Caching.RedisCaching
 
         protected virtual bool TryGetInner<TValue>(String key, out TValue value)
         {
-            var outcome = TryGetScopedInner(key, out value);
-            return outcome.MethodTaken.HasFlag(CacheMethodTaken.Get);
+            var cacheMethodTaken = TryGetScopedInner(key, out value);
+            return cacheMethodTaken.HasFlag(CacheMethodTaken.Get);
         }
 
-        private CacheDirectivesOutcome TryGetScopedInner<TValue>(String key, out TValue value)
+        private CacheMethodTaken TryGetScopedInner<TValue>(String key, out TValue value)
         {
             var directives = ScopedContext<CacheDirectives>.CurrentContext;
             if (!directives.Method.HasFlag(CacheMethod.Get))
             {
                 value = default;
-                return new CacheDirectivesOutcome(CacheMethodTaken.None);
+                return CacheMethodTaken.None;
             }
 
             var cacheItem = InnerCache.GetItem<TValue>(this.Name, key);
@@ -186,11 +186,11 @@ namespace PubComp.Caching.RedisCaching
             {
                 value = cacheItem.Value;
                 ResetExpirationTime(cacheItem);
-                return new CacheDirectivesOutcome(CacheMethodTaken.Get);
+                return CacheMethodTaken.Get;
             }
 
             value = default;
-            return new CacheDirectivesOutcome(CacheMethodTaken.GetMiss);
+            return CacheMethodTaken.GetMiss;
         }
 
         public TValue Get<TValue>(string key, Func<TValue> getter)
@@ -203,7 +203,7 @@ namespace PubComp.Caching.RedisCaching
             SetScoped(key, value, valueTimestamp);
             return value;
         }
-
+        
         public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
             var result = await TryGetAsync<TValue>(key).ConfigureAwait(false);
@@ -216,33 +216,53 @@ namespace PubComp.Caching.RedisCaching
             return value;
         }
 
-        public CacheDirectivesOutcome SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
+        public GetScopedResult<TValue> GetScoped<TValue>(string key, Func<ScopedValue<TValue>> getter)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<GetScopedResult<TValue>> GetScopedAsync<TValue>(string key, Func<Task<ScopedValue<TValue>>> getter)
+        {
+            var result = await TryGetScopedAsync<TValue>(key).ConfigureAwait(false);
+            if (result.MethodTaken.HasFlag(CacheMethodTaken.Get))
+                return result;
+
+            var scopedValue = await getter().ConfigureAwait(false);
+            var cacheMethodTaken = await SetScopedAsync(key, scopedValue.Value, scopedValue.ValueTimestamp).ConfigureAwait(false);
+            return new GetScopedResult<TValue>
+            {
+                ScopedValue = scopedValue,
+                MethodTaken = cacheMethodTaken
+            };
+        }
+
+        public CacheMethodTaken SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
             var directives = ScopedContext<CacheDirectives>.CurrentContext;
             if (directives.Method.HasFlag(CacheMethod.Set))
             {
                 var newItem = CreateCacheItem(key, value, valueTimestamp);
                 InnerCache.SetItem(newItem);
-                return new CacheDirectivesOutcome(CacheMethodTaken.Set, valueTimestamp);
+                return CacheMethodTaken.Set;
             }
 
-            return new CacheDirectivesOutcome(CacheMethodTaken.None);
+            return CacheMethodTaken.None;
         }
 
-        public async Task<CacheDirectivesOutcome> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
+        public async Task<CacheMethodTaken> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
             var directives = ScopedContext<CacheDirectives>.CurrentContext;
             if (directives.Method.HasFlag(CacheMethod.Set))
             {
                 var newItem = CreateCacheItem(key, value, valueTimestamp);
                 await InnerCache.SetItemAsync(newItem).ConfigureAwait(false);
-                return new CacheDirectivesOutcome(CacheMethodTaken.Set, valueTimestamp);
+                return CacheMethodTaken.Set;
             }
 
-            return new CacheDirectivesOutcome(CacheMethodTaken.None);
+            return CacheMethodTaken.None;
         }
 
-        public CacheDirectivesOutcome TryGetScoped<TValue>(String key, out TValue value)
+        public CacheMethodTaken TryGetScoped<TValue>(String key, out ScopedValue<TValue> value)
         {
             return TryGetScopedInner(key, out value);
         }

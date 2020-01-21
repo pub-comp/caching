@@ -1,8 +1,13 @@
 ﻿namespace PubComp.Caching.Core
 {
-    public class TryGetScopedResult<TValue>
+    public class TryGetScopedResult<TValue> : GetScopedResult<TValue>
     {
-        public CacheMethodTaken MethodTaken { get; set; }
-        public ScopedCacheItem<TValue> ScopedCacheItem { get; set; }
+        public bool WasFound
+        {
+            get
+            {
+                return MethodTaken.HasFlag(CacheMethodTaken.Get);
+            }
+        }
     }
 }
