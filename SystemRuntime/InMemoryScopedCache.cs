@@ -93,7 +93,7 @@ namespace PubComp.Caching.SystemRuntime
                 return new GetScopedResult<TValue>
                 {
                     ScopedValue = getterScopedResult,
-                    MethodTaken = cacheMethodTakenOnMiss | CacheMethodTaken.GetMiss
+                    MethodTaken = cacheMethodTakenOnMiss | cacheMethodTaken
                 };
             }
 
@@ -141,18 +141,18 @@ namespace PubComp.Caching.SystemRuntime
             if (cacheMethodTaken.HasFlag(CacheMethodTaken.Get))
                 return new GetScopedResult<TValue>
                 {
-                    MethodTaken = cacheMethodTaken,
-                    ScopedValue = scopedValue
+                    ScopedValue = scopedValue,
+                    MethodTaken = cacheMethodTaken
                 };
 
             async Task<GetScopedResult<TValue>> OnCacheMiss()
             {
                 var scopedValueOnMiss = await getter().ConfigureAwait(false);
-                var cacheMethodTakenOnMiss = SetScoped(key, scopedValueOnMiss.Value, scopedValueOnMiss.ValueTimestamp);
+                cacheMethodTaken |= SetScoped(key, scopedValueOnMiss.Value, scopedValueOnMiss.ValueTimestamp);
                 return new GetScopedResult<TValue>
                 {
-                    MethodTaken = cacheMethodTakenOnMiss,
-                    ScopedValue = scopedValueOnMiss
+                    ScopedValue = scopedValueOnMiss,
+                    MethodTaken = cacheMethodTaken
                 };
             }
 
@@ -162,8 +162,8 @@ namespace PubComp.Caching.SystemRuntime
                 if (cacheMethodTakenOnMiss.HasFlag(CacheMethodTaken.Get)) 
                     return new GetScopedResult<TValue>
                     {
-                        MethodTaken = cacheMethodTakenOnMiss,
-                        ScopedValue = scopedValueOnMiss
+                        ScopedValue = scopedValueOnMiss,
+                        MethodTaken = cacheMethodTakenOnMiss
                     };
                 return await OnCacheMiss().ConfigureAwait(false);
             }

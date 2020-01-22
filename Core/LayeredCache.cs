@@ -25,9 +25,9 @@ namespace PubComp.Caching.Core
 
             if (policy?.InvalidateLevel1OnLevel2Update ?? false)
             {
-                level1Notifier = CacheManager.GetNotifier(policy.Level1CacheName);
+                level1Notifier = CacheManager.GetAssociatedNotifier(this.level1);
                 if (level1Notifier == null)
-                    throw new ApplicationException("SyncProvider is not registered for automatic invalidation policy: level1CacheName=" + policy.Level1CacheName);
+                    throw new ApplicationException("InvalidateLevel1OnLevel2Update requires level1 cache to have SyncProvider defined in policy: level1CacheName=" + policy.Level1CacheName);
             }
         }
 
@@ -156,20 +156,16 @@ namespace PubComp.Caching.Core
 
         public TValue Get<TValue>(String key, Func<TValue> getter)
         {
-            if (this.level1.TryGet(key, out TValue value))
-                return value;
+            var getterHasBeenInvoked = false;
+            var value =
+                this.level1.Get(key, () =>
+                    this.level2.Get(key, () =>
+                    {
+                        getterHasBeenInvoked = true;
+                        return getter();
+                    }));
 
-            if (this.level2.TryGet(key, out value))
-            {
-                this.level1.Set(key, value);
-                return value;
-            }
-
-            value = getter();
-
-            this.level1.Set(key, value);
-            this.level2.Set(key, value);
-            if (this.policy.InvalidateLevel1OnLevel2Update)
+            if (getterHasBeenInvoked && this.policy.InvalidateLevel1OnLevel2Update)
                 this.level1Notifier.Publish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
 
             return value;
@@ -177,24 +173,17 @@ namespace PubComp.Caching.Core
 
         public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
-            var level1Result = await this.level1
-                .TryGetAsync<TValue>(key)
-                .ConfigureAwait(false);
-            if (level1Result.WasFound)
-                return level1Result.Value;
+            var getterHasBeenInvoked = false;
+            var value =
+                await this.level1.GetAsync(key, async () =>
+                        await this.level2.GetAsync(key, async () =>
+                        {
+                            getterHasBeenInvoked = true;
+                            return await getter().ConfigureAwait(false);
+                        }).ConfigureAwait(false))
+                    .ConfigureAwait(false);
 
-            var level2Result = await this.level2.TryGetAsync<TValue>(key).ConfigureAwait(false);
-            if (level2Result.WasFound)
-            {
-                await this.level1.SetAsync(key,level2Result.Value).ConfigureAwait(false);
-                return level2Result.Value;
-            }
-
-            var value = await getter().ConfigureAwait(false);
-
-            await this.level1.SetAsync(key, value).ConfigureAwait(false);
-            await this.level2.SetAsync(key, value).ConfigureAwait(false);
-            if (this.policy.InvalidateLevel1OnLevel2Update)
+            if (getterHasBeenInvoked && this.policy.InvalidateLevel1OnLevel2Update)
                 await this.level1Notifier
                     .PublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated)
                     .ConfigureAwait(false);

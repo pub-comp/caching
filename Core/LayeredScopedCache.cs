@@ -148,7 +148,7 @@ namespace PubComp.Caching.Core
                 return level1Result;
 
             var level2Result = await this.level2.TryGetScopedAsync<TValue>(key).ConfigureAwait(false);
-            if (level2Result.MethodTaken.HasFlag(CacheMethod.Get))
+            if (level2Result.MethodTaken.HasFlag(CacheMethodTaken.Get))
             {
                 await this.level1
                     .SetScopedAsync(key, level2Result.ScopedValue.Value, level2Result.ScopedValue.ValueTimestamp)

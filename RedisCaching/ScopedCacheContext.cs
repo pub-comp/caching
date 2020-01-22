@@ -41,7 +41,15 @@ namespace PubComp.Caching.RedisCaching
         {
             TimeSpan? expiry = null;
             if (scopedCacheItem.ExpireIn.HasValue)
+            {
                 expiry = scopedCacheItem.ExpireIn;
+
+                if (expiry.Value.TotalSeconds <= 0)
+                {
+                    client.Database.KeyDelete(scopedCacheItem.Id, CommandFlags.None);
+                    return;
+                }
+            }
 
             client.Database.StringSet(scopedCacheItem.Id, convert.ToScopedRedis(scopedCacheItem), expiry, When.Always, CommandFlags.None);
         }
@@ -50,7 +58,12 @@ namespace PubComp.Caching.RedisCaching
         {
             TimeSpan? expiry = null;
             if (scopedCacheItem.ExpireIn.HasValue)
+            {
                 expiry = scopedCacheItem.ExpireIn;
+
+                if (expiry.Value.TotalSeconds <= 0)
+                    return client.Database.KeyDeleteAsync(scopedCacheItem.Id, CommandFlags.None);
+            }
 
             return client.Database
                 .StringSetAsync(scopedCacheItem.Id, convert.ToScopedRedis(scopedCacheItem), expiry, When.Always, CommandFlags.None);

@@ -12,9 +12,10 @@ namespace PubComp.Caching.DemoSynchronizedClient
     {
         const string NotifierName = "redisNotifier";
         const string LocalCacheWithNotifier = "MyApp.LocalCacheWithNotifier";
-        const string LocalCacheWithNotifierAndAutomaticInvalidationOnUpdate = "MyApp.LocalCacheWithNotifierAndAutomaticInvalidationOnUpdate";
+        
+        const string LayeredCache = "MyApp.LayeredCache";
+        const string LayeredCacheWithAutomaticInvalidation = "MyApp.LayeredCacheWithAutomaticInvalidation";
 
-        private static readonly string connectionString = @"127.0.0.1:6379,serviceName=mymaster";
         private static object config;
 
         static void Main(string[] args)
@@ -57,22 +58,26 @@ namespace PubComp.Caching.DemoSynchronizedClient
 
             if (args.Any(a => a.ToLowerInvariant() == "general-invalidation"))
             {
+                var connectionString = CacheManager.GetConnectionString("localRedis").ConnectionString;
                 using (var connection = ConnectionMultiplexer.Connect(connectionString))
                     connection.GetSubscriber().Publish("+general-invalidation", "test");
             }
 
-            if (args.Any(a=> a.ToLowerInvariant() == "invalidate-on-update"))
+            if (args.Any(a => a.ToLowerInvariant() == "invalidate-on-update"))
             {
-                Console.WriteLine("Implicitly updating keyB2 InMemory with SyncProvider.InvalidateOnUpdate = true");
+                Console.WriteLine("invalidate-on-update using LayeredCache.InvalidateLevel1OnLevel2Update");
 
-                var cacheWithNotifierAndAutomaticInvalidationOnUpdate = CacheManager.GetCache(LocalCacheWithNotifierAndAutomaticInvalidationOnUpdate);
-                cache.Set("keyA1", "valueA1");
-                cache.Set("keyA2", "valueA2");
-                cacheWithNotifierAndAutomaticInvalidationOnUpdate.Set("keyB1", "valueB1");
-                cacheWithNotifierAndAutomaticInvalidationOnUpdate.Set("keyB2", "valueB2");
+                var layeredCache = CacheManager.GetCache(LayeredCache);
+                var layeredCacheWithAutomaticInvalidation = CacheManager.GetCache(LayeredCacheWithAutomaticInvalidation);
 
-                cache.Set("keyA2", "valueA1.2");
-                cacheWithNotifierAndAutomaticInvalidationOnUpdate.Set("keyB2", "valueB2.2");
+                if (layeredCache.TryGet("keyA2", out string a2) && a2 == "valueA2" &&
+                    layeredCacheWithAutomaticInvalidation.TryGet("keyB2", out string b2) && b2 == "valueB2")
+                {
+                    layeredCache.Set("keyA2", "demoProgram.valueA2");
+                    layeredCacheWithAutomaticInvalidation.Set("keyB2", "demoProgram.valueB2");
+                }
+                else
+                    Console.WriteLine("invalid!");
             }
 
             // Otherwise clear all

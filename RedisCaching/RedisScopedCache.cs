@@ -19,8 +19,8 @@ namespace PubComp.Caching.RedisCaching
         public RedisScopedCache(String name, RedisCachePolicy policy)
         {
             this.Name = name;
+            var log = NLog.LogManager.GetLogger(typeof(RedisScopedCache).FullName);
 
-            var log = NLog.LogManager.GetLogger(typeof(RedisCache).FullName);
             log.Debug("Init Cache {0}", this.Name);
 
             if (policy == null)
@@ -31,8 +31,8 @@ namespace PubComp.Caching.RedisCaching
 
             if (string.IsNullOrEmpty(policy.ConnectionName) && string.IsNullOrEmpty(policy.ConnectionString))
             {
-                    throw new ArgumentException(
-                    $"{nameof(policy.ConnectionName)} is undefined", $"{nameof(policy)}.{nameof(policy.ConnectionName)}");
+                throw new ArgumentException(
+                $"{nameof(policy.ConnectionName)} is undefined", $"{nameof(policy)}.{nameof(policy.ConnectionName)}");
             }
 
             if (policy.SlidingExpiration.HasValue && policy.SlidingExpiration.Value < TimeSpan.MaxValue)
@@ -117,11 +117,9 @@ namespace PubComp.Caching.RedisCaching
         public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
         {
             var result = await TryGetScopedInnerAsync<TValue>(key).ConfigureAwait(false);
-            return new TryGetResult<TValue>
-            {
-                WasFound = result.MethodTaken.HasFlag(CacheMethodTaken.Get),
-                Value = result.ScopedValue.Value
-            };
+            return result.MethodTaken.HasFlag(CacheMethodTaken.Get)
+                ? new TryGetResult<TValue> { WasFound = true, Value = result.ScopedValue.Value }
+                : new TryGetResult<TValue> { WasFound = false, Value = default };
         }
 
         private async Task<TryGetScopedResult<TValue>> TryGetScopedInnerAsync<TValue>(String key)
@@ -203,7 +201,7 @@ namespace PubComp.Caching.RedisCaching
             SetScoped(key, value, valueTimestamp);
             return value;
         }
-        
+
         public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
             var result = await TryGetAsync<TValue>(key).ConfigureAwait(false);
@@ -218,21 +216,35 @@ namespace PubComp.Caching.RedisCaching
 
         public GetScopedResult<TValue> GetScoped<TValue>(string key, Func<ScopedValue<TValue>> getter)
         {
-            throw new NotImplementedException();
+            var cacheMethodTaken = TryGetScoped<TValue>(key, out var scopedValue);
+            if (cacheMethodTaken.HasFlag(CacheMethodTaken.Get))
+                return new GetScopedResult<TValue>
+                {
+                    ScopedValue = scopedValue,
+                    MethodTaken = cacheMethodTaken
+                };
+
+            scopedValue = getter();
+            cacheMethodTaken |= SetScoped(key, scopedValue.Value, scopedValue.ValueTimestamp);
+            return new GetScopedResult<TValue>
+            {
+                ScopedValue = scopedValue,
+                MethodTaken = cacheMethodTaken
+            };
         }
 
         public async Task<GetScopedResult<TValue>> GetScopedAsync<TValue>(string key, Func<Task<ScopedValue<TValue>>> getter)
         {
-            var result = await TryGetScopedAsync<TValue>(key).ConfigureAwait(false);
-            if (result.MethodTaken.HasFlag(CacheMethodTaken.Get))
-                return result;
+            var getResult = await TryGetScopedAsync<TValue>(key).ConfigureAwait(false);
+            if (getResult.MethodTaken.HasFlag(CacheMethodTaken.Get))
+                return getResult;
 
             var scopedValue = await getter().ConfigureAwait(false);
             var cacheMethodTaken = await SetScopedAsync(key, scopedValue.Value, scopedValue.ValueTimestamp).ConfigureAwait(false);
             return new GetScopedResult<TValue>
             {
                 ScopedValue = scopedValue,
-                MethodTaken = cacheMethodTaken
+                MethodTaken = cacheMethodTaken | getResult.MethodTaken
             };
         }
 
