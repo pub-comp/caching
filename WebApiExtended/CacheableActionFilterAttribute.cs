@@ -25,15 +25,15 @@ namespace PubComp.Caching.WebApiExtended
             CancellationToken cancellationToken,
             Func<Task<HttpResponseMessage>> continuation)
         {
-            var definedCacheDirectives = GetCacheDirectives(actionContext);
-            using (ScopedContext<CacheDirectives>.CreateNewScope(definedCacheDirectives))
+            var requestedCacheDirectives = GetCacheDirectivesFromRequest(actionContext);
+            using (CacheDirectives.SetScope(requestedCacheDirectives))
             {
                 var response = await continuation().ConfigureAwait(false);
                 return response;
             }
         }
 
-        private CacheDirectives GetCacheDirectives(HttpActionContext actionContext)
+        private CacheDirectives GetCacheDirectivesFromRequest(HttpActionContext actionContext)
         {
             var cacheDirectivesJson = actionContext.Request.Headers
                 .FirstOrDefault(x => x.Key == CacheDirectives.HeadersKey)

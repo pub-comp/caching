@@ -19,9 +19,18 @@ namespace PubComp.Caching.Core
             this.MinimumValueTimestamp = minimumValueTimestamp;
         }
 
+        public static IDisposable SetScope(CacheDirectives cacheDirectives)
+        {
+            var scopeContext = new CacheDirectives(cacheDirectives.Method, cacheDirectives.MinimumValueTimestamp);
+            return ScopedContext<CacheDirectives>.CreateNewScope(scopeContext);
+        }
+
         public static IDisposable SetScope(CacheMethod method, DateTimeOffset minimumValueTimestamp)
         {
             return ScopedContext<CacheDirectives>.CreateNewScope(new CacheDirectives(method, minimumValueTimestamp));
         }
+
+        public static CacheDirectives CurrentScope => ScopedContext<CacheDirectives>.CurrentContext;
+        public static DateTimeOffset CurrentScopeTimestamp => ScopedContext<CacheDirectives>.CurrentTimestamp;
     }
 }

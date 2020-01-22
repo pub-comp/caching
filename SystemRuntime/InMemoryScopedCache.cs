@@ -32,7 +32,7 @@ namespace PubComp.Caching.SystemRuntime
 
         protected override void Add<TValue>(string key, TValue value)
         {
-            var valueTimestamp = ScopedContext<CacheDirectives>.CurrentTimestamp;
+            var valueTimestamp = CacheDirectives.CurrentScopeTimestamp;
             SetScoped(key, value, valueTimestamp);
         }
 
@@ -179,7 +179,7 @@ namespace PubComp.Caching.SystemRuntime
 
         public CacheMethodTaken SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
-            var directives = ScopedContext<CacheDirectives>.CurrentContext;
+            var directives = CacheDirectives.CurrentScope;
             if (directives.Method.HasFlag(CacheMethod.Set))
             {
                 InnerCache.Set(key, new ScopedValue<TValue>(value, valueTimestamp), GetRuntimePolicy(), regionName: null);
@@ -197,7 +197,7 @@ namespace PubComp.Caching.SystemRuntime
 
         public CacheMethodTaken TryGetScoped<TValue>(String key, out ScopedValue<TValue> value)
         {
-            var directives = ScopedContext<CacheDirectives>.CurrentContext;
+            var directives = CacheDirectives.CurrentScope;
             if (!directives.Method.HasFlag(CacheMethod.Get))
             {
                 value = default;

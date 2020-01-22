@@ -116,7 +116,7 @@ namespace PubComp.Caching.Core
 
         public bool TryGet<TValue>(String key, out TValue value)
         {
-            var directives = ScopedContext<CacheDirectives>.CurrentContext;
+            var directives = CacheDirectives.CurrentScope;
             if (!directives.Method.HasFlag(CacheMethod.Get))
             {
                 value = default;
@@ -139,7 +139,7 @@ namespace PubComp.Caching.Core
 
         public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(String key)
         {
-            var directives = ScopedContext<CacheDirectives>.CurrentContext;
+            var directives = CacheDirectives.CurrentScope;
             if (!directives.Method.HasFlag(CacheMethod.Get))
                 return new TryGetResult<TValue> { WasFound = false };
 
@@ -165,13 +165,13 @@ namespace PubComp.Caching.Core
 
         public void Set<TValue>(String key, TValue value)
         {
-            var valueTimestamp = ScopedContext<CacheDirectives>.CurrentTimestamp;
+            var valueTimestamp = CacheDirectives.CurrentScopeTimestamp;
             SetScoped(key, value, valueTimestamp);
         }
 
         public async Task SetAsync<TValue>(String key, TValue value)
         {
-            var valueTimestamp = ScopedContext<CacheDirectives>.CurrentTimestamp;
+            var valueTimestamp = CacheDirectives.CurrentScopeTimestamp;
             await SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
         }
 

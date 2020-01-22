@@ -126,7 +126,7 @@ namespace PubComp.Caching.RedisCaching
 
         private async Task<TryGetScopedResult<TValue>> TryGetScopedInnerAsync<TValue>(String key)
         {
-            var directives = ScopedContext<CacheDirectives>.CurrentContext;
+            var directives = CacheDirectives.CurrentScope;
             if (!directives.Method.HasFlag(CacheMethod.Get))
             {
                 return new TryGetScopedResult<TValue>
@@ -156,13 +156,13 @@ namespace PubComp.Caching.RedisCaching
 
         public void Set<TValue>(string key, TValue value)
         {
-            var valueTimestamp = ScopedContext<CacheDirectives>.CurrentTimestamp;
+            var valueTimestamp = CacheDirectives.CurrentScopeTimestamp;
             SetScoped(key, value, valueTimestamp);
         }
 
         public Task SetAsync<TValue>(string key, TValue value)
         {
-            var valueTimestamp = ScopedContext<CacheDirectives>.CurrentTimestamp;
+            var valueTimestamp = CacheDirectives.CurrentScopeTimestamp;
             return SetScopedAsync(key, value, valueTimestamp);
         }
 
@@ -174,7 +174,7 @@ namespace PubComp.Caching.RedisCaching
 
         private CacheMethodTaken TryGetScopedInner<TValue>(String key, out TValue value)
         {
-            var directives = ScopedContext<CacheDirectives>.CurrentContext;
+            var directives = CacheDirectives.CurrentScope;
             if (!directives.Method.HasFlag(CacheMethod.Get))
             {
                 value = default;
@@ -238,7 +238,7 @@ namespace PubComp.Caching.RedisCaching
 
         public CacheMethodTaken SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
-            var directives = ScopedContext<CacheDirectives>.CurrentContext;
+            var directives = CacheDirectives.CurrentScope;
             if (directives.Method.HasFlag(CacheMethod.Set))
             {
                 var newItem = CreateCacheItem(key, value, valueTimestamp);
@@ -251,7 +251,7 @@ namespace PubComp.Caching.RedisCaching
 
         public async Task<CacheMethodTaken> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
-            var directives = ScopedContext<CacheDirectives>.CurrentContext;
+            var directives = CacheDirectives.CurrentScope;
             if (directives.Method.HasFlag(CacheMethod.Set))
             {
                 var newItem = CreateCacheItem(key, value, valueTimestamp);

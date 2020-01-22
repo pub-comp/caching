@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json;
 using PubComp.Caching.Core;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 
 namespace PubComp.Caching.WebApiExtended.Net.Core
 {
@@ -22,14 +22,14 @@ namespace PubComp.Caching.WebApiExtended.Net.Core
                 ActionExecutingContext context,
                 ActionExecutionDelegate next)
             {
-                var definedCacheDirectives = GetCacheDirectives(context);
-                using (ScopedContext<CacheDirectives>.CreateNewScope(definedCacheDirectives))
+                var requestedCacheDirectives = GetCacheDirectivesFromRequest(context);
+                using (CacheDirectives.SetScope(requestedCacheDirectives))
                 {
                     await next().ConfigureAwait(false);
                 }
             }
 
-            private CacheDirectives GetCacheDirectives(ActionExecutingContext actionContext)
+            private CacheDirectives GetCacheDirectivesFromRequest(ActionExecutingContext actionContext)
             {
                 var cacheDirectivesJson = actionContext.HttpContext.Request.Headers[CacheDirectives.HeadersKey]
                     .FirstOrDefault();
