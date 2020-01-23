@@ -166,11 +166,18 @@ namespace PubComp.Caching.RedisCaching
 
         protected virtual bool TryGetInner<TValue>(String key, out TValue value)
         {
-            var cacheMethodTaken = TryGetScopedInner(key, out value);
-            return cacheMethodTaken.HasFlag(CacheMethodTaken.Get);
+            var cacheMethodTaken = TryGetScopedInner<TValue>(key, out var scopedValue);
+            if (cacheMethodTaken.HasFlag(CacheMethodTaken.Get))
+            {
+                value = scopedValue.Value;
+                return true;
+            }
+
+            value = default;
+            return false;
         }
 
-        private CacheMethodTaken TryGetScopedInner<TValue>(String key, out TValue value)
+        private CacheMethodTaken TryGetScopedInner<TValue>(String key, out ScopedValue<TValue> value)
         {
             var directives = CacheDirectives.CurrentScope;
             if (!directives.Method.HasFlag(CacheMethod.Get))
@@ -182,7 +189,7 @@ namespace PubComp.Caching.RedisCaching
             var cacheItem = InnerCache.GetItem<TValue>(this.Name, key);
             if (cacheItem != null && cacheItem.ValueTimestamp >= directives.MinimumValueTimestamp)
             {
-                value = cacheItem.Value;
+                value = cacheItem;
                 ResetExpirationTime(cacheItem);
                 return CacheMethodTaken.Get;
             }
