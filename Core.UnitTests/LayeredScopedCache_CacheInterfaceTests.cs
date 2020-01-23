@@ -5,7 +5,7 @@ using System;
 namespace PubComp.Caching.Core.UnitTests
 {
     [TestClass]
-    public class LayeredScopedCacheTests_CacheInterfaceTests : CacheInterfaceTests
+    public class LayeredScopedCache_CacheInterfaceTests : CacheInterfaceTests
     {
         protected override ICache GetCache(string name)
         {
@@ -38,21 +38,5 @@ namespace PubComp.Caching.Core.UnitTests
 
             return new LayeredScopedCache(name, l1, l2);
         }
-
-        private IDisposable cacheDirectives;
-
-        [TestInitialize]
-        public void TestInitialize()
-        {
-            cacheDirectives = CacheDirectives.SetScope(CacheMethod.GetOrSet, DateTimeOffset.UtcNow);
-        }
-
-        [TestCleanup]
-        public void TestCleanup()
-        {
-            cacheDirectives?.Dispose();
-            cacheDirectives = null;
-        }
-
     }
 }

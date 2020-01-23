@@ -38,7 +38,7 @@ namespace PubComp.Caching.SystemRuntime
 
         protected override bool TryGetInner<TValue>(string key, out TValue value)
         {
-            var cacheMethodTaken = TryGetScoped(key, out ScopedValue<TValue> scopedValue);
+            var cacheMethodTaken = TryGetScopedInner(key, out ScopedValue<TValue> scopedValue);
             if (cacheMethodTaken.HasFlag(CacheMethodTaken.Get))
             {
                 value = scopedValue.Value;
@@ -195,7 +195,7 @@ namespace PubComp.Caching.SystemRuntime
             return Task.FromResult(cacheMethodTaken);
         }
 
-        public CacheMethodTaken TryGetScoped<TValue>(String key, out ScopedValue<TValue> value)
+        protected virtual CacheMethodTaken TryGetScopedInner<TValue>(String key, out ScopedValue<TValue> value)
         {
             var directives = CacheDirectives.CurrentScope;
             if (!directives.Method.HasFlag(CacheMethod.Get))
@@ -215,9 +215,14 @@ namespace PubComp.Caching.SystemRuntime
             return CacheMethodTaken.GetMiss;
         }
 
+        public CacheMethodTaken TryGetScoped<TValue>(String key, out ScopedValue<TValue> value)
+        {
+            return TryGetScopedInner(key, out value);
+        }
+
         public Task<TryGetScopedResult<TValue>> TryGetScopedAsync<TValue>(String key)
         {
-            var cacheMethodTaken = TryGetScoped<TValue>(key, out var scopedValue);
+            var cacheMethodTaken = TryGetScopedInner<TValue>(key, out var scopedValue);
             return Task.FromResult(new TryGetScopedResult<TValue>
             {
                 ScopedValue = scopedValue,

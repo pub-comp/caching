@@ -17,6 +17,21 @@ namespace PubComp.Caching.Core.UnitTests
         protected abstract ICache GetCacheWithExpirationFromAdd(string name, TimeSpan expirationFromAdd);
         protected abstract ICache GetCacheWithAbsoluteExpiration(string name, DateTimeOffset expireAt);
 
+        private IDisposable cacheDirectives;
+
+        [TestInitialize]
+        public void TestInitialize()
+        {
+            cacheDirectives = CacheDirectives.SetScope(CacheMethod.GetOrSet, DateTimeOffset.UtcNow);
+        }
+
+        [TestCleanup]
+        public void TestCleanup()
+        {
+            cacheDirectives?.Dispose();
+            cacheDirectives = null;
+        }
+
         [TestMethod]
         public void TestCacheStruct()
         {

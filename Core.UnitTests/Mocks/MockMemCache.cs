@@ -4,7 +4,7 @@ using PubComp.Caching.SystemRuntime;
 
 namespace PubComp.Caching.Core.UnitTests.Mocks
 {
-    public class MockMemCache : ICache
+    public class MockMemCache : IMockCache
     {
         private readonly MockCacheInner innerCache;
 

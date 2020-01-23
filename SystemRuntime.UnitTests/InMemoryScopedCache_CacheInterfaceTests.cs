@@ -19,20 +19,5 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
 
         protected override ICache GetCacheWithAbsoluteExpiration(string name, DateTimeOffset expireAt)
             => new InMemoryScopedCache(name, new InMemoryPolicy { AbsoluteExpiration = expireAt });
-
-        private IDisposable cacheDirectives;
-
-        [TestInitialize]
-        public void TestInitialize()
-        {
-            cacheDirectives = CacheDirectives.SetScope(CacheMethod.GetOrSet, DateTimeOffset.UtcNow);
-        }
-
-        [TestCleanup]
-        public void TestCleanup()
-        {
-            cacheDirectives?.Dispose();
-            cacheDirectives = null;
-        }
     }
 }

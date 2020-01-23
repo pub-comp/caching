@@ -2,25 +2,24 @@
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.UnitTests;
 using System;
-using PubComp.Caching.RedisCaching;
 
 namespace PubComp.Caching.RedisCaching.UnitTests
 {
     [TestClass]
-    public class RedisScopedCacheTests_ScopedCacheInterfaceTests : ScopedCacheInterfaceTests
+    public class RedisScopedCache_CacheInterfaceTests : CacheInterfaceTests
     {
         private readonly string connectionName = "localRedis";
 
-        protected override IScopedCache GetScopedCache(string name)
+        protected override ICache GetCache(string name)
             => new RedisScopedCache(name, new RedisCachePolicy { ConnectionName = connectionName });
 
-        protected override IScopedCache GetScopedCacheWithSlidingExpiration(string name, TimeSpan slidingExpiration)
+        protected override ICache GetCacheWithSlidingExpiration(string name, TimeSpan slidingExpiration)
             => new RedisScopedCache(name, new RedisCachePolicy { SlidingExpiration = slidingExpiration, ConnectionName = connectionName });
 
-        protected override IScopedCache GetScopedCacheWithExpirationFromAdd(string name, TimeSpan expirationFromAdd)
+        protected override ICache GetCacheWithExpirationFromAdd(string name, TimeSpan expirationFromAdd)
             => new RedisScopedCache(name, new RedisCachePolicy { ExpirationFromAdd = expirationFromAdd, ConnectionName = connectionName });
 
-        protected override IScopedCache GetScopedCacheWithAbsoluteExpiration(string name, DateTimeOffset expireAt)
+        protected override ICache GetCacheWithAbsoluteExpiration(string name, DateTimeOffset expireAt)
             => new RedisScopedCache(name, new RedisCachePolicy { AbsoluteExpiration = expireAt, ConnectionName = connectionName });
     }
 }

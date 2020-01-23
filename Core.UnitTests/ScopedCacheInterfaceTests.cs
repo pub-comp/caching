@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Threading;
 
 namespace PubComp.Caching.Core.UnitTests
 {
@@ -135,6 +136,133 @@ namespace PubComp.Caching.Core.UnitTests
 
                 var cacheMethodTaken = cache.TryGetScoped<int>("key", out _);
                 Assert.AreEqual(CacheMethodTaken.GetMiss, cacheMethodTaken);
+            }
+        }
+
+        [TestMethod]
+        public void TestWithCacheDirectives_MultipleScopes()
+        {
+            var cache = GetScopedCacheWithSlidingExpiration("cache1", TimeSpan.FromMinutes(2));
+            cache.ClearAll();
+
+            var testTimestamp = DateTimeOffset.UtcNow;
+
+            int getterInvocations = 0;
+            ScopedValue<int> Getter() => new ScopedValue<int>(++getterInvocations, DateTimeOffset.UtcNow);
+
+            using (CacheDirectives.SetScope(CacheMethod.None, testTimestamp))
+            {
+                var result = cache.GetScoped("key", Getter);
+                Assert.AreEqual(CacheMethodTaken.None, result.MethodTaken);
+                Assert.AreEqual(1, getterInvocations);
+            }
+
+            using (CacheDirectives.SetScope(CacheMethod.Get, testTimestamp))
+            {
+                var result = cache.GetScoped("key", Getter);
+                Assert.AreEqual(CacheMethodTaken.GetMiss, result.MethodTaken);
+                Assert.AreEqual(2, getterInvocations);
+            }
+
+            using (CacheDirectives.SetScope(CacheMethod.Set, testTimestamp))
+            {
+                var result = cache.GetScoped("key", Getter);
+                Assert.AreEqual(CacheMethodTaken.Set, result.MethodTaken);
+                Assert.AreEqual(3, getterInvocations);
+            }
+
+            using (CacheDirectives.SetScope(CacheMethod.None, testTimestamp))
+            {
+                var result = cache.GetScoped("key", Getter);
+                Assert.AreEqual(CacheMethodTaken.None, result.MethodTaken);
+                Assert.AreEqual(4, getterInvocations);
+            }
+
+            var resultOutsideOfScope = cache.GetScoped("key", Getter);
+            Assert.AreEqual(CacheMethodTaken.None, resultOutsideOfScope.MethodTaken);
+            Assert.AreEqual(5, getterInvocations);
+
+            Thread.Sleep(1);
+            using (CacheDirectives.SetScope(CacheMethod.Get, DateTimeOffset.UtcNow))
+            {
+                var result = cache.GetScoped("key", Getter);
+                Assert.AreEqual(CacheMethodTaken.GetMiss, result.MethodTaken);
+                Assert.AreEqual(6, getterInvocations);
+            }
+
+            using (CacheDirectives.SetScope(CacheMethod.Get, testTimestamp))
+            {
+                var result = cache.GetScoped("key", Getter);
+                Assert.AreEqual(CacheMethodTaken.Get, result.MethodTaken);
+                Assert.AreEqual(6, getterInvocations);
+            }
+        }
+
+        [TestMethod]
+        public void TestWithCacheDirectives_NestedScopes()
+        {
+            var cache = GetScopedCacheWithSlidingExpiration("cache1", TimeSpan.FromMinutes(2));
+            cache.ClearAll();
+
+            var t2 = DateTimeOffset.UtcNow;
+            var testTimestamp = t2;//DateTimeOffset.UtcNow;
+
+            int getterInvocations = 0;
+            ScopedValue<int> Getter() => new ScopedValue<int>(++getterInvocations, DateTimeOffset.UtcNow);
+
+            using (CacheDirectives.SetScope(CacheMethod.Get, testTimestamp))
+            {
+                var result = cache.GetScoped("key", Getter);
+                Assert.AreEqual(CacheMethodTaken.GetMiss, result.MethodTaken);
+                Assert.AreEqual(1, getterInvocations);
+
+                using (CacheDirectives.SetScope(CacheMethod.Set, testTimestamp))
+                {
+                    result = cache.GetScoped("key", Getter);
+                    Assert.AreEqual(CacheMethodTaken.Set, result.MethodTaken);
+                    Assert.AreEqual(2, getterInvocations);
+
+                    using (CacheDirectives.SetScope(CacheMethod.None, testTimestamp))
+                    {
+                        result = cache.GetScoped("key", Getter);
+                        Assert.AreEqual(CacheMethodTaken.None, result.MethodTaken);
+                        Assert.AreEqual(3, getterInvocations);
+
+                        using (CacheDirectives.SetScope(CacheMethod.Get, testTimestamp))
+                        {
+                            result = cache.GetScoped("key", Getter);
+                            Assert.AreEqual(CacheMethodTaken.Get, result.MethodTaken);
+                            Assert.AreEqual(3, getterInvocations);
+                        }
+
+                        Thread.Sleep(1);
+                        using (CacheDirectives.SetScope(CacheMethod.Get, DateTimeOffset.UtcNow))
+                        {
+                            using (CacheDirectives.SetScope(CacheMethod.Get, testTimestamp))
+                            {
+                                result = cache.GetScoped("key", Getter);
+                                Assert.AreEqual(CacheMethodTaken.Get, result.MethodTaken);
+                                Assert.AreEqual(3, getterInvocations);
+                            }
+
+                            result = cache.GetScoped("key", Getter);
+                            Assert.AreEqual(CacheMethodTaken.GetMiss, result.MethodTaken);
+                            Assert.AreEqual(4, getterInvocations);
+                        }
+
+                        result = cache.GetScoped("key", Getter);
+                        Assert.AreEqual(CacheMethodTaken.None, result.MethodTaken);
+                        Assert.AreEqual(5, getterInvocations);
+                    }
+
+                    result = cache.GetScoped("key", Getter);
+                    Assert.AreEqual(CacheMethodTaken.Set, result.MethodTaken);
+                    Assert.AreEqual(6, getterInvocations);
+                }
+
+                var resultOutsideOfScope = cache.GetScoped("key", Getter);
+                Assert.AreEqual(CacheMethodTaken.Get, resultOutsideOfScope.MethodTaken);
+                Assert.AreEqual(6, getterInvocations);
             }
         }
     }

@@ -5,7 +5,7 @@ using System;
 namespace PubComp.Caching.Core.UnitTests
 {
     [TestClass]
-    public class LayeredScopedCacheTests_ScopedCacheInterfaceTests : ScopedCacheInterfaceTests
+    public class LayeredScopedCache_ScopedCacheInterfaceTests : ScopedCacheInterfaceTests
     {
         protected override IScopedCache GetScopedCache(string name)
         {

@@ -2,12 +2,11 @@
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.UnitTests;
 using System;
-using PubComp.Caching.RedisCaching;
 
 namespace PubComp.Caching.RedisCaching.UnitTests
 {
     [TestClass]
-    public class RedisCacheTests_CacheInterfaceTests : CacheInterfaceTests
+    public class RedisCache_CacheInterfaceTests : CacheInterfaceTests
     {
         private readonly string connectionName = "localRedis";
 

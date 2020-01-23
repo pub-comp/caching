@@ -5,7 +5,7 @@ using System;
 namespace PubComp.Caching.Core.UnitTests
 {
     [TestClass]
-    public class LayeredCacheTests_CacheInterfaceTests : CacheInterfaceTests
+    public class LayeredCache_CacheInterfaceTests : CacheInterfaceTests
     {
         protected override ICache GetCache(string name)
         {
