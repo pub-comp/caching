@@ -57,9 +57,8 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
         {
         }
 
-        public Task PublishAsync(string cacheName, string key, CacheItemActionTypes action)
+        public async Task PublishAsync(string cacheName, string key, CacheItemActionTypes action)
         {
-            throw new NotImplementedException();
         }
 
         public bool TryPublish(string cacheName, string key, CacheItemActionTypes action)
