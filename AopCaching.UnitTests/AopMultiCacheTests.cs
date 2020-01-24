@@ -75,7 +75,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual(0, cache1.Misses);
 
             var service = new MultiService();
-            var results = await service.GetItemsAsync(new[] { "k1" }).ConfigureAwait(false);
+            var results = await service.GetItemsAsync(new[] { "k1" });
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(1, cache1.Misses);
@@ -89,7 +89,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual(0, cache1.Misses);
 
             var service = new MultiService();
-            var results = await service.GetItemsAsync(new[] { "k1", "k2", "k3" }).ConfigureAwait(false);
+            var results = await service.GetItemsAsync(new[] { "k1", "k2", "k3" });
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
@@ -98,7 +98,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k2");
             CollectionAssert.Contains(results.Select(x => x.Id).ToArray(), "k3");
 
-            results = await service.GetItemsAsync(new[] { "k1", "k2", "k3" }).ConfigureAwait(false);
+            results = await service.GetItemsAsync(new[] { "k1", "k2", "k3" });
 
             Assert.AreEqual(3, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
@@ -194,7 +194,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual(0, cache1.Misses);
 
             var service = new MultiService();
-            var results1 = await service.GetItemsAsync(new[] { "k1", "k2", "k3" }).ConfigureAwait(false);
+            var results1 = await service.GetItemsAsync(new[] { "k1", "k2", "k3" });
 
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
@@ -203,7 +203,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k2");
             CollectionAssert.Contains(results1.Select(x => x.Id).ToArray(), "k3");
 
-            var results2 = await service.GetItemsAsync(new[] { "k5", "k2", "k1", "k4", "k3" }).ConfigureAwait(false);
+            var results2 = await service.GetItemsAsync(new[] { "k5", "k2", "k1", "k4", "k3" });
 
             Assert.AreEqual(3, cache1.Hits);
             Assert.AreEqual(5, cache1.Misses);
@@ -330,7 +330,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             var service = new MultiService();
             IList<MockData> results;
 
-            results = await service.GetItemsAsync(new[] { "a", "b", "c" }, new MockObject { Data = 1111 }).ConfigureAwait(false);
+            results = await service.GetItemsAsync(new[] { "a", "b", "c" }, new MockObject { Data = 1111 });
             Assert.AreEqual(0, cache1.Hits);
             Assert.AreEqual(3, cache1.Misses);
             Assert.AreEqual(3, results.Count);
@@ -341,7 +341,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             Assert.AreEqual("c", results[2].Id);
             Assert.AreEqual("c1111", results[2].Value);
 
-            results = await service.GetItemsAsync(new[] { "a", "b", "d" }, new MockObject { Data = 2222 }).ConfigureAwait(false);
+            results = await service.GetItemsAsync(new[] { "a", "b", "d" }, new MockObject { Data = 2222 });
             Assert.AreEqual(2, cache1.Hits);
             Assert.AreEqual(4, cache1.Misses);
             Assert.AreEqual(3, results.Count);

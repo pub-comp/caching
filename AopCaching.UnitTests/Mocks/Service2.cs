@@ -15,7 +15,7 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
         [Cache("localCache")]
         public async Task<IEnumerable<string>> MethodToCache1Async()
         {
-            return await Task.FromResult(new string[] { "1", "2", "3", "4", "5" }).ConfigureAwait(false);
+            return await Task.FromResult(new string[] { "1", "2", "3", "4", "5" });
         }
 
         [Cache("localCache")]

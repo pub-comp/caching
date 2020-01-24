@@ -71,7 +71,7 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
         /// <inheritdoc />
         public async Task ClearAllAsync()
         {
-            await this.innerCache.ClearAllAsync().ConfigureAwait(false);
+            await this.innerCache.ClearAllAsync();
             this.innerCache.ResetCounters();
         }
 

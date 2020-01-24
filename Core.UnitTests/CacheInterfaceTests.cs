@@ -86,11 +86,11 @@ namespace PubComp.Caching.Core.UnitTests
 
             string result;
 
-            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
+            result = await cache.GetAsync("key", getter);
             Assert.AreEqual(1, hits);
             Assert.AreEqual("1", result);
 
-            result = await cache.GetAsync("key", getter).ConfigureAwait(false);
+            result = await cache.GetAsync("key", getter);
             Assert.AreEqual(1, hits);
             Assert.AreEqual("1", result);
         }
@@ -247,7 +247,7 @@ namespace PubComp.Caching.Core.UnitTests
 
             cache.Set("key", "1");
 
-            var result = await cache.TryGetAsync<string>("key").ConfigureAwait(false);
+            var result = await cache.TryGetAsync<string>("key");
             Assert.AreEqual("1", result.Value);
             Assert.IsTrue(result.WasFound);
         }
@@ -260,7 +260,7 @@ namespace PubComp.Caching.Core.UnitTests
 
             cache.Set("key", "1");
 
-            var result = await cache.TryGetAsync<string>("wrongKey").ConfigureAwait(false);
+            var result = await cache.TryGetAsync<string>("wrongKey");
             Assert.AreEqual(null, result.Value);
             Assert.IsFalse(result.WasFound);
         }
