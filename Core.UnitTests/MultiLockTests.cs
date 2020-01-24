@@ -416,8 +416,7 @@ namespace PubComp.Caching.Core.UnitTests
 
             try
             {
-                await locks
-                    .LockAndLoadAsync(key, async () => await ExternalIncPosZero(locks, key, counter));
+                await locks.LockAndLoadAsync(key, async () => await ExternalIncPosZero(locks, key, counter));
             }
             finally
             {
@@ -440,8 +439,7 @@ namespace PubComp.Caching.Core.UnitTests
 
         private async Task<long> ExternalIncPosZero(MultiLock locks, string key, long[] counter)
         {
-            await locks
-                .LockAndLoadAsync(key, async () => await InternalIncPosZero(counter));
+            await locks.LockAndLoadAsync(key, async () => await InternalIncPosZero(counter));
             return Interlocked.Increment(ref counter[0]);
         }
 

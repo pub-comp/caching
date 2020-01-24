@@ -85,17 +85,17 @@ namespace PubComp.Caching.Core
             if (level1 == null)
                 throw new ApplicationException("innerCache1 must not be null");
             if (!(level1 is IScopedCache))
-                throw new ApplicationException($"Cache type does not implement {nameof(IScopedCache)}");
+                throw new ApplicationException($"innerCache1 type does not implement {nameof(IScopedCache)}");
 
             if (level2 == null)
                 throw new ApplicationException("innerCache2 must not be null");
-            if (!(level1 is IScopedCache))
-                throw new ApplicationException($"Cache type does not implement {nameof(IScopedCache)}");
+            if (!(level2 is IScopedCache))
+                throw new ApplicationException($"innerCache2 type does not implement {nameof(IScopedCache)}");
 
             if (level2 == level1)
             {
                 throw new ApplicationException(
-                    string.Format("Cache2 must not be the same as cache2, received {0}={1} and {2}={3}",
+                    string.Format("level2 must not be the same as level1, received {0}={1} and {2}={3}",
                         "level1", level1.Name, "level2", level2.Name));
             }
 
