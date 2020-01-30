@@ -60,12 +60,12 @@ namespace PubComp.Caching.DemoSynchronizedClient
             {
                 var connectionString = CacheManager.GetConnectionString("localRedis").ConnectionString;
                 using (var connection = ConnectionMultiplexer.Connect(connectionString))
-                    connection.GetSubscriber().Publish("+general-invalidation", "test");
+                    connection.GetSubscriber().Publish("+general-invalidation", ".*");
             }
 
             if (args.Any(a => a.ToLowerInvariant() == "invalidate-on-update"))
             {
-                Console.WriteLine("invalidate-on-update using LayeredCache.InvalidateLevel1OnLevel2Update");
+                Console.WriteLine("invalidate-on-update using LayeredCache.InvalidateLevel1OnLevel2Upsert");
 
                 var layeredCache = CacheManager.GetCache(LayeredCache);
                 var layeredCacheWithAutomaticInvalidation = CacheManager.GetCache(LayeredCacheWithAutomaticInvalidation);

@@ -18,7 +18,7 @@ namespace PubComp.Caching.RedisCaching
         public string ConnectionName { get; set; }
 
         /// <summary>
-        /// Redic converter. Currently supports "json" (default), "bson", "deflate" or "gzip".
+        /// Redis converter. Currently supports "json" (default), "bson", "deflate" or "gzip".
         /// </summary>
         public string Converter { get; set; }
 

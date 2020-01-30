@@ -19,6 +19,25 @@ namespace PubComp.Caching.Core
             this.MinimumValueTimestamp = minimumValueTimestamp;
         }
 
+        public bool IsInScope<TValue>(ScopedValue<TValue> scopedValue)
+        {
+            return this.Method.HasFlag(CacheMethod.IgnoreMinimumValueTimestamp)
+                   || scopedValue.ValueTimestamp >= this.MinimumValueTimestamp;
+        }
+
+        public bool IsValid()
+        {
+            if (this.Method.HasFlag(CacheMethod.Get) && !this.Method.HasFlag(CacheMethod.IgnoreMinimumValueTimestamp))
+            {
+                if (this.MinimumValueTimestamp == default || this.MinimumValueTimestamp > DateTimeOffset.UtcNow)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         public static IDisposable SetScope(CacheDirectives cacheDirectives)
         {
             var scopeContext = new CacheDirectives(cacheDirectives.Method, cacheDirectives.MinimumValueTimestamp);

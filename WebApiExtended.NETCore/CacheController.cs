@@ -58,12 +58,13 @@ namespace PubComp.Caching.WebApiExtended.Net.Core
                 throw;
             }
         }
+
         /// <summary>
         /// Gets names of all registered cache instances
         /// </summary>
         [HttpGet]
         [Route("")]
-        public IEnumerable<string> GetRegisteredCacheNames()
+        public IEnumerable<string> GetRegisteredCacheNames(bool includePolicy)
         {
             try
             {

@@ -23,11 +23,11 @@ namespace PubComp.Caching.Core
         {
             this.policy = policy;
 
-            if (policy?.InvalidateLevel1OnLevel2Update ?? false)
+            if (policy?.InvalidateLevel1OnLevel2Upsert ?? false)
             {
                 level1Notifier = CacheManager.GetAssociatedNotifier(this.level1);
                 if (level1Notifier == null)
-                    throw new ApplicationException("InvalidateLevel1OnLevel2Update requires level1 cache to have SyncProvider defined in policy: level1CacheName=" + policy.Level1CacheName);
+                    throw new ApplicationException("InvalidateLevel1OnLevel2Upsert requires level1 cache to have SyncProvider defined in policy: level1CacheName=" + policy.Level1CacheName);
             }
         }
 
@@ -139,7 +139,7 @@ namespace PubComp.Caching.Core
             this.level2.Set(key, value);
             this.level1.Set(key, value);
 
-            if (this.policy.InvalidateLevel1OnLevel2Update)
+            if (this.policy.InvalidateLevel1OnLevel2Upsert)
                 level1Notifier.Publish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
         }
 
@@ -148,7 +148,7 @@ namespace PubComp.Caching.Core
             await this.level2.SetAsync(key, value).ConfigureAwait(false);
             await this.level1.SetAsync(key, value).ConfigureAwait(false);
 
-            if (this.policy.InvalidateLevel1OnLevel2Update)
+            if (this.policy.InvalidateLevel1OnLevel2Upsert)
                 await level1Notifier
                     .PublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated)
                     .ConfigureAwait(false);
@@ -165,7 +165,7 @@ namespace PubComp.Caching.Core
                         return getter();
                     }));
 
-            if (getterHasBeenInvoked && this.policy.InvalidateLevel1OnLevel2Update)
+            if (getterHasBeenInvoked && this.policy.InvalidateLevel1OnLevel2Upsert)
                 this.level1Notifier.Publish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
 
             return value;
@@ -183,7 +183,7 @@ namespace PubComp.Caching.Core
                         }).ConfigureAwait(false))
                     .ConfigureAwait(false);
 
-            if (getterHasBeenInvoked && this.policy.InvalidateLevel1OnLevel2Update)
+            if (getterHasBeenInvoked && this.policy.InvalidateLevel1OnLevel2Upsert)
                 await this.level1Notifier
                     .PublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated)
                     .ConfigureAwait(false);

@@ -135,7 +135,7 @@ namespace PubComp.Caching.RedisCaching
             }
 
             var scopedCacheItem = await InnerCache.GetItemAsync<TValue>(this.Name, key).ConfigureAwait(false);
-            if (scopedCacheItem != null && scopedCacheItem.ValueTimestamp >= directives.MinimumValueTimestamp)
+            if (scopedCacheItem != null && directives.IsInScope(scopedCacheItem))
             {
                 await ResetExpirationTimeAsync(scopedCacheItem).ConfigureAwait(false);
                 return new TryGetScopedResult<TValue>
@@ -186,11 +186,11 @@ namespace PubComp.Caching.RedisCaching
                 return CacheMethodTaken.None;
             }
 
-            var cacheItem = InnerCache.GetItem<TValue>(this.Name, key);
-            if (cacheItem != null && cacheItem.ValueTimestamp >= directives.MinimumValueTimestamp)
+            var scopedCacheItem = InnerCache.GetItem<TValue>(this.Name, key);
+            if (scopedCacheItem != null && directives.IsInScope(scopedCacheItem))
             {
-                value = cacheItem;
-                ResetExpirationTime(cacheItem);
+                value = scopedCacheItem;
+                ResetExpirationTime(scopedCacheItem);
                 return CacheMethodTaken.Get;
             }
 

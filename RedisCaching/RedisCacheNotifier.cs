@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.Notifications;
@@ -94,10 +95,25 @@ namespace PubComp.Caching.RedisCaching
             generalInvalidationRedisClient = CreateClient(null);
             generalInvalidationRedisClient.Subscriber.Subscribe(generalInvalidationChannel, (channel, message) =>
             {
-                var allCacheNames = CacheManager.GetCacheNames();
-                log.Info("General-Invalidation has been invoked");
-                foreach (var cacheName in allCacheNames)
-                    CacheManager.GetCache(cacheName).ClearAll();
+                if (string.IsNullOrEmpty(message))
+                {
+                    log.Warn("General-Invalidation invoked without a regex pattern (to clear all: .*)");
+                    return;
+                }
+                log.Info($"General-Invalidation has been invoked: '{message}'");
+
+                try
+                {
+                    var regex = new Regex(message);
+                    var cacheNamesToClear = CacheManager.GetCacheNames().Where(cacheName => regex.IsMatch(cacheName));
+
+                    foreach (var cacheName in cacheNamesToClear)
+                        CacheManager.GetCache(cacheName).ClearAll();
+                }
+                catch (Exception ex)
+                {
+                    log.Error(ex, "General-Invalidation failed !");
+                }
             });
         }
 

@@ -25,11 +25,11 @@ namespace PubComp.Caching.Core
         {
             this.policy = policy;
 
-            if (policy?.InvalidateLevel1OnLevel2Update ?? false)
+            if (policy?.InvalidateLevel1OnLevel2Upsert ?? false)
             {
-                level1Notifier = CacheManager.GetNotifier(policy.Level1CacheName);
+                level1Notifier = CacheManager.GetAssociatedNotifier(this.level1);
                 if (level1Notifier == null)
-                    throw new ApplicationException("SyncProvider is not registered for automatic invalidation policy: level1CacheName=" + policy.Level1CacheName);
+                    throw new ApplicationException("InvalidateLevel1OnLevel2Upsert requires level1 cache to have SyncProvider defined in policy: level1CacheName=" + policy.Level1CacheName);
             }
         }
 
@@ -201,7 +201,7 @@ namespace PubComp.Caching.Core
 
             if (level2Result != null
                 && level2Result.MethodTaken.HasFlag(CacheMethodTaken.Set)
-                && this.policy.InvalidateLevel1OnLevel2Update)
+                && this.policy.InvalidateLevel1OnLevel2Upsert)
                 this.level1Notifier.Publish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
 
             return level1Result;
@@ -235,7 +235,7 @@ namespace PubComp.Caching.Core
             }).ConfigureAwait(false);
 
             if (level2Result != null && level2Result.MethodTaken.HasFlag(CacheMethodTaken.Set) 
-                && this.policy.InvalidateLevel1OnLevel2Update)
+                && this.policy.InvalidateLevel1OnLevel2Upsert)
                 await this.level1Notifier
                     .PublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated)
                     .ConfigureAwait(false);
@@ -248,7 +248,7 @@ namespace PubComp.Caching.Core
             this.level1.SetScoped(key, value, valueTimestamp);
             var level2Result = this.level2.SetScoped(key, value, valueTimestamp);
 
-            if (level2Result.HasFlag(CacheMethodTaken.Set) && this.policy.InvalidateLevel1OnLevel2Update)
+            if (level2Result.HasFlag(CacheMethodTaken.Set) && this.policy.InvalidateLevel1OnLevel2Upsert)
                 level1Notifier.Publish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
 
             return level2Result;
@@ -259,7 +259,7 @@ namespace PubComp.Caching.Core
             await this.level1.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
             var level2Result = await this.level2.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
 
-            if (this.policy.InvalidateLevel1OnLevel2Update && level2Result.HasFlag(CacheMethodTaken.Set))
+            if (this.policy.InvalidateLevel1OnLevel2Upsert && level2Result.HasFlag(CacheMethodTaken.Set))
                 await level1Notifier.PublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated).ConfigureAwait(false);
 
             return level2Result;

@@ -13,11 +13,11 @@ namespace PubComp.Caching.WebApiExtended
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class CacheableActionFilterAttribute : FilterAttribute, IActionFilter, ICacheable
     {
-        private readonly NLog.ILogger log;
+        private readonly NLog.ILogger logger;
 
         public CacheableActionFilterAttribute()
         {
-            log = NLog.LogManager.GetLogger(typeof(CacheableActionFilterAttribute).FullName);
+            logger = NLog.LogManager.GetLogger(typeof(CacheableActionFilterAttribute).FullName);
         }
 
         public async Task<HttpResponseMessage> ExecuteActionFilterAsync(
@@ -35,24 +35,26 @@ namespace PubComp.Caching.WebApiExtended
 
         private CacheDirectives GetCacheDirectivesFromRequest(HttpActionContext actionContext)
         {
-            var cacheDirectivesJson = actionContext.Request.Headers
-                .FirstOrDefault(x => x.Key == CacheDirectives.HeadersKey)
-                .Value?.First();
-
-            if (string.IsNullOrEmpty(cacheDirectivesJson))
-                return new CacheDirectives { Method = CacheMethod.None };
-
-            var cacheDirectives = JsonConvert.DeserializeObject<CacheDirectives>(cacheDirectivesJson);
-            if (cacheDirectives.Method.HasFlag(CacheMethod.Get) &&
-                (cacheDirectives.MinimumValueTimestamp == default || 
-                 cacheDirectives.MinimumValueTimestamp > DateTimeOffset.UtcNow))
+            try
             {
-                var newCacheMethod = cacheDirectives.Method ^ CacheMethod.Get;
-                log.Warn($"CacheMethod requested: {cacheDirectives.Method} has been demoted to {newCacheMethod} due to invalid {nameof(cacheDirectives.MinimumValueTimestamp)}: {cacheDirectives.MinimumValueTimestamp}");
-                cacheDirectives.Method = newCacheMethod;
-            }
+                var cacheDirectivesJson = actionContext.Request.Headers
+                    .FirstOrDefault(x => x.Key == CacheDirectives.HeadersKey)
+                    .Value?.First();
 
-            return cacheDirectives;
+                if (string.IsNullOrEmpty(cacheDirectivesJson))
+                    return new CacheDirectives { Method = CacheMethod.None };
+
+                var cacheDirectives = JsonConvert.DeserializeObject<CacheDirectives>(cacheDirectivesJson);
+                if (cacheDirectives.IsValid())
+                    return cacheDirectives;
+
+                logger.Warn($"CacheMethod requested: {cacheDirectives.Method} has been demoted to CacheMethod.{nameof(CacheMethod.None)} due to invalid request: {cacheDirectivesJson}");
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Failed to retrieve/parse CacheDirectives, CacheMethod.None");
+            }
+            return new CacheDirectives { Method = CacheMethod.None };
         }
     }
 }

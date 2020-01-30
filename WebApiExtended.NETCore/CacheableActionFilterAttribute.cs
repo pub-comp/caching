@@ -31,24 +31,25 @@ namespace PubComp.Caching.WebApiExtended.Net.Core
 
             private CacheDirectives GetCacheDirectivesFromRequest(ActionExecutingContext actionContext)
             {
-                var cacheDirectivesJson = actionContext.HttpContext.Request.Headers[CacheDirectives.HeadersKey]
-                    .FirstOrDefault();
-
-                if (string.IsNullOrEmpty(cacheDirectivesJson))
-                    return new CacheDirectives {Method = CacheMethod.None};
-
-                var cacheDirectives = JsonConvert.DeserializeObject<CacheDirectives>(cacheDirectivesJson);
-                if (cacheDirectives.Method.HasFlag(CacheMethod.Get) &&
-                    (cacheDirectives.MinimumValueTimestamp == default ||
-                     cacheDirectives.MinimumValueTimestamp > DateTimeOffset.UtcNow))
+                try
                 {
-                    var newCacheMethod = cacheDirectives.Method ^ CacheMethod.Get;
-                    Logger.Warn(
-                        $"CacheMethod requested: {cacheDirectives.Method} has been demoted to {newCacheMethod} due to invalid {nameof(cacheDirectives.MinimumValueTimestamp)}: {cacheDirectives.MinimumValueTimestamp}");
-                    cacheDirectives.Method = newCacheMethod;
-                }
+                    var cacheDirectivesJson = actionContext.HttpContext.Request.Headers[CacheDirectives.HeadersKey]
+                        .FirstOrDefault();
 
-                return cacheDirectives;
+                    if (string.IsNullOrEmpty(cacheDirectivesJson))
+                        return new CacheDirectives {Method = CacheMethod.None};
+
+                    var cacheDirectives = JsonConvert.DeserializeObject<CacheDirectives>(cacheDirectivesJson);
+                    if (cacheDirectives.IsValid())
+                        return cacheDirectives;
+
+                    Logger.Warn($"CacheMethod requested: {cacheDirectives.Method} has been demoted to CacheMethod.{nameof(CacheMethod.None)} due to invalid request: {cacheDirectivesJson}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "Failed to retrieve/parse CacheDirectives, CacheMethod.None");
+                }
+                return new CacheDirectives { Method = CacheMethod.None };
             }
         }
     }

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Net;
+using NLog;
 
 namespace PubComp.Caching.RedisCaching
 {
@@ -61,7 +62,8 @@ namespace PubComp.Caching.RedisCaching
 
             try
             {
-                OnRedisConnectionStateChanged(this, new Core.Events.ProviderStateChangedEventArgs(newState));
+                log.Log(newState ? LogLevel.Info : LogLevel.Warn, $"RedisClient.ConnectionState Changed to: {newState}");
+                OnRedisConnectionStateChanged?.Invoke(this, new Core.Events.ProviderStateChangedEventArgs(newState));
             }
             catch (Exception e)
             {

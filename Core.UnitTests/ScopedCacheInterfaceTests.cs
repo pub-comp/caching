@@ -68,6 +68,7 @@ namespace PubComp.Caching.Core.UnitTests
             int getterInvocations = 0;
             ScopedValue<int> Getter() => new ScopedValue<int>(++getterInvocations, DateTimeOffset.UtcNow);
 
+            using (CacheDirectives.SetScope(CacheMethod.Get, DateTimeOffset.UtcNow))
             using (CacheDirectives.SetScope(CacheMethod.Set, DateTimeOffset.UtcNow))
             {
                 Assert.AreEqual(CacheMethodTaken.None, cache.TryGetScoped<int>("key", out _));
