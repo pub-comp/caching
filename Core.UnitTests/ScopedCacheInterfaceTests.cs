@@ -97,6 +97,49 @@ namespace PubComp.Caching.Core.UnitTests
         }
 
         [TestMethod]
+        public void TestWithCacheDirectives_SetScope()
+        {
+            var cache = GetScopedCacheWithSlidingExpiration("cache1", TimeSpan.FromMinutes(2));
+            cache.ClearAll();
+
+            int getterInvocations = 0;
+            ScopedValue<int> Getter() => new ScopedValue<int>(++getterInvocations, DateTimeOffset.UtcNow);
+            ScopedValue<int> expectedScopedValue;
+
+            using (CacheDirectives.SetScope(CacheMethod.Get, DateTimeOffset.UtcNow))
+            {
+                using (CacheDirectives.SetScope(CacheMethod.Set, DateTimeOffset.UtcNow))
+                {
+                    Assert.AreEqual(CacheMethodTaken.None, cache.TryGetScoped<int>("key", out _));
+                    Assert.AreEqual(CacheMethodTaken.Set, cache.GetScoped("key", Getter).MethodTaken);
+                    Assert.AreEqual(CacheMethodTaken.None, cache.TryGetScoped<int>("key", out _));
+                    Assert.AreEqual(1, getterInvocations);
+
+                    expectedScopedValue = Getter();
+                    expectedScopedValue.ValueTimestamp = expectedScopedValue.ValueTimestamp.AddHours(2);
+                    Assert.AreEqual(CacheMethodTaken.Set,
+                        cache.SetScoped("key2", expectedScopedValue.Value, expectedScopedValue.ValueTimestamp));
+                }
+
+                Assert.AreEqual(CacheMethodTaken.None, cache.SetScoped("key3", 3, DateTimeOffset.UtcNow));
+                Assert.AreEqual(CacheMethodTaken.GetMiss, cache.TryGetScoped<int>("key3", out _));
+
+                Assert.AreEqual(CacheMethodTaken.Get, cache.TryGetScoped<int>("key", out var value));
+                Assert.AreEqual(1, value?.Value);
+
+                using (CacheDirectives.SetScope(CacheMethod.Get, DateTimeOffset.UtcNow.AddHours(1)))
+                {
+                    Assert.AreEqual(CacheMethodTaken.GetMiss, cache.TryGetScoped<int>("key", out _));
+                    Assert.AreEqual(CacheMethodTaken.Get, cache.TryGetScoped<int>("key2", out _));
+                }
+
+                Assert.AreEqual(CacheMethodTaken.Get, cache.TryGetScoped<int>("key2", out var value2));
+                Assert.AreEqual(expectedScopedValue.Value, value2?.Value);
+                Assert.AreEqual(expectedScopedValue.ValueTimestamp, value2?.ValueTimestamp);
+            }
+        }
+
+        [TestMethod]
         public void TestWithCacheDirectives_MinimumValueTimestamp_UpToDate()
         {
             var cache = GetScopedCacheWithSlidingExpiration("cache1", TimeSpan.FromMinutes(2));
@@ -137,6 +180,27 @@ namespace PubComp.Caching.Core.UnitTests
 
                 var cacheMethodTaken = cache.TryGetScoped<int>("key", out _);
                 Assert.AreEqual(CacheMethodTaken.GetMiss, cacheMethodTaken);
+            }
+        }
+
+        [TestMethod]
+        public void TestWithCacheDirectives_MinimumValueTimestamp_NotUpToDateWithIgnore()
+        {
+            var cache = GetScopedCacheWithSlidingExpiration("cache1", TimeSpan.FromMinutes(2));
+            cache.ClearAll();
+
+            var testTimestamp = DateTimeOffset.UtcNow;
+
+            int getterInvocations = 0;
+            ScopedValue<int> Getter() => new ScopedValue<int>(++getterInvocations, testTimestamp.AddHours(-1));
+
+            using (CacheDirectives.SetScope(CacheMethod.GetOrSet | CacheMethod.IgnoreMinimumValueTimestamp, testTimestamp))
+            {
+                var result = cache.GetScoped("key", Getter);
+                Assert.AreEqual(CacheMethodTaken.Set | CacheMethodTaken.GetMiss, result.MethodTaken);
+
+                var cacheMethodTaken = cache.TryGetScoped<int>("key", out _);
+                Assert.AreEqual(CacheMethodTaken.Get, cacheMethodTaken);
             }
         }
 

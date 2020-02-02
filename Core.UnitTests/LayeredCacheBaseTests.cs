@@ -139,6 +139,17 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.AreEqual(2, l2.Misses);
             Assert.AreEqual(1, l1.Hits);
             Assert.AreEqual(0, l2.Hits);
+
+            // Clears counters too
+            l1.ClearAll();
+
+            Assert.IsTrue(cache.TryGet<int>("key", out result));
+            Assert.AreEqual(3, result);
+            Assert.AreEqual(3, hits);
+            Assert.AreEqual(1, l1.Misses);
+            Assert.AreEqual(2, l2.Misses);
+            Assert.AreEqual(0, l1.Hits);
+            Assert.AreEqual(1, l2.Hits);
         }
 
         [TestMethod]
@@ -248,6 +259,18 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.AreEqual(2, l2.Misses);
             Assert.AreEqual(1, l1.Hits);
             Assert.AreEqual(0, l2.Hits);
+
+            // Clears counters too
+            l1.ClearAll();
+
+            var tryGetResult = await cache.TryGetAsync<int>("key");
+            Assert.IsTrue(tryGetResult.WasFound);
+            Assert.AreEqual(3, tryGetResult.Value);
+            Assert.AreEqual(3, hits);
+            Assert.AreEqual(1, l1.Misses);
+            Assert.AreEqual(2, l2.Misses);
+            Assert.AreEqual(0, l1.Hits);
+            Assert.AreEqual(1, l2.Hits);
         }
 
         [TestMethod]

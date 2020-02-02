@@ -8,20 +8,29 @@ namespace PubComp.Caching.Core
         private readonly ICache cache;
         private readonly ICacheNotifier notifier;
 
-        public bool IsActive { get; private set; }
+        private bool? notifierIsConnected;
+        public bool IsActive => notifierIsConnected ?? false;
 
         public CacheSynchronizer(ICache cache, ICacheNotifier notifier)
         {
             this.cache = cache;
             this.notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
-
+            
             notifier.Subscribe(cache.Name, OnCacheUpdated, OnNotifierStateChanged);
         }
 
         private void OnNotifierStateChanged(object sender, Events.ProviderStateChangedEventArgs args)
         {
-            IsActive = args.NewState;
-            OnCacheUpdated(new CacheItemNotification("self", this.cache.Name, null, CacheItemActionTypes.RemoveAll));
+            if (notifierIsConnected.HasValue && notifierIsConnected != args.NewState)
+            {
+                notifierIsConnected = args.NewState;
+                OnCacheUpdated(new CacheItemNotification("self", this.cache.Name, null,
+                    CacheItemActionTypes.RemoveAll));
+            }
+            else
+            {
+                notifierIsConnected = args.NewState;
+            }
         }
 
         private bool OnCacheUpdated(CacheItemNotification notification)

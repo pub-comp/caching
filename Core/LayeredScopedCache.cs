@@ -130,6 +130,7 @@ namespace PubComp.Caching.Core
             if (level2Result.HasFlag(CacheMethodTaken.Get))
             {
                 this.level1.SetScoped(key, scopedCacheItem.Value, scopedCacheItem.ValueTimestamp);
+                value = scopedCacheItem.Value;
                 return true;
             }
 

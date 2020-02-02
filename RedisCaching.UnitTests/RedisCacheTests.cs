@@ -20,6 +20,21 @@ namespace PubComp.Caching.RedisCaching.UnitTests
     {
         private readonly string connectionName = "localRedis";
 
+        [TestInitialize]
+        public void TestInitialize()
+        {
+            CacheManager.InitializeFromConfig();
+            foreach (var cacheName in CacheManager.GetCacheNames())
+                try
+                {
+                    CacheManager.GetCache(cacheName).ClearAll();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to clear cache [{cacheName}] due to: {ex.Message}");
+                }
+        }
+
         [TestMethod]
         public void TestRedisCacheObjectMutated()
         {

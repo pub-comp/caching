@@ -14,16 +14,46 @@ namespace PubComp.Caching.RedisCaching.UnitTests
     {
         private readonly string connectionName = "localRedis";
 
+        private IDisposable cacheDirectives;
+
+        [TestInitialize]
+        public void TestInitialize()
+        {
+            cacheDirectives = CacheDirectives.SetScope(CacheMethod.GetOrSet, DateTimeOffset.UtcNow);
+            CacheManager.InitializeFromConfig();
+            foreach (var cacheName in CacheManager.GetCacheNames())
+                try
+                {
+                    CacheManager.GetCache(cacheName).ClearAll();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to clear cache [{cacheName}] due to: {ex.Message}");
+                }
+        }
+
+        [TestCleanup]
+        public void TestCleanup()
+        {
+            cacheDirectives?.Dispose();
+            cacheDirectives = null;
+        }
+
         [TestMethod]
-        public void TestRedisNotifierGeneralInvalidation()
+        public void TestRedisNotifierGeneralInvalidation_Empty()
         {
             const string localCache = "localCache";
+            const string layeredCache = "MyApp.LayeredCache";
 
             var cache = CacheManager.GetCache(localCache);
             cache.Get("key1", () => "value1");
 
+            var cache2 = CacheManager.GetCache(layeredCache);
+            cache2.Get("key2", () => "value2");
+
             // key1 should be in cache1
             Assert.IsTrue(cache.TryGet("key1", out string value1));
+            Assert.IsTrue(cache2.TryGet("key2", out string value2));
 
             var secondProcess = Process.Start(
                 new ProcessStartInfo
@@ -37,17 +67,117 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             secondProcess.WaitForExit();
 
             Thread.Sleep(100);
-            Assert.IsFalse(cache.TryGet("key1", out value1));
+            Assert.IsTrue(cache.TryGet("key1", out value1));
+            Assert.IsTrue(cache2.TryGet("key2", out value2));
         }
 
         [TestMethod]
-        public void TestRedisNotifierAutomaticInvalidationOnUpdate()
+        public void TestRedisNotifierGeneralInvalidation_Invalid()
+        {
+            const string localCache = "localCache";
+            const string layeredCache = "MyApp.LayeredCache";
+
+            var cache = CacheManager.GetCache(localCache);
+            cache.Get("key1", () => "value1");
+
+            var cache2 = CacheManager.GetCache(layeredCache);
+            cache2.Get("key2", () => "value2");
+
+            // key1 should be in cache1
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+            Assert.IsTrue(cache2.TryGet("key2", out string value2));
+
+            var secondProcess = Process.Start(
+                new ProcessStartInfo
+                {
+                    CreateNoWindow = false,
+                    FileName = typeof(DemoProgram).Assembly.Location,
+                    Arguments = "general-invalidation **?[(",
+                    WindowStyle = ProcessWindowStyle.Normal,
+                });
+            Assert.IsNotNull(secondProcess);
+            secondProcess.WaitForExit();
+
+            Thread.Sleep(100);
+            Assert.IsTrue(cache.TryGet("key1", out value1));
+            Assert.IsTrue(cache2.TryGet("key2", out value2));
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierGeneralInvalidation_All()
+        {
+            const string localCache = "localCache";
+            const string layeredCache = "MyApp.LayeredCache";
+
+            var cache = CacheManager.GetCache(localCache);
+            cache.Get("key1", () => "value1");
+
+            var cache2 = CacheManager.GetCache(layeredCache);
+            cache2.Get("key2", () => "value2");
+
+            // key1 should be in cache1
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+            Assert.IsTrue(cache2.TryGet("key2", out string value2));
+
+            var secondProcess = Process.Start(
+                new ProcessStartInfo
+                {
+                    CreateNoWindow = false,
+                    FileName = typeof(DemoProgram).Assembly.Location,
+                    Arguments = "general-invalidation .*",
+                    WindowStyle = ProcessWindowStyle.Normal,
+                });
+            Assert.IsNotNull(secondProcess);
+            secondProcess.WaitForExit();
+
+            Thread.Sleep(100);
+            Assert.IsFalse(cache.TryGet("key1", out value1));
+            Assert.IsFalse(cache2.TryGet("key2", out value2));
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierGeneralInvalidation_Pattern()
+        {
+            const string localCache = "localCache";
+            const string layeredCache = "MyApp.LayeredCache";
+
+            var cache = CacheManager.GetCache(localCache);
+            cache.Get("key1", () => "value1");
+
+            var cache2 = CacheManager.GetCache(layeredCache);
+            cache2.Get("key2", () => "value2");
+
+            // key1 should be in cache1
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+            Assert.IsTrue(cache2.TryGet("key2", out string value2));
+
+            var secondProcess = Process.Start(
+                new ProcessStartInfo
+                {
+                    CreateNoWindow = false,
+                    FileName = typeof(DemoProgram).Assembly.Location,
+                    Arguments = "general-invalidation loc.*",
+                    WindowStyle = ProcessWindowStyle.Normal,
+                });
+            Assert.IsNotNull(secondProcess);
+            secondProcess.WaitForExit();
+
+            Thread.Sleep(100);
+            Assert.IsFalse(cache.TryGet("key1", out value1));
+            Assert.IsTrue(cache2.TryGet("key2", out value2));
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierLayeredInvalidationOnUpsert()
         {
             const string layeredCache = "MyApp.LayeredCache";
             const string layeredCacheWithAutomaticInvalidation = "MyApp.LayeredCacheWithAutomaticInvalidation";
 
             var cache = CacheManager.GetCache(layeredCache);
             var cacheWithAutomaticInvalidationOnUpdate = CacheManager.GetCache(layeredCacheWithAutomaticInvalidation);
+
+            cache.ClearAll();
+            cacheWithAutomaticInvalidationOnUpdate.ClearAll();
 
             Assert.AreEqual("valueA1", cache.Get("keyA1", () => "valueA1"));
             Assert.AreEqual("valueA2", cache.Get("keyA2", () => "valueA2"));
@@ -59,7 +189,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 {
                     CreateNoWindow = false,
                     FileName = typeof(DemoProgram).Assembly.Location,
-                    Arguments = "invalidate-on-update",
+                    Arguments = "layered-invalidate-on-upsert",
                     WindowStyle = ProcessWindowStyle.Normal,
                 });
             Assert.IsNotNull(secondProcess);
@@ -71,6 +201,44 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             Assert.AreEqual("valueA2", cache.Get("keyA2", () => "valueA2"));
             Assert.AreEqual("valueB1", cacheWithAutomaticInvalidationOnUpdate.Get("keyB1", () => "valueB1"));
             Assert.AreEqual("demoProgram.valueB2", cacheWithAutomaticInvalidationOnUpdate.Get("keyB2", () => "valueB2"));
+        }
+
+        [TestMethod]
+        public void TestRedisNotifierLayeredScopedInvalidationOnUpsert()
+        {
+            const string layeredCache = "MyApp.LayeredScopedCache";
+            const string layeredCacheWithAutomaticInvalidation = "MyApp.LayeredScopedCacheWithAutomaticInvalidation";
+
+            var cache = CacheManager.GetCache(layeredCache);
+            var cacheWithAutomaticInvalidationOnUpdate = CacheManager.GetCache(layeredCacheWithAutomaticInvalidation);
+
+            using (CacheDirectives.SetScope(CacheMethod.GetOrSet | CacheMethod.IgnoreMinimumValueTimestamp, DateTimeOffset.UtcNow))
+            {
+
+                Assert.AreEqual("valueA1", cache.Get("keyA1", () => "valueA1"));
+                Assert.AreEqual("valueA2", cache.Get("keyA2", () => "valueA2"));
+                Assert.AreEqual("valueB1", cacheWithAutomaticInvalidationOnUpdate.Get("keyB1", () => "valueB1"));
+                Assert.AreEqual("valueB2", cacheWithAutomaticInvalidationOnUpdate.Get("keyB2", () => "valueB2"));
+
+                var secondProcess = Process.Start(
+                    new ProcessStartInfo
+                    {
+                        CreateNoWindow = false,
+                        FileName = typeof(DemoProgram).Assembly.Location,
+                        Arguments = "layered-scoped-invalidate-on-upsert",
+                        WindowStyle = ProcessWindowStyle.Normal,
+                    });
+                Assert.IsNotNull(secondProcess);
+                secondProcess.WaitForExit();
+
+                Thread.Sleep(200);
+
+                Assert.AreEqual("valueA1", cache.Get("keyA1", () => "valueA1"));
+                Assert.AreEqual("valueA2", cache.Get("keyA2", () => "valueA2"));
+                Assert.AreEqual("valueB1", cacheWithAutomaticInvalidationOnUpdate.Get("keyB1", () => "valueB1"));
+                Assert.AreEqual("demoProgram.valueB2",
+                    cacheWithAutomaticInvalidationOnUpdate.Get("keyB2", () => "valueB2"));
+            }
         }
 
         [TestMethod]
@@ -89,7 +257,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             Assert.IsTrue(cache.TryGet("key1", out string value1));
             Assert.IsTrue(cacheInvalidConnection.TryGet("key2", out value1));
 
-            Thread.Sleep(1000);
+            Thread.Sleep(4000);
 
             Assert.IsTrue(cache.TryGet("key1", out value1));
             Assert.IsFalse(cacheInvalidConnection.TryGet("key2", out value1));
@@ -120,13 +288,14 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
 
-            cache.Get("key1", () => "value1");
-            Assert.IsTrue(cache.TryGet("key1", out string value1));
-
+            FakeRedisClientsNewState(newState: false);
             FakeRedisClientsNewState(newState: true);
 
-            // OnRedisConnectionStateChanged should invalidate cache items
-            Assert.IsFalse(cache.TryGet("key1", out value1));
+            cache.Get("key1", () => "value1");
+            Assert.IsTrue(cache.TryGet<string>("key1", out _));
+
+            Thread.Sleep(4000);
+            Assert.IsTrue(cache.TryGet<string>("key1", out _));
         }
 
         [TestMethod]

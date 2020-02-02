@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using PubComp.Caching.Core;
+using PubComp.Caching.Core.Events;
 using PubComp.Caching.Core.Notifications;
 using PubComp.Caching.RedisCaching.Converters;
 using StackExchange.Redis;
@@ -22,6 +23,8 @@ namespace PubComp.Caching.RedisCaching
         private RedisClient generalInvalidationRedisClient = null;
         private ConcurrentDictionary<string, RedisClient> cacheSubClients;
         private ConcurrentDictionary<string, Func<CacheItemNotification, bool>> cacheCallbacks;
+
+        //public bool IsActive { this.}
 
         public RedisCacheNotifier(string name, RedisCacheNotifierPolicy policy)
         {
@@ -121,12 +124,14 @@ namespace PubComp.Caching.RedisCaching
         public void Subscribe(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback, 
             EventHandler<Core.Events.ProviderStateChangedEventArgs> notifierProviderStateChangedCallback)
         {
+            var client = GetSubClient(cacheName, cacheUpdatedCallback, notifierProviderStateChangedCallback);
             // Subscribe to Redis
-            GetSubClient(cacheName, cacheUpdatedCallback, notifierProviderStateChangedCallback).Subscriber.Subscribe(cacheName, (channel, message) =>
+            client.Subscriber.Subscribe(cacheName, (channel, message) =>
             {
                 var notificationInfo = convert.FromRedis(message);
                 OnCacheUpdated(notificationInfo);
             });
+            notifierProviderStateChangedCallback(this, new ProviderStateChangedEventArgs(client.IsConnected));
         }
 
         public void UnSubscribe(string cacheName)
