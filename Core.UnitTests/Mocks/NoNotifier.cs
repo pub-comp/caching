@@ -1,5 +1,6 @@
-﻿using System;
-using PubComp.Caching.Core.Notifications;
+﻿using PubComp.Caching.Core.Notifications;
+using System;
+using System.Threading.Tasks;
 
 namespace PubComp.Caching.Core.UnitTests.Mocks
 {
@@ -9,8 +10,6 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
         private readonly NoNotifierPolicy policy;
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly string connectionString;
-
-        public bool IsInvalidateOnUpdateEnabled { get { return policy.InvalidateOnUpdate; } }
 
         public NoNotifier(string name, NoNotifierPolicy policy)
         {
@@ -58,9 +57,18 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
         {
         }
 
+        public async Task PublishAsync(string cacheName, string key, CacheItemActionTypes action)
+        {
+        }
+
         public bool TryPublish(string cacheName, string key, CacheItemActionTypes action)
         {
             return true;
+        }
+
+        public Task<bool> TryPublishAsync(string cacheName, string key, CacheItemActionTypes action)
+        {
+            return Task.FromResult(true);
         }
 
         public void Publish(string cacheName, string key, CacheItemActionTypes action)

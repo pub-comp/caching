@@ -134,7 +134,7 @@ namespace PubComp.Caching.RedisCaching
                     Monitor();
 
                     // don't run again for at least X milliseconds
-                    await Task.Delay(monitorIntervalMilliseconds);
+                    await Task.Delay(monitorIntervalMilliseconds).ConfigureAwait(false);
                 }
             });
         }

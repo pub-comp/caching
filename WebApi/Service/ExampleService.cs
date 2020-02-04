@@ -8,7 +8,7 @@ namespace TestHost.WebApi.Service
 {
     public class ExampleService
     {
-        public const string CacheName = "Numbers";
+        public const string CacheName = "redisCache";//"Numbers";
 
         private readonly string dbPath;
 
@@ -24,25 +24,27 @@ namespace TestHost.WebApi.Service
         public string Get(int id)
         {
             var num = DateTime.Now.Ticks % id;
-            return GetInner(num);
+            return $"{id}>{num} - " + GetInner(num);
         }
 
-        public Task<string> GetAsync(int id)
+        public async Task<string> GetAsync(int id)
         {
             var num = DateTime.Now.Ticks % id;
-            return GetAsyncInner(num);
+            return $"{id}>{num} - " + await GetAsyncInner(num).ConfigureAwait(false);
         }
 
         [Cache(CacheName)]
         private string GetInner(long id)
         {
-            return FileHelper.ReadLine($"{dbPath}\\{id}.txt");
+            return $"{id} - {DateTimeOffset.UtcNow} - " + FileHelper.ReadLine($"{dbPath}\\{id}.txt");
         }
-        
+
         [Cache(CacheName)]
-        private Task<string> GetAsyncInner(long id)
+        private async Task<string> GetAsyncInner(long id)
         {
-            return FileHelper.ReadLineAsync($"{dbPath}\\{id}.txt");
+            return $"{id} - {DateTimeOffset.UtcNow} - " + await FileHelper
+                       .ReadLineAsync($"{dbPath}\\{id}.txt")
+                       .ConfigureAwait(false);
         }
     }
 }

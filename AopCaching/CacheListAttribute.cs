@@ -213,8 +213,7 @@ namespace PubComp.Caching.AopCaching
             }
 
             var cacheToUse = this.cache;
-
-            if (cacheToUse == null)
+            if (!cacheToUse.IsUseable())
             {
                 base.OnInvoke(args);
                 return;
@@ -252,16 +251,28 @@ namespace PubComp.Caching.AopCaching
                 return;
             }
 
+            var newValuesTimestamp = DateTimeOffset.UtcNow;
+
             args.Arguments[this.keyParameterNumber] = missingKeys;
             base.OnInvoke(args);
-            var resultsFromerInner = args.ReturnValue;
-            addDataRange.Invoke(resultList, new [] { resultsFromerInner });
+            var resultsFromInner = args.ReturnValue;
+            addDataRange.Invoke(resultList, new [] { resultsFromInner });
 
-            var values = GetKeyValues(args, resultsFromerInner, parameterValues);
+            var values = GetKeyValues(args, resultsFromInner, parameterValues);
 
-            foreach (var value in values)
+            if (cacheToUse is IScopedCache scopedCacheToUse)
             {
-                cacheToUse.Set(value.Key, value.Value);
+                foreach (var value in values)
+                {
+                    scopedCacheToUse.SetScoped(value.Key, value.Value, newValuesTimestamp);
+                }
+            }
+            else
+            {
+                foreach (var value in values)
+                {
+                    cacheToUse.Set(value.Key, value.Value);
+                }
             }
 
             args.ReturnValue = resultList;
@@ -276,8 +287,7 @@ namespace PubComp.Caching.AopCaching
             }
 
             var cacheToUse = this.cache;
-
-            if (cacheToUse == null)
+            if (!cacheToUse.IsUseable())
             {
                 await base.OnInvokeAsync(args).ConfigureAwait(false);
                 return;
@@ -315,6 +325,8 @@ namespace PubComp.Caching.AopCaching
                 return;
             }
 
+            var newValuesTimestamp = DateTimeOffset.UtcNow;
+
             args.Arguments[this.keyParameterNumber] = missingKeys;
             await base.OnInvokeAsync(args).ConfigureAwait(false);
             var resultsFromerInner = args.ReturnValue;
@@ -322,13 +334,23 @@ namespace PubComp.Caching.AopCaching
 
             var values = GetKeyValues(args, resultsFromerInner, parameterValues);
 
-            var tasks = values.Select(async x => await cacheToUse.SetAsync(x.Key, x.Value).ConfigureAwait(false));
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+            if (cacheToUse is IScopedCache scopedCacheToUse)
+            {
+                var tasks = values.Select(async x => await scopedCacheToUse
+                    .SetScopedAsync(x.Key, x.Value, newValuesTimestamp).ConfigureAwait(false));
+                await Task.WhenAll(tasks).ConfigureAwait(false);
+            }
+            else
+            {
+                var tasks = values.Select(async x => await cacheToUse
+                    .SetAsync(x.Key, x.Value).ConfigureAwait(false));
+                await Task.WhenAll(tasks).ConfigureAwait(false);
+            }
 
             args.ReturnValue = resultList;
         }
 
-        private Dictionary<string, object> GetKeyValues(MethodInterceptionArgs args, object resultsFromerInner, object[] parameterValues)
+        private Dictionary<string, object> GetKeyValues(MethodInterceptionArgs args, object resultsFromInner, object[] parameterValues)
         {
             var converter = createDataKeyConverter.Invoke(new object[0]);
 
@@ -341,7 +363,7 @@ namespace PubComp.Caching.AopCaching
                 : args.Method.GetParameters().Select(p => p.ParameterType.FullName).ToArray();
 
             Dictionary<string, object> values = new Dictionary<string, object>();
-            foreach (object result in resultsFromerInner as IEnumerable)
+            foreach (object result in resultsFromInner as IEnumerable)
             {
                 var k = convertDataToKey.Invoke(converter, new[] {result});
 

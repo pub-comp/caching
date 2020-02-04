@@ -12,7 +12,7 @@ namespace PubComp.Caching.SystemRuntime
         /// <summary>
         /// If set, override expiration policy in case where the sync provider is down
         /// </summary>
-        public InMemoryExpirationPolicy OnSyncProviderFailure { get; set; }
+        public InMemoryFallbackPolicy OnSyncProviderFailure { get; set; }
 
         /// <summary>
         /// Whether or not to lock on cache misses before calling underlying getter.

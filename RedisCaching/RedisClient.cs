@@ -3,6 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Net;
+using NLog;
 
 namespace PubComp.Caching.RedisCaching
 {
@@ -19,11 +20,13 @@ namespace PubComp.Caching.RedisCaching
         public static RedisClient GetNamedRedisClient(string connectionName) => GetNamedRedisClient(connectionName, null);
         public static RedisClient GetNamedRedisClient(string connectionName, EventHandler<Core.Events.ProviderStateChangedEventArgs> providerStateChangedCallback)
         {
+            var redisConnectionConfig = PubComp.Caching.Core.CacheManager.GetConnectionString(connectionName);
+
             var lazyRedisClientCreator = new Lazy<RedisClient>(() =>
             {
-                var redisConnectionConfig = PubComp.Caching.Core.CacheManager.GetConnectionString(connectionName);
                 var policy = (redisConnectionConfig as RedisConnectionString)?.Policy ?? new RedisClientPolicy();
-                return new RedisClient(redisConnectionConfig.ConnectionString, policy.ClusterType, policy.MonitorPort, policy.MonitorIntervalMilliseconds);
+                return new RedisClient(redisConnectionConfig.ConnectionString, policy.ClusterType, policy.MonitorPort,
+                    policy.MonitorIntervalMilliseconds);
             }, isThreadSafe: true);
 
             var client = ActiveRedisClients.GetOrAdd(connectionName, lazyRedisClientCreator).Value;
@@ -59,7 +62,8 @@ namespace PubComp.Caching.RedisCaching
 
             try
             {
-                OnRedisConnectionStateChanged(this, new Core.Events.ProviderStateChangedEventArgs(newState));
+                log.Log(newState ? LogLevel.Info : LogLevel.Warn, $"RedisClient.ConnectionState Changed to: {newState}");
+                OnRedisConnectionStateChanged?.Invoke(this, new Core.Events.ProviderStateChangedEventArgs(newState));
             }
             catch (Exception e)
             {

@@ -1,23 +1,34 @@
-﻿using System;
+﻿using PubComp.Caching.Core.Notifications;
+using System;
 using System.Threading.Tasks;
+// ReSharper disable NotAccessedField.Local
+// ReSharper disable UseStringInterpolation
 
 namespace PubComp.Caching.Core
 {
     /// <summary>
     /// A layered cache e.g. level1 = in-memory cache that falls back to level2 = distributed cache
     /// </summary>
-    public class LayeredCache : ICache
+    public class LayeredCache : ICache, ICacheGetPolicy
     {
         private readonly String name;
         private ICache level1;
         private ICache level2;
         private readonly LayeredCachePolicy policy;
         private readonly CacheSynchronizer synchronizer;
+        private readonly ICacheNotifier level1Notifier;
 
         public LayeredCache(String name, LayeredCachePolicy policy)
             : this(name, policy?.Level1CacheName, policy?.Level2CacheName)
         {
             this.policy = policy;
+
+            if (policy?.InvalidateLevel1OnLevel2Upsert ?? false)
+            {
+                level1Notifier = CacheManager.GetAssociatedNotifier(this.level1);
+                if (level1Notifier == null)
+                    throw new ApplicationException("InvalidateLevel1OnLevel2Upsert requires level1 cache to have SyncProvider defined in policy: level1CacheName=" + policy.Level1CacheName);
+            }
         }
 
         /// <summary>
@@ -51,9 +62,9 @@ namespace PubComp.Caching.Core
             this.level2 = level2;
 
             this.policy = new LayeredCachePolicy { Level1CacheName = level1CacheName, Level2CacheName = level1CacheName };
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy?.SyncProvider);
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.SyncProvider);
         }
-        
+
         /// <summary>
         /// Creates a layered cache
         /// </summary>
@@ -81,7 +92,7 @@ namespace PubComp.Caching.Core
             this.level2 = level2;
 
             this.policy = new LayeredCachePolicy { Level1CacheName = level1.Name, Level2CacheName = level2.Name };
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy?.SyncProvider);
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.SyncProvider);
         }
 
         public string Name { get { return this.name; } }
@@ -91,16 +102,6 @@ namespace PubComp.Caching.Core
         protected ICache Level2 { get { return this.level2; } }
 
         protected LayeredCachePolicy Policy { get { return this.policy; } }
-
-        private TValue GetterWrapper<TValue>(String key, Func<TValue> getter)
-        {
-            return this.level2.Get(key, getter);
-        }
-
-        private Task<TValue> GetterWrapperAsync<TValue>(String key, Func<Task<TValue>> getter)
-        {
-            return this.level2.GetAsync(key, getter);
-        }
         
         public bool TryGet<TValue>(string key, out TValue value)
         {
@@ -113,17 +114,17 @@ namespace PubComp.Caching.Core
                 return true;
             }
 
-            value = default(TValue);
+            value = default;
             return false;
         }
 
         public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
         {
-            var level1Result = await this.level1.TryGetAsync<TValue>(key);
+            var level1Result = await this.level1.TryGetAsync<TValue>(key).ConfigureAwait(false);
             if (level1Result.WasFound)
                 return level1Result;
 
-            var level2Result = await this.level2.TryGetAsync<TValue>(key);
+            var level2Result = await this.level2.TryGetAsync<TValue>(key).ConfigureAwait(false);
             if (level2Result.WasFound)
             {
                 this.level1.Set(key, level2Result.Value);
@@ -137,22 +138,57 @@ namespace PubComp.Caching.Core
         {
             this.level2.Set(key, value);
             this.level1.Set(key, value);
+
+            if (this.policy.InvalidateLevel1OnLevel2Upsert)
+                level1Notifier.TryPublish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
         }
 
         public async Task SetAsync<TValue>(string key, TValue value)
         {
-            await this.level2.SetAsync(key, value);
-            await this.level1.SetAsync(key, value);
+            await this.level2.SetAsync(key, value).ConfigureAwait(false);
+            await this.level1.SetAsync(key, value).ConfigureAwait(false);
+
+            if (this.policy.InvalidateLevel1OnLevel2Upsert)
+                await level1Notifier
+                    .TryPublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated)
+                    .ConfigureAwait(false);
         }
 
         public TValue Get<TValue>(String key, Func<TValue> getter)
         {
-            return this.level1.Get(key, () => GetterWrapper(key, getter));
+            var getterHasBeenInvoked = false;
+            var value =
+                this.level1.Get(key, () =>
+                    this.level2.Get(key, () =>
+                    {
+                        getterHasBeenInvoked = true;
+                        return getter();
+                    }));
+
+            if (getterHasBeenInvoked && this.policy.InvalidateLevel1OnLevel2Upsert)
+                this.level1Notifier.TryPublish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
+
+            return value;
         }
 
-        public Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
-            return this.level1.GetAsync(key, () => GetterWrapperAsync(key, getter));
+            var getterHasBeenInvoked = false;
+            var value =
+                await this.level1.GetAsync(key, async () =>
+                        await this.level2.GetAsync(key, async () =>
+                        {
+                            getterHasBeenInvoked = true;
+                            return await getter().ConfigureAwait(false);
+                        }).ConfigureAwait(false))
+                    .ConfigureAwait(false);
+
+            if (getterHasBeenInvoked && this.policy.InvalidateLevel1OnLevel2Upsert)
+                await this.level1Notifier
+                    .TryPublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated)
+                    .ConfigureAwait(false);
+
+            return value;
         }
 
         public void Clear(String key)
@@ -163,8 +199,8 @@ namespace PubComp.Caching.Core
 
         public async Task ClearAsync(string key)
         {
-            await this.level2.ClearAsync(key);
-            await this.level1.ClearAsync(key);
+            await this.level2.ClearAsync(key).ConfigureAwait(false);
+            await this.level1.ClearAsync(key).ConfigureAwait(false);
         }
 
         public void ClearAll()
@@ -175,8 +211,20 @@ namespace PubComp.Caching.Core
 
         public async Task ClearAllAsync()
         {
-            await this.level2.ClearAllAsync();
-            await this.level1.ClearAllAsync();
+            await this.level2.ClearAllAsync().ConfigureAwait(false);
+            await this.level1.ClearAllAsync().ConfigureAwait(false);
+        }
+
+        public object GetPolicy()
+        {
+            return new
+            {
+                Level1CacheName = this.level1.Name,
+                Level2CacheName = this.level2.Name,
+                this.policy.SyncProvider,
+
+                this.policy.InvalidateLevel1OnLevel2Upsert
+            };
         }
     }
 }

@@ -142,3 +142,46 @@
 
 ### 4.4.0:
 	* CacheManager enhanced to enable support for .NET standard configuration (Microsoft.Extensions.Configuration)
+
+### 4.5.0:
+	* RedisClient
+	  - Optimization: Reuse ConnectionMultiplexer when using RedisCache/SyncProvider
+
+	* RedisNotifier
+	  - New optional policy: GeneralInvalidationChannel
+	  - New method: TryPublish
+
+	* InMemory*Cache
+	  - New optional policy: OnSyncProviderFailure
+		- Automatic Invalidation on SyncProvider state change
+		- Fallback expiry policy
+
+	* Redis*Cache
+	  - New property: ICacheState.IsActive => RedisClient.IsConnected
+	  - Bug fix: Invalid AbsoluteExpiration handling
+
+	* LayeredCache
+	  - New optional policy: InvalidateLevel1OnLevel2Upsert 
+
+	* New IScopedCache (:ICache)
+	  - TryGetScoped
+	  - GetScoped
+	  - SetScoped
+	  - New property: ICacheState.IsActive => RedisClient.IsConnected
+	* New cache types (implements ICache and IScopedCache)
+	  - InMemoryScopedCache
+	  - RedisScopedCache
+	  - LayeredScopedCache
+
+	* ICacheState for cache types
+	  - New behavior: Won't throw an exception is cache is inactive when used by AOP or by by cache implementing IScopedCache (RedisScopedCache)
+	* ICacheGetPolicy for cache types
+	  - New behevior: Expose state and censored configurations of cache
+
+	* WebApiExtended/.NETCore
+	  - New optional parameter: IncludeConfiguration - now can serve state and censored configuration of defined cache
+	  - New: CacheableActionFilterAttribute for an easy and consistant way to work with IScopedCache CacheDirectives
+	
+	* New packages: WebApiExtended.Swashbuckle and  WebApiExtended.NETCore.Swashbuckle
+	  - Expose CacheDirectives for endpoints with CacheableActionFilterAttribute
+

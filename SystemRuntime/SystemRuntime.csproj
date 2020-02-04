@@ -4,9 +4,9 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>PubComp.Caching.SystemRuntime</AssemblyName>
     <RootNamespace>PubComp.Caching.SystemRuntime</RootNamespace>
-    <Version>4.3.0</Version>
-    <!--Only change AssemblyVersion for major versions!--><AssemblyVersion>4.2.0.0</AssemblyVersion>
-    <FileVersion>4.3.0.0</FileVersion>
+    <Version>4.4.0-b200204-1727</Version>
+    <!--Only change AssemblyVersion for major versions!--><AssemblyVersion>4.4.0.0</AssemblyVersion>
+    <FileVersion>4.4.0.0</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <NoWarn>1701;1702;1591</NoWarn>

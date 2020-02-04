@@ -5,13 +5,13 @@ using System.Threading.Tasks;
 
 namespace PubComp.Caching.SystemRuntime
 {
-    public abstract class ObjectCache : ICache
+    public abstract class ObjectCache : ICache, ICacheGetPolicy
     {
         private readonly String name;
         private System.Runtime.Caching.ObjectCache innerCache;
-        private readonly MultiLock locks;
-        private readonly InMemoryPolicy policy;
-        private readonly bool InvalidateOnUpdate;
+        
+        protected readonly MultiLock Locks;
+        protected readonly InMemoryPolicy Policy;
 
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly string notiferName;
@@ -23,21 +23,33 @@ namespace PubComp.Caching.SystemRuntime
             String name, System.Runtime.Caching.ObjectCache innerCache, InMemoryPolicy policy)
         {
             this.name = name;
-            this.policy = policy;
+            this.Policy = policy;
             this.innerCache = innerCache;
 
-            this.locks = !this.policy.DoNotLock
+            this.Locks = !this.Policy.DoNotLock
                 ? new MultiLock(
-                    this.policy.NumberOfLocks ?? 50,
-                    this.policy.LockTimeoutMilliseconds != null && this.policy.LockTimeoutMilliseconds > 0
-                        ? this.policy.LockTimeoutMilliseconds
+                    this.Policy.NumberOfLocks ?? 50,
+                    this.Policy.LockTimeoutMilliseconds != null && this.Policy.LockTimeoutMilliseconds > 0
+                        ? this.Policy.LockTimeoutMilliseconds
                         : null,
-                    this.policy.DoThrowExceptionOnTimeout ?? true)
+                    this.Policy.DoThrowExceptionOnTimeout ?? true)
                 : null;
 
-            this.notiferName = this.policy?.SyncProvider;
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.notiferName);
-            InvalidateOnUpdate = this.synchronizer?.IsInvalidateOnUpdateEnabled ?? false;
+            if (this.Policy.OnSyncProviderFailure != null)
+            {
+                if (string.IsNullOrEmpty(this.Policy.SyncProvider))
+                    throw new ApplicationException($"{name}.OnSyncProviderFailure requires SyncProvider to be defined");
+
+                var cacheItemPolicy = ToRuntimePolicy(this.Policy);
+                var syncProviderFailureCacheItemPolicy = ToRuntimePolicy(this.Policy.OnSyncProviderFailure);
+                if (syncProviderFailureCacheItemPolicy.AbsoluteExpiration >= cacheItemPolicy.AbsoluteExpiration &&
+                    syncProviderFailureCacheItemPolicy.SlidingExpiration >= cacheItemPolicy.SlidingExpiration)
+                    throw new ApplicationException($"{name}.OnSyncProviderFailure expiry policy needs to be more restrictive");
+            }
+
+            this.notiferName = this.Policy.SyncProvider;
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.notiferName,
+                invalidateOnStateChange: this.Policy.OnSyncProviderFailure?.InvalidateOnProviderStateChange ?? false);
         }
 
         public string Name { get { return this.name; } }
@@ -50,11 +62,11 @@ namespace PubComp.Caching.SystemRuntime
             {
                 if (synchronizer?.IsActive ?? true)
                 {
-                    return policy;
+                    return Policy;
                 }
                 else
                 {
-                    return policy.OnSyncProviderFailure ?? policy;
+                    return (InMemoryExpirationPolicy) Policy.OnSyncProviderFailure ?? Policy;
                 }
             }
         }
@@ -75,10 +87,6 @@ namespace PubComp.Caching.SystemRuntime
 
         public void Set<TValue>(string key, TValue value)
         {
-            if (InvalidateOnUpdate && innerCache.Contains(key))
-            {
-                synchronizer?.TryPublishCacheItemUpdated(key);
-            }
             Add(key, value);
         }
 
@@ -94,11 +102,11 @@ namespace PubComp.Caching.SystemRuntime
             {
                 // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
                 // ReSharper disable once MergeConditionalExpression
-                value = item.Value is TValue ? (TValue)item.Value : default(TValue);
+                value = item.Value is TValue ? (TValue)item.Value : default;
                 return true;
             }
 
-            value = default(TValue);
+            value = default;
             return false;
         }
 
@@ -149,44 +157,52 @@ namespace PubComp.Caching.SystemRuntime
             };
         }
 
-        public TValue Get<TValue>(String key, Func<TValue> getter)
+        public virtual TValue Get<TValue>(String key, Func<TValue> getter)
         {
             if (TryGetInner(key, out TValue value))
                 return value;
 
             TValue OnCacheMiss()
             {
-                if (TryGetInner(key, out value)) return value;
-
                 value = getter();
                 Set(key, value);
                 return value;
             }
 
-            if (policy.DoNotLock)
+            TValue OnCacheMissWithLock()
+            {
+                if (TryGetInner(key, out value)) return value;
+                return OnCacheMiss();
+            }
+
+            if (Policy.DoNotLock)
                 return OnCacheMiss();
 
-            return this.locks.LockAndLoad(key, OnCacheMiss);
+            return this.Locks.LockAndLoad(key, OnCacheMissWithLock);
         }
 
-        public async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
+        public virtual async Task<TValue> GetAsync<TValue>(string key, Func<Task<TValue>> getter)
         {
             if (TryGetInner(key, out TValue value))
                 return value;
 
             async Task<TValue> OnCacheMiss()
             {
-                if (TryGetInner(key, out value)) return value;
-
                 value = await getter().ConfigureAwait(false);
                 Set(key, value);
                 return value;
             }
 
-            if (policy.DoNotLock)
+            async Task<TValue> OnCacheMissWithLock()
+            {
+                if (TryGetInner(key, out value)) return value;
+                return await OnCacheMiss().ConfigureAwait(false);
+            }
+
+            if (Policy.DoNotLock)
                 return await OnCacheMiss().ConfigureAwait(false);
 
-            return await this.locks.LockAndLoadAsync(key, OnCacheMiss).ConfigureAwait(false);
+            return await this.Locks.LockAndLoadAsync(key, OnCacheMissWithLock).ConfigureAwait(false);
         }
 
         public void Clear(String key)
@@ -209,6 +225,24 @@ namespace PubComp.Caching.SystemRuntime
         {
             innerCache = new System.Runtime.Caching.MemoryCache(this.name);
             return Task.FromResult<object>(null);
+        }
+
+        public object GetPolicy()
+        {
+            return new
+            {
+                this.Policy.DoThrowExceptionOnTimeout,
+                this.Policy.DoNotLock,
+                this.Policy.LockTimeoutMilliseconds,
+                this.Policy.NumberOfLocks,
+                this.Policy.AbsoluteExpiration,
+                this.Policy.SlidingExpiration,
+                this.Policy.ExpirationFromAdd,
+                this.Policy.SyncProvider,
+                this.Policy.OnSyncProviderFailure,
+
+                SyncProviderIsActive = synchronizer?.IsActive
+            };
         }
     }
 }

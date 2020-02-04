@@ -5,7 +5,7 @@ using PubComp.NoSql.MongoDbDriver;
 
 namespace PubComp.Caching.MongoDbCaching
 {
-    public class MongoDbCache : ICache
+    public class MongoDbCache : ICache, ICacheGetPolicy
     {
         private readonly String connectionString;
         private readonly String cacheDbName;
@@ -14,11 +14,11 @@ namespace PubComp.Caching.MongoDbCaching
         private readonly TimeSpan? expireWithin;
         private readonly DateTime? expireAt;
         private readonly CacheSynchronizer synchronizer;
+        private readonly MongoDbCachePolicy policy;
 
         public MongoDbCache(String cacheCollectionName, MongoDbCachePolicy policy)
         {
-            if (policy == null)
-                throw new ArgumentNullException(nameof(policy));
+            this.policy = policy ?? throw new ArgumentNullException(nameof(policy));
 
             if (!string.IsNullOrEmpty(policy.ConnectionName))
             {
@@ -183,12 +183,12 @@ namespace PubComp.Caching.MongoDbCaching
                 if (cacheItem != null)
                 {
                     // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
-                    value = cacheItem.Value is TValue ? (TValue)cacheItem.Value : default(TValue);
+                    value = cacheItem.Value is TValue ? (TValue)cacheItem.Value : default;
                     UpdateExpirationTime(set, cacheItem);
                     return true;
                 }
 
-                value = default(TValue);
+                value = default;
                 return false;
             }
         }
@@ -250,6 +250,23 @@ namespace PubComp.Caching.MongoDbCaching
             // TODO: This should be made async -- requires updating MongoDbDriver
             ClearAll();
             return Task.FromResult<object>(null);
+        }
+
+        public object GetPolicy()
+        {
+            return new
+            {
+                this.policy.DatabaseName,
+                this.policy.ConnectionName,
+                this.policy.AbsoluteExpiration,
+                this.policy.SlidingExpiration,
+                this.policy.ExpirationFromAdd,
+                this.policy.SyncProvider,
+
+                UseSlidingExpiration = this.useSlidingExpiration,
+                ExpireWithin = this.expireWithin,
+                ExpireAt = expireAt
+            };
         }
     }
 }
