@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace PubComp.Caching.SystemRuntime
 {
-    public abstract class ObjectCache : ICache
+    public abstract class ObjectCache : ICache, ICacheGetPolicy
     {
         private readonly String name;
         private System.Runtime.Caching.ObjectCache innerCache;
@@ -35,8 +35,21 @@ namespace PubComp.Caching.SystemRuntime
                     this.Policy.DoThrowExceptionOnTimeout ?? true)
                 : null;
 
-            this.notiferName = this.Policy?.SyncProvider;
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.notiferName);
+            if (this.Policy.OnSyncProviderFailure != null)
+            {
+                if (string.IsNullOrEmpty(this.Policy.SyncProvider))
+                    throw new ApplicationException($"{name}.OnSyncProviderFailure requires SyncProvider to be defined");
+
+                var cacheItemPolicy = ToRuntimePolicy(this.Policy);
+                var syncProviderFailureCacheItemPolicy = ToRuntimePolicy(this.Policy.OnSyncProviderFailure);
+                if (syncProviderFailureCacheItemPolicy.AbsoluteExpiration >= cacheItemPolicy.AbsoluteExpiration &&
+                    syncProviderFailureCacheItemPolicy.SlidingExpiration >= cacheItemPolicy.SlidingExpiration)
+                    throw new ApplicationException($"{name}.OnSyncProviderFailure expiry policy needs to be more restrictive");
+            }
+
+            this.notiferName = this.Policy.SyncProvider;
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.notiferName,
+                invalidateOnStateChange: this.Policy.OnSyncProviderFailure?.InvalidateOnProviderStateChange ?? false);
         }
 
         public string Name { get { return this.name; } }
@@ -53,7 +66,7 @@ namespace PubComp.Caching.SystemRuntime
                 }
                 else
                 {
-                    return Policy.OnSyncProviderFailure ?? Policy;
+                    return (InMemoryExpirationPolicy) Policy.OnSyncProviderFailure ?? Policy;
                 }
             }
         }
@@ -212,6 +225,24 @@ namespace PubComp.Caching.SystemRuntime
         {
             innerCache = new System.Runtime.Caching.MemoryCache(this.name);
             return Task.FromResult<object>(null);
+        }
+
+        public object GetPolicy()
+        {
+            return new
+            {
+                this.Policy.DoThrowExceptionOnTimeout,
+                this.Policy.DoNotLock,
+                this.Policy.LockTimeoutMilliseconds,
+                this.Policy.NumberOfLocks,
+                this.Policy.AbsoluteExpiration,
+                this.Policy.SlidingExpiration,
+                this.Policy.ExpirationFromAdd,
+                this.Policy.SyncProvider,
+                this.Policy.OnSyncProviderFailure,
+
+                SyncProviderIsActive = synchronizer?.IsActive
+            };
         }
     }
 }

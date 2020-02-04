@@ -5,6 +5,8 @@ namespace PubComp.Caching.Core
 {
     public interface IScopedCache : ICache
     {
+        bool IsActive { get; }
+
         CacheMethodTaken SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp);
         Task<CacheMethodTaken> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp);
 

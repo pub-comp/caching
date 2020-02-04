@@ -199,6 +199,12 @@ namespace PubComp.Caching.Core.UnitTests
                 var result = cache.GetScoped("key", Getter);
                 Assert.AreEqual(CacheMethodTaken.Set | CacheMethodTaken.GetMiss, result.MethodTaken);
 
+                using (CacheDirectives.SetScope(CacheMethod.Get | CacheMethod.IgnoreMinimumValueTimestamp,
+                    testTimestamp))
+                {
+
+                }
+
                 var cacheMethodTaken = cache.TryGetScoped<int>("key", out _);
                 Assert.AreEqual(CacheMethodTaken.Get, cacheMethodTaken);
             }

@@ -213,8 +213,7 @@ namespace PubComp.Caching.AopCaching
             }
 
             var cacheToUse = this.cache;
-            
-            if (cacheToUse == null)
+            if (!cacheToUse.IsUseable())
             {
                 base.OnInvoke(args);
                 return;
@@ -256,10 +255,10 @@ namespace PubComp.Caching.AopCaching
 
             args.Arguments[this.keyParameterNumber] = missingKeys;
             base.OnInvoke(args);
-            var resultsFromerInner = args.ReturnValue;
-            addDataRange.Invoke(resultList, new [] { resultsFromerInner });
+            var resultsFromInner = args.ReturnValue;
+            addDataRange.Invoke(resultList, new [] { resultsFromInner });
 
-            var values = GetKeyValues(args, resultsFromerInner, parameterValues);
+            var values = GetKeyValues(args, resultsFromInner, parameterValues);
 
             if (cacheToUse is IScopedCache scopedCacheToUse)
             {
@@ -288,8 +287,7 @@ namespace PubComp.Caching.AopCaching
             }
 
             var cacheToUse = this.cache;
-
-            if (cacheToUse == null)
+            if (!cacheToUse.IsUseable())
             {
                 await base.OnInvokeAsync(args).ConfigureAwait(false);
                 return;
@@ -352,7 +350,7 @@ namespace PubComp.Caching.AopCaching
             args.ReturnValue = resultList;
         }
 
-        private Dictionary<string, object> GetKeyValues(MethodInterceptionArgs args, object resultsFromerInner, object[] parameterValues)
+        private Dictionary<string, object> GetKeyValues(MethodInterceptionArgs args, object resultsFromInner, object[] parameterValues)
         {
             var converter = createDataKeyConverter.Invoke(new object[0]);
 
@@ -365,7 +363,7 @@ namespace PubComp.Caching.AopCaching
                 : args.Method.GetParameters().Select(p => p.ParameterType.FullName).ToArray();
 
             Dictionary<string, object> values = new Dictionary<string, object>();
-            foreach (object result in resultsFromerInner as IEnumerable)
+            foreach (object result in resultsFromInner as IEnumerable)
             {
                 var k = convertDataToKey.Invoke(converter, new[] {result});
 

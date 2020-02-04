@@ -4,7 +4,7 @@ namespace PubComp.Caching.Core
 {
     public class LayeredScopedCacheConfig : CacheConfig
     {
-        public LayeredCachePolicy Policy { get; set; }
+        public LayeredScopedCachePolicy Policy { get; set; }
 
         public override ICache CreateCache()
         {

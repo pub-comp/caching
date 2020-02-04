@@ -1,10 +1,10 @@
-﻿using System;
+﻿using PubComp.Caching.Core;
+using System;
 using System.Threading.Tasks;
-using PubComp.Caching.Core;
 
 namespace PubComp.Caching.RedisCaching
 {
-    public class RedisCache : ICache
+    public class RedisCache : ICache, ICacheGetPolicy
     {
         private readonly string name;
         private readonly string connectionString;
@@ -20,6 +20,8 @@ namespace PubComp.Caching.RedisCaching
         private readonly CacheSynchronizer synchronizer;
         private readonly NLog.ILogger log;
 
+        private readonly RedisCachePolicy Policy;
+
         public string Name { get { return this.name; } }
 
         private CacheContext InnerCache
@@ -31,6 +33,7 @@ namespace PubComp.Caching.RedisCaching
         {
             this.name = name;
             this.log = NLog.LogManager.GetLogger(typeof(RedisCache).FullName);
+            this.Policy = policy;
 
             log.Debug("Init Cache {0}", this.name);
 
@@ -120,7 +123,7 @@ namespace PubComp.Caching.RedisCaching
             var prevValue = GetCacheItem<TValue>(context, key);
             if (!doForceOverride && prevValue != null && prevValue.Value is TValue)
                 return prevValue.Value;
-            
+
             context.SetItem(newItem);
 
             return newValue;
@@ -139,7 +142,7 @@ namespace PubComp.Caching.RedisCaching
             var prevValue = await GetCacheItemAsync<TValue>(context, key).ConfigureAwait(false);
             if (!doForceOverride && prevValue != null && prevValue.Value is TValue)
                 return prevValue.Value;
-            
+
             await context.SetItemAsync(newItem).ConfigureAwait(false);
 
             return newValue;
@@ -291,6 +294,22 @@ namespace PubComp.Caching.RedisCaching
         public Task ClearAllAsync()
         {
             return InnerCache.ClearItemsAsync(Name);
+        }
+
+        public object GetPolicy()
+        {
+            return new
+            {
+                this.Policy.ConnectionName,
+                this.Policy.AbsoluteExpiration,
+                this.Policy.SlidingExpiration,
+                this.Policy.ExpirationFromAdd,
+                this.Policy.SyncProvider,
+
+                UseSlidingExpiration = this.useSlidingExpiration,
+                ExpireWithin = this.expireWithin,
+                ExpireAt = expireAt
+            };
         }
     }
 }

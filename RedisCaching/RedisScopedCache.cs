@@ -5,21 +5,24 @@ using System.Threading.Tasks;
 
 namespace PubComp.Caching.RedisCaching
 {
-    public class RedisScopedCache : IScopedCache
+    public class RedisScopedCache : IScopedCache, ICacheGetPolicy
     {
         private readonly bool useSlidingExpiration;
         private readonly TimeSpan? expireWithin;
         private readonly DateTime? expireAt;
-
+        private readonly RedisCachePolicy Policy;
         private readonly CacheSynchronizer synchronizer;
+        
+        private ScopedCacheContext InnerCache { get; }
 
         public string Name { get; }
-        private ScopedCacheContext InnerCache { get; }
+        public bool IsActive => InnerCache.IsActive;
 
         public RedisScopedCache(String name, RedisCachePolicy policy)
         {
             this.Name = name;
             var log = NLog.LogManager.GetLogger(typeof(RedisScopedCache).FullName);
+            this.Policy = policy;
 
             log.Debug("Init Cache {0}", this.Name);
 
@@ -75,6 +78,13 @@ namespace PubComp.Caching.RedisCaching
             synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, policy.SyncProvider);
         }
 
+        private CacheDirectives GetCacheDirectives()
+        {
+            var directives = CacheDirectives.CurrentScope;
+            if (!this.IsActive) directives.Method &= ~CacheMethod.GetOrSet;
+            return directives;
+        }
+
         private ScopedCacheItem<TValue> CreateCacheItem<TValue>(string key, TValue value, DateTimeOffset valueTimestamp)
         {
             ScopedCacheItem<TValue> newItem;
@@ -124,7 +134,7 @@ namespace PubComp.Caching.RedisCaching
 
         private async Task<TryGetScopedResult<TValue>> TryGetScopedInnerAsync<TValue>(String key)
         {
-            var directives = CacheDirectives.CurrentScope;
+            var directives = GetCacheDirectives();
             if (!directives.Method.HasFlag(CacheMethod.Get))
             {
                 return new TryGetScopedResult<TValue>
@@ -179,7 +189,7 @@ namespace PubComp.Caching.RedisCaching
 
         private CacheMethodTaken TryGetScopedInner<TValue>(String key, out ScopedValue<TValue> value)
         {
-            var directives = CacheDirectives.CurrentScope;
+            var directives = GetCacheDirectives();
             if (!directives.Method.HasFlag(CacheMethod.Get))
             {
                 value = default;
@@ -257,7 +267,7 @@ namespace PubComp.Caching.RedisCaching
 
         public CacheMethodTaken SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
-            var directives = CacheDirectives.CurrentScope;
+            var directives = GetCacheDirectives();
             if (directives.Method.HasFlag(CacheMethod.Set))
             {
                 var newItem = CreateCacheItem(key, value, valueTimestamp);
@@ -270,7 +280,7 @@ namespace PubComp.Caching.RedisCaching
 
         public async Task<CacheMethodTaken> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
-            var directives = CacheDirectives.CurrentScope;
+            var directives = GetCacheDirectives();
             if (directives.Method.HasFlag(CacheMethod.Set))
             {
                 var newItem = CreateCacheItem(key, value, valueTimestamp);
@@ -309,6 +319,24 @@ namespace PubComp.Caching.RedisCaching
         public Task ClearAllAsync()
         {
             return InnerCache.ClearItemsAsync(Name);
+        }
+
+        public object GetPolicy()
+        {
+            return new
+            {
+                this.IsActive,
+
+                this.Policy.ConnectionName,
+                this.Policy.AbsoluteExpiration,
+                this.Policy.SlidingExpiration,
+                this.Policy.ExpirationFromAdd,
+                this.Policy.SyncProvider,
+
+                UseSlidingExpiration = this.useSlidingExpiration,
+                ExpireWithin = this.expireWithin,
+                ExpireAt = expireAt
+            };
         }
     }
 }

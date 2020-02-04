@@ -15,7 +15,7 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
         [TestMethod]
         public void TestPolicyDeserialization()
         {
-            var policyString = @"{'SyncProvider':'RedisNotifier', 'SlidingExpiration':'1:02:03:04.567', 'DoNotLock':true, 'NumberOfLocks':10, 'LockTimeoutMilliseconds':10000, 'DoThrowExceptionOnTimeout':false}";
+            var policyString = @"{'SyncProvider':'RedisNotifier', 'SlidingExpiration':'1:02:03:04.567', 'DoNotLock':true, 'NumberOfLocks':10, 'LockTimeoutMilliseconds':10000, 'DoThrowExceptionOnTimeout':false, 'OnSyncProviderFailure': {InvalidateOnProviderStateChange:false, 'SlidingExpiration':'1:02:03:04.567'} }";
             var policy = Newtonsoft.Json.JsonConvert.DeserializeObject<InMemoryPolicy>(policyString);
 
             Assert.IsNotNull(policy);
@@ -25,6 +25,10 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             Assert.AreEqual((ushort)10, policy.NumberOfLocks);
             Assert.AreEqual(10000, policy.LockTimeoutMilliseconds);
             Assert.AreEqual(false, policy.DoThrowExceptionOnTimeout);
+
+            Assert.IsNotNull(policy.OnSyncProviderFailure);
+            Assert.AreEqual(false, policy.OnSyncProviderFailure.InvalidateOnProviderStateChange);
+            Assert.AreEqual(new TimeSpan(1, 2, 3, 4, 567), policy.OnSyncProviderFailure.SlidingExpiration);
         }
 
         [TestMethod]
@@ -52,7 +56,7 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
         {
             //Arrange
             var cache = new InMemoryCache("cache1",
-                new InMemoryPolicy {SlidingExpiration = new TimeSpan(0, 2, 0), DoNotLock = true, NumberOfLocks = 1});
+                new InMemoryPolicy { SlidingExpiration = new TimeSpan(0, 2, 0), DoNotLock = true, NumberOfLocks = 1 });
             int hits = 0;
 
             int Get()
@@ -77,12 +81,13 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             Assert.AreEqual(1, result2);
         }
 
-        [TestMethod][Ignore] // Now reentrant locking is supported
+        [TestMethod]
+        [Ignore] // Now reentrant locking is supported
         public void Get_NestedGetWithLock_Deadlock()
         {
             //Arrange
             var cache = new InMemoryCache("cache1",
-                new InMemoryPolicy {SlidingExpiration = new TimeSpan(0, 2, 0), DoNotLock = false, NumberOfLocks = 1});
+                new InMemoryPolicy { SlidingExpiration = new TimeSpan(0, 2, 0), DoNotLock = false, NumberOfLocks = 1 });
             int hits = 0;
 
             int Get()
@@ -97,7 +102,7 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
             //Act
             var t = Task.Factory.StartNew(() => cache.Get("key", Get), tokenSource.Token);
             var finished = t.Wait(TimeSpan.FromSeconds(2));
-            
+
             //Assert
             Assert.AreEqual(false, finished);
             Assert.AreEqual(0, hits);
@@ -144,6 +149,52 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
                 $"d. {nameof(noLockTime)} < {nameof(oneLockTime)} * 0.5");
             Assert.IsTrue(onehundredLocksTime < oneLockTime * 0.5,
                 $"e. {nameof(onehundredLocksTime)} < {nameof(oneLockTime)} * 0.5");
+        }
+
+        [TestMethod]
+        public void Policy_OnSyncProviderFailure_WithOnSyncProvider()
+        {
+            var cache = new InMemoryCache("t1",
+                new InMemoryPolicy
+                {
+                    ExpirationFromAdd = TimeSpan.FromMinutes(2),
+                    SyncProvider = "syncProvider",
+                    OnSyncProviderFailure = new InMemoryFallbackPolicy
+                    {
+                        ExpirationFromAdd = TimeSpan.FromMinutes(1)
+                    }
+                });
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ApplicationException))]
+        public void Policy_OnSyncProviderFailure_WithoutOnSyncProvider()
+        {
+            var cache = new InMemoryCache("t1",
+                new InMemoryPolicy
+                {
+                    ExpirationFromAdd = TimeSpan.FromMinutes(2),
+                    OnSyncProviderFailure = new InMemoryFallbackPolicy
+                    {
+                        ExpirationFromAdd = TimeSpan.FromMinutes(1)
+                    }
+                });
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ApplicationException))]
+        public void Policy_OnSyncProviderFailure_WithOnSyncProvider_GreaterExpiryForFallback()
+        {
+            var cache = new InMemoryCache("t1",
+                new InMemoryPolicy
+                {
+                    ExpirationFromAdd = TimeSpan.FromMinutes(2),
+                    SyncProvider = "syncProvider",
+                    OnSyncProviderFailure = new InMemoryFallbackPolicy
+                    {
+                        ExpirationFromAdd = TimeSpan.FromMinutes(4)
+                    }
+                });
         }
 
         private double LoadTest(ushort? numberOfLocks, int numberOfIterations, List<string> threadKeys)

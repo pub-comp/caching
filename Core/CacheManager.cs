@@ -182,7 +182,7 @@ namespace PubComp.Caching.Core
         {
             return CacheManagerInternals.GetAssociatedNotifier(cache);
         }
-
+        
         #endregion
 
         #region Cache configuration API

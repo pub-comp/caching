@@ -9,7 +9,7 @@ namespace PubComp.Caching.Core
     /// <summary>
     /// A layered cache e.g. level1 = in-memory cache that falls back to level2 = distributed cache
     /// </summary>
-    public class LayeredCache : ICache
+    public class LayeredCache : ICache, ICacheGetPolicy
     {
         private readonly String name;
         private ICache level1;
@@ -62,7 +62,7 @@ namespace PubComp.Caching.Core
             this.level2 = level2;
 
             this.policy = new LayeredCachePolicy { Level1CacheName = level1CacheName, Level2CacheName = level1CacheName };
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy?.SyncProvider);
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.SyncProvider);
         }
 
         /// <summary>
@@ -92,7 +92,7 @@ namespace PubComp.Caching.Core
             this.level2 = level2;
 
             this.policy = new LayeredCachePolicy { Level1CacheName = level1.Name, Level2CacheName = level2.Name };
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy?.SyncProvider);
+            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.SyncProvider);
         }
 
         public string Name { get { return this.name; } }
@@ -213,6 +213,18 @@ namespace PubComp.Caching.Core
         {
             await this.level2.ClearAllAsync().ConfigureAwait(false);
             await this.level1.ClearAllAsync().ConfigureAwait(false);
+        }
+
+        public object GetPolicy()
+        {
+            return new
+            {
+                Level1CacheName = this.level1.Name,
+                Level2CacheName = this.level2.Name,
+                this.policy.SyncProvider,
+
+                this.policy.InvalidateLevel1OnLevel2Upsert
+            };
         }
     }
 }

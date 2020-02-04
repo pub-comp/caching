@@ -282,6 +282,24 @@ namespace PubComp.Caching.RedisCaching.UnitTests
         }
 
         [TestMethod]
+        public void TestRedisNotifierFallbackWithoutInvalidationOnConnectionFailure()
+        {
+            const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback.WithoutInvalidation";
+
+            var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
+            cache.Get("key1", () => "value1");
+
+            Assert.IsTrue(cache.TryGet("key1", out string value1));
+
+            FakeRedisClientsNewState(newState: false);
+
+            // OnRedisConnectionStateChanged should invalidate cache items
+            Assert.IsTrue(cache.TryGet("key1", out value1));
+
+            FakeRedisClientsNewState(newState: true);
+        }
+
+        [TestMethod]
         public void TestRedisNotifierFallbackInvalidationOnConnectionResumed()
         {
             const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback";

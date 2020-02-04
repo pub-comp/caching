@@ -7,6 +7,8 @@ namespace PubComp.Caching.SystemRuntime
 {
     public class InMemoryScopedCache : ObjectCache, IScopedCache
     {
+        public bool IsActive { get; } = true;
+
         public InMemoryScopedCache(String name, InMemoryPolicy policy)
             : base(name, new System.Runtime.Caching.MemoryCache(name), policy)
         {

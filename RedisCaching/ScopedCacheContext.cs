@@ -11,16 +11,26 @@ namespace PubComp.Caching.RedisCaching
         private readonly RedisClient client;
         private readonly IRedisConverter convert;
 
+        public bool IsActive { get; private set; }
+
         public ScopedCacheContext(String connectionString, String converterType, String clusterType, int monitorPort, int monitorIntervalMilliseconds)
         {
             this.convert = RedisConverterFactory.CreateConverter(converterType);
             this.client = new RedisClient(connectionString, clusterType, monitorPort, monitorIntervalMilliseconds);
+            RegisterToRedisConnectionStateChangeEvent();
         }
 
         public ScopedCacheContext(String connectionName, String converterType)
         {
             this.convert = RedisConverterFactory.CreateConverter(converterType);
             this.client = RedisClient.GetNamedRedisClient(connectionName);
+            RegisterToRedisConnectionStateChangeEvent();
+        }
+
+        private void RegisterToRedisConnectionStateChangeEvent()
+        {
+            this.client.OnRedisConnectionStateChanged += (sender, args) => this.IsActive = args.NewState;
+            this.IsActive = this.client.IsConnected;
         }
 
         internal ScopedCacheItem<TValue> GetItem<TValue>(String cacheName, String key)

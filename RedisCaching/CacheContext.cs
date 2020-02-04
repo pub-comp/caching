@@ -1,8 +1,8 @@
-﻿using System;
+﻿using PubComp.Caching.RedisCaching.Converters;
+using StackExchange.Redis;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using PubComp.Caching.RedisCaching.Converters;
-using StackExchange.Redis;
 
 namespace PubComp.Caching.RedisCaching
 {

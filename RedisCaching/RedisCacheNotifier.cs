@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using PubComp.Caching.Core;
+﻿using PubComp.Caching.Core;
 using PubComp.Caching.Core.Events;
 using PubComp.Caching.Core.Notifications;
 using PubComp.Caching.RedisCaching.Converters;
 using StackExchange.Redis;
+using System;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace PubComp.Caching.RedisCaching
 {
@@ -23,8 +23,6 @@ namespace PubComp.Caching.RedisCaching
         private RedisClient generalInvalidationRedisClient = null;
         private ConcurrentDictionary<string, RedisClient> cacheSubClients;
         private ConcurrentDictionary<string, Func<CacheItemNotification, bool>> cacheCallbacks;
-
-        //public bool IsActive { this.}
 
         public RedisCacheNotifier(string name, RedisCacheNotifierPolicy policy)
         {

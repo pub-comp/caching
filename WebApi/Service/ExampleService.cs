@@ -8,7 +8,7 @@ namespace TestHost.WebApi.Service
 {
     public class ExampleService
     {
-        public const string CacheName = "Numbers";
+        public const string CacheName = "redisCache";//"Numbers";
 
         private readonly string dbPath;
 

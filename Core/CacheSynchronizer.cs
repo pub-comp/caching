@@ -7,30 +7,27 @@ namespace PubComp.Caching.Core
     {
         private readonly ICache cache;
         private readonly ICacheNotifier notifier;
+        private readonly bool invalidateOnStateChange;
 
-        private bool? notifierIsConnected;
-        public bool IsActive => notifierIsConnected ?? false;
 
-        public CacheSynchronizer(ICache cache, ICacheNotifier notifier)
+        public bool IsActive { get; private set; }
+
+        public CacheSynchronizer(ICache cache, ICacheNotifier notifier, bool invalidateOnStateChange)
         {
             this.cache = cache;
             this.notifier = notifier ?? throw new ArgumentNullException(nameof(notifier));
-            
+            this.invalidateOnStateChange = invalidateOnStateChange;
+
             notifier.Subscribe(cache.Name, OnCacheUpdated, OnNotifierStateChanged);
         }
 
         private void OnNotifierStateChanged(object sender, Events.ProviderStateChangedEventArgs args)
         {
-            if (notifierIsConnected.HasValue && notifierIsConnected != args.NewState)
-            {
-                notifierIsConnected = args.NewState;
-                OnCacheUpdated(new CacheItemNotification("self", this.cache.Name, null,
-                    CacheItemActionTypes.RemoveAll));
-            }
-            else
-            {
-                notifierIsConnected = args.NewState;
-            }
+            var oldState = IsActive;
+            IsActive = args.NewState;
+
+            if (this.invalidateOnStateChange && oldState != args.NewState)
+                OnCacheUpdated(new CacheItemNotification("self", this.cache.Name, null, CacheItemActionTypes.RemoveAll));
         }
 
         private bool OnCacheUpdated(CacheItemNotification notification)
@@ -57,6 +54,9 @@ namespace PubComp.Caching.Core
         }
 
         public static CacheSynchronizer CreateCacheSynchronizer(ICache cache, string syncProviderName)
+            => CreateCacheSynchronizer(cache, syncProviderName, invalidateOnStateChange: false);
+
+        public static CacheSynchronizer CreateCacheSynchronizer(ICache cache, string syncProviderName, bool invalidateOnStateChange)
         {
             if (string.IsNullOrEmpty(syncProviderName))
                 return null;
@@ -66,7 +66,7 @@ namespace PubComp.Caching.Core
             if (notifier == null)
                 return null;
 
-            var synchronizer = new CacheSynchronizer(cache, notifier);
+            var synchronizer = new CacheSynchronizer(cache, notifier, invalidateOnStateChange);
 
             CacheManager.Associate(cache, notifier);
 

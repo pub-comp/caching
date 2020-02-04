@@ -8,6 +8,8 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
     {
         private readonly MockScopedCacheInner innerCache;
 
+        public bool IsActive { get; set; } = true;
+
         public MockMemScopedCache(string name)
         {
             this.innerCache = new MockScopedCacheInner(name);
