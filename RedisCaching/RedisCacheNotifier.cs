@@ -144,8 +144,15 @@ namespace PubComp.Caching.RedisCaching
         {
             try
             {
-                Publish(cacheName, key, action);
-                return true;
+                var message = new CacheItemNotification(sender, cacheName, key, action);
+                var messageToSend = convert.ToRedis(message);
+                var redisClient = GetSubClient(cacheName, null, null);
+                if (redisClient.IsConnected)
+                {
+                    redisClient.Subscriber.Publish(cacheName, messageToSend, CommandFlags.None);
+                    return true;
+                }
+                return false;
             }
             catch (Exception ex)
             {
@@ -158,8 +165,17 @@ namespace PubComp.Caching.RedisCaching
         {
             try
             {
-                await PublishAsync(cacheName, key, action).ConfigureAwait(false);
-                return true;
+                var message = new CacheItemNotification(sender, cacheName, key, action);
+                var messageToSend = convert.ToRedis(message);
+                var redisClient = GetSubClient(cacheName, null, null);
+                if (redisClient.IsConnected)
+                {
+                    await redisClient.Subscriber
+                        .PublishAsync(cacheName, messageToSend, CommandFlags.None)
+                        .ConfigureAwait(false);
+                    return true;
+                }
+                return false;
             }
             catch (Exception ex)
             {

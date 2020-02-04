@@ -140,7 +140,7 @@ namespace PubComp.Caching.Core
             this.level1.Set(key, value);
 
             if (this.policy.InvalidateLevel1OnLevel2Upsert)
-                level1Notifier.Publish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
+                level1Notifier.TryPublish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
         }
 
         public async Task SetAsync<TValue>(string key, TValue value)
@@ -150,7 +150,7 @@ namespace PubComp.Caching.Core
 
             if (this.policy.InvalidateLevel1OnLevel2Upsert)
                 await level1Notifier
-                    .PublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated)
+                    .TryPublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated)
                     .ConfigureAwait(false);
         }
 
@@ -166,7 +166,7 @@ namespace PubComp.Caching.Core
                     }));
 
             if (getterHasBeenInvoked && this.policy.InvalidateLevel1OnLevel2Upsert)
-                this.level1Notifier.Publish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
+                this.level1Notifier.TryPublish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
 
             return value;
         }
@@ -185,7 +185,7 @@ namespace PubComp.Caching.Core
 
             if (getterHasBeenInvoked && this.policy.InvalidateLevel1OnLevel2Upsert)
                 await this.level1Notifier
-                    .PublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated)
+                    .TryPublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated)
                     .ConfigureAwait(false);
 
             return value;

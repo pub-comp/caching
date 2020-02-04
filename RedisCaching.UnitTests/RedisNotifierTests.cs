@@ -204,44 +204,6 @@ namespace PubComp.Caching.RedisCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestRedisNotifierLayeredScopedInvalidationOnUpsert()
-        {
-            const string layeredCache = "MyApp.LayeredScopedCache";
-            const string layeredCacheWithAutomaticInvalidation = "MyApp.LayeredScopedCacheWithAutomaticInvalidation";
-
-            var cache = CacheManager.GetCache(layeredCache);
-            var cacheWithAutomaticInvalidationOnUpdate = CacheManager.GetCache(layeredCacheWithAutomaticInvalidation);
-
-            using (CacheDirectives.SetScope(CacheMethod.GetOrSet | CacheMethod.IgnoreMinimumValueTimestamp, DateTimeOffset.UtcNow))
-            {
-
-                Assert.AreEqual("valueA1", cache.Get("keyA1", () => "valueA1"));
-                Assert.AreEqual("valueA2", cache.Get("keyA2", () => "valueA2"));
-                Assert.AreEqual("valueB1", cacheWithAutomaticInvalidationOnUpdate.Get("keyB1", () => "valueB1"));
-                Assert.AreEqual("valueB2", cacheWithAutomaticInvalidationOnUpdate.Get("keyB2", () => "valueB2"));
-
-                var secondProcess = Process.Start(
-                    new ProcessStartInfo
-                    {
-                        CreateNoWindow = false,
-                        FileName = typeof(DemoProgram).Assembly.Location,
-                        Arguments = "layered-scoped-invalidate-on-upsert",
-                        WindowStyle = ProcessWindowStyle.Normal,
-                    });
-                Assert.IsNotNull(secondProcess);
-                secondProcess.WaitForExit();
-
-                Thread.Sleep(200);
-
-                Assert.AreEqual("valueA1", cache.Get("keyA1", () => "valueA1"));
-                Assert.AreEqual("valueA2", cache.Get("keyA2", () => "valueA2"));
-                Assert.AreEqual("valueB1", cacheWithAutomaticInvalidationOnUpdate.Get("keyB1", () => "valueB1"));
-                Assert.AreEqual("demoProgram.valueB2",
-                    cacheWithAutomaticInvalidationOnUpdate.Get("keyB2", () => "valueB2"));
-            }
-        }
-
-        [TestMethod]
         public void TestRedisNotifierFallback()
         {
             const string localCacheWithNotifierAndFallback = "MyApp.LocalCacheWithNotifierAndFallback";

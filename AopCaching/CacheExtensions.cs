@@ -9,8 +9,8 @@ namespace PubComp.Caching.AopCaching
             if (cacheToCheck == null)
                 return false;
 
-            if (cacheToCheck is IScopedCache scopedCache)
-                return scopedCache.IsActive;
+            if (cacheToCheck is ICacheState cacheWithState)
+                return cacheWithState.IsActive;
 
             return true;
         }

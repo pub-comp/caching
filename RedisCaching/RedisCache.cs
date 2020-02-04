@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace PubComp.Caching.RedisCaching
 {
-    public class RedisCache : ICache, ICacheGetPolicy
+    public class RedisCache : ICache, ICacheGetPolicy, ICacheState
     {
         private readonly string name;
         private readonly string connectionString;
@@ -23,6 +23,7 @@ namespace PubComp.Caching.RedisCaching
         private readonly RedisCachePolicy Policy;
 
         public string Name { get { return this.name; } }
+        public bool IsActive => InnerCache.IsActive;
 
         private CacheContext InnerCache
         {

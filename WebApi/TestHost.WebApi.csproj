@@ -251,6 +251,10 @@
       <Project>{57585B9A-7003-461A-B812-CA48603C839F}</Project>
       <Name>Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MongoDbCaching\MongoDbCaching.csproj">
+      <Project>{7443dbd0-65db-4bbe-a1e7-d8bc0c55f2f5}</Project>
+      <Name>MongoDbCaching</Name>
+    </ProjectReference>
     <ProjectReference Include="..\RedisCaching\RedisCaching.csproj">
       <Project>{222025fc-2d4c-4a4d-b4f9-b874cfe6507f}</Project>
       <Name>RedisCaching</Name>

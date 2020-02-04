@@ -3,10 +3,8 @@ using System.Threading.Tasks;
 
 namespace PubComp.Caching.Core
 {
-    public interface IScopedCache : ICache
+    public interface IScopedCache : ICache, ICacheState
     {
-        bool IsActive { get; }
-
         CacheMethodTaken SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp);
         Task<CacheMethodTaken> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp);
 

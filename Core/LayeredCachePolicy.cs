@@ -13,7 +13,7 @@
         public string Level2CacheName { get; set; }
 
         /// <summary>
-        /// Use SyncProvider to notify level1 when upserting level2
+        /// Use SyncProvider to *try* notifying level1 when upserting level2
         /// </summary>
         public bool InvalidateLevel1OnLevel2Upsert { get; set; }
 

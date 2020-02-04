@@ -4,7 +4,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>PubComp.Caching.MongoDbCaching</AssemblyName>
     <RootNamespace>PubComp.Caching.MongoDbCaching</RootNamespace>
-    <Version>4.1.1</Version>
+    <Version>4.1.2-200204-1727</Version>
     <AssemblyVersion>4.1.1.0</AssemblyVersion>
     <FileVersion>4.1.1.0</FileVersion>
   </PropertyGroup>
