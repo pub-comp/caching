@@ -4,7 +4,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>PubComp.Caching.WebApiExtended.NETCore.Swashbuckle</AssemblyName>
     <RootNamespace>PubComp.Caching.WebApiExtended.Net.Core.Swashbuckle</RootNamespace>
-    <Version>4.2.0-b200204-1727</Version>
+    <Version>4.2.0-b200206-1038</Version><GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AssemblyVersion>4.2.0.0</AssemblyVersion>
     <FileVersion>4.1.1.0</FileVersion>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>

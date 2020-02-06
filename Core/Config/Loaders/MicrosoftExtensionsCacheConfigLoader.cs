@@ -61,7 +61,7 @@ namespace PubComp.Caching.Core.Config.Loaders
                                                ex is FileNotFoundException ||
                                                ex is BadImageFormatException)
                     {
-                        LogConfigError(loadErrors, $"Could not load assembly {assemblyName}", ex);
+                        LogConfigError(loadErrors, $"Could not load assembly {assemblyName} for type {typeName}", ex);
                         continue;
                     }
 

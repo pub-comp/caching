@@ -2,7 +2,7 @@
 
 namespace PubComp.Caching.Core
 {
-    public class CacheDirectives
+    public class CacheDirectives : IContext<CacheDirectives>
     {
         public static string HeadersKey = $"X-{nameof(CacheDirectives)}";
 
@@ -47,6 +47,11 @@ namespace PubComp.Caching.Core
         public static IDisposable SetScope(CacheMethod method, DateTimeOffset minimumValueTimestamp)
         {
             return ScopedContext<CacheDirectives>.CreateNewScope(new CacheDirectives(method, minimumValueTimestamp));
+        }
+
+        public CacheDirectives Clone()
+        {
+            return new CacheDirectives(method: this.Method, minimumValueTimestamp: this.MinimumValueTimestamp);
         }
 
         public static CacheDirectives CurrentScope => ScopedContext<CacheDirectives>.CurrentContext;

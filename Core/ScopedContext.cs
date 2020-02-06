@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace PubComp.Caching.Core
 {
-    internal class ScopedContext<TContext> where TContext : class, new()
+    internal class ScopedContext<TContext> where TContext : IContext<TContext>, new()
     {
         private static readonly AsyncLocal<ImmutableStack<DisposableScopedContext>> ContextsStack = new AsyncLocal<ImmutableStack<DisposableScopedContext>>();
 
@@ -17,7 +17,7 @@ namespace PubComp.Caching.Core
                     return new TContext();
                 }
 
-                return ContextsStack.Value.Peek().Context;
+                return ContextsStack.Value.Peek().Context.Clone();
             }
         }
 
