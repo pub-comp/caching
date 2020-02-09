@@ -144,6 +144,10 @@
 	* CacheManager enhanced to enable support for .NET standard configuration (Microsoft.Extensions.Configuration)
 
 ### 4.5.0:
+	* Configuration
+	  - New cache configuration option: LoadPriority
+	    default 1 to all cache types except Layered[Scoped]Cache which has default of 2
+
 	* RedisClient
 	  - Optimization: Reuse ConnectionMultiplexer when using RedisCache/SyncProvider
 
