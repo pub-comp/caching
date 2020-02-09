@@ -15,7 +15,7 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
         [TestMethod]
         public void TestPolicyDeserialization()
         {
-            var policyString = @"{'SyncProvider':'RedisNotifier', 'SlidingExpiration':'1:02:03:04.567', 'DoNotLock':true, 'NumberOfLocks':10, 'LockTimeoutMilliseconds':10000, 'DoThrowExceptionOnTimeout':false, 'OnSyncProviderFailure': {InvalidateOnProviderStateChange:false, 'SlidingExpiration':'1:02:03:04.567'} }";
+            var policyString = @"{'SyncProvider':'RedisNotifier', 'SlidingExpiration':'1:02:03:04.567', 'DoNotLock':true, 'NumberOfLocks':10, 'LockTimeoutMilliseconds':10000, 'DoThrowExceptionOnTimeout':false, 'OnSyncProviderFailure': {'InvalidateOnProviderStateChange':false, 'SlidingExpiration':'1:02:03:04.567'} }";
             var policy = Newtonsoft.Json.JsonConvert.DeserializeObject<InMemoryPolicy>(policyString);
 
             Assert.IsNotNull(policy);

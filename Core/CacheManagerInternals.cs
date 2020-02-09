@@ -19,7 +19,7 @@ namespace PubComp.Caching.Core
     internal class CacheManagerInternals
     {
         private Func<MethodBase> callingMethodGetter;
-        
+
         // ReSharper disable once InconsistentNaming
         private readonly ConcurrentDictionary<CacheName, ICache> caches
             = new ConcurrentDictionary<CacheName, ICache>();
@@ -394,7 +394,7 @@ namespace PubComp.Caching.Core
 
             if (constructor == null)
                 throw new PlatformNotSupportedException("StackFrame(int skipFrames) constructor not present");
-            
+
             if (getMethodMethod == null)
                 throw new PlatformNotSupportedException("StackFrame.GetMethod() not present");
 
@@ -479,7 +479,7 @@ namespace PubComp.Caching.Core
                 SetConnectionString(item.Name, item.CreateConnectionString());
             foreach (var item in notifierConfigs)
                 SetNotifier(item.Name, item.CreateCacheNotifier());
-            foreach (var item in cacheConfigs)
+            foreach (var item in cacheConfigs.OrderBy(c => c.LoadPriority))
                 SetCache(item.Name, item.CreateCache());
         }
 

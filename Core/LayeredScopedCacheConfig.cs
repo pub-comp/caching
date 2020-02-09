@@ -6,6 +6,8 @@ namespace PubComp.Caching.Core
     {
         public LayeredScopedCachePolicy Policy { get; set; }
 
+        public override int LoadPriority { get; set; } = 2;
+
         public override ICache CreateCache()
         {
             return new LayeredScopedCache(this.Name, this.Policy);
