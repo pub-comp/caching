@@ -4,7 +4,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>PubComp.Caching.WebApiExtended.NETCore</AssemblyName>
     <RootNamespace>PubComp.Caching.WebApiExtended.Net.Core</RootNamespace>
-    <Version>4.2.0-b200209-1151</Version><GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>4.2.0-b200209-1632</Version><GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AssemblyVersion>4.2.0.0</AssemblyVersion>
     <FileVersion>4.2.0.0</FileVersion>
   </PropertyGroup>

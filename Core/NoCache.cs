@@ -3,9 +3,11 @@ using System.Threading.Tasks;
 
 namespace PubComp.Caching.Core
 {
-    public class NoCache : ICache
+    public class NoCache : ICache, IScopedCache
     {
         private readonly string name;
+
+        public bool IsActive { get; } = true;
 
         public NoCache(string name)
         {
@@ -51,6 +53,51 @@ namespace PubComp.Caching.Core
             return getter();
         }
 
+        public CacheMethodTaken SetScoped<TValue>(string key, TValue value, DateTimeOffset valueTimestamp)
+        {
+            return CacheMethodTaken.None;
+        }
+
+        public Task<CacheMethodTaken> SetScopedAsync<TValue>(string key, TValue value, DateTimeOffset valueTimestamp)
+        {
+            return Task.FromResult(CacheMethodTaken.None);
+        }
+
+        public GetScopedResult<TValue> GetScoped<TValue>(string key, Func<ScopedValue<TValue>> getter)
+        {
+            var scopedValue = getter();
+            return new GetScopedResult<TValue>
+            {
+                MethodTaken = CacheMethodTaken.None, 
+                ScopedValue = scopedValue
+            };
+        }
+
+        public async Task<GetScopedResult<TValue>> GetScopedAsync<TValue>(string key, Func<Task<ScopedValue<TValue>>> getter)
+        {
+            var scopedValue = await getter().ConfigureAwait(false);
+            return new GetScopedResult<TValue>
+            {
+                MethodTaken = CacheMethodTaken.None,
+                ScopedValue = scopedValue
+            };
+        }
+
+        public CacheMethodTaken TryGetScoped<TValue>(string key, out ScopedValue<TValue> scopedValue)
+        {
+            scopedValue = default;
+            return CacheMethodTaken.None;
+        }
+
+        public Task<TryGetScopedResult<TValue>> TryGetScopedAsync<TValue>(string key)
+        {
+            return Task.FromResult(new TryGetScopedResult<TValue>
+            {
+                MethodTaken = CacheMethodTaken.None,
+                ScopedValue = default
+            });
+        }
+
         public void Clear(String key)
         {
         }
@@ -68,5 +115,5 @@ namespace PubComp.Caching.Core
         {
             return Task.FromResult<object>(null);
         }
-    }
+     }
 }
