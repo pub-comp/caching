@@ -105,7 +105,7 @@ namespace PubComp.Caching.RedisCaching
 
                 try
                 {
-                    var regex = new Regex(message);
+                    var regex = new Regex(message, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
                     var cacheNamesToClear = CacheManager.GetCacheNames().Where(cacheName => regex.IsMatch(cacheName));
 
                     foreach (var cacheName in cacheNamesToClear)

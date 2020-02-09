@@ -156,7 +156,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 {
                     CreateNoWindow = false,
                     FileName = typeof(DemoProgram).Assembly.Location,
-                    Arguments = "general-invalidation loc.*",
+                    Arguments = "general-invalidation lOc.*",
                     WindowStyle = ProcessWindowStyle.Normal,
                 });
             Assert.IsNotNull(secondProcess);

@@ -471,6 +471,10 @@ namespace PubComp.Caching.Core
             foreach (var i in connectionRemoveIndexes)
                 connectionConfigs.RemoveAt(i);
 
+            ValidateNoDuplicationOfName(nameof(ConnectionStringConfig), connectionConfigs);
+            ValidateNoDuplicationOfName(nameof(NotifierConfig), notifierConfigs);
+            ValidateNoDuplicationOfName(nameof(CacheConfig), cacheConfigs);
+
             // Add still pending nodes,
             // order by types (to enable forward declaration)
             // and then by appearance in config
@@ -482,6 +486,31 @@ namespace PubComp.Caching.Core
             foreach (var item in cacheConfigs.OrderBy(c => c.LoadPriority))
                 SetCache(item.Name, item.CreateCache());
         }
+
+        private void ValidateNoDuplicationOfName(string configNodeType, IEnumerable<ConfigNode> configNodes)
+        {
+            var duplicateNames = GetDuplicates(configNodes.Select(n=>n.Name)).ToList();
+            if (duplicateNames.Any())
+                throw new ApplicationException($"Duplicate name detected in configuration of type {configNodeType} (name is case insensitive): {string.Join(", ", duplicateNames)}");
+        }
+
+        private IEnumerable<string> GetDuplicates(IEnumerable<string> keys)
+        {
+            HashSet<string> itemsSeen = new HashSet<string>();
+            HashSet<string> itemsYielded = new HashSet<string>();
+            
+            foreach (var key in keys)
+            {
+                if (!itemsSeen.Add(key.ToLowerInvariant()))
+                {
+                    if (itemsYielded.Add(key))
+                    {
+                        yield return key;
+                    }
+                }
+            }
+        }
+
 
         #endregion
     }
