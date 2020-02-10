@@ -31,8 +31,8 @@ namespace PubComp.Caching.RedisCaching
 
             this.log = NLog.LogManager.GetLogger(typeof(RedisCacheNotifier).FullName);
 
-            this.cacheSubClients = new ConcurrentDictionary<string, RedisClient>();
-            this.cacheCallbacks = new ConcurrentDictionary<string, Func<CacheItemNotification, bool>>();
+            this.cacheSubClients = new ConcurrentDictionary<string, RedisClient>(StringComparer.InvariantCultureIgnoreCase);
+            this.cacheCallbacks = new ConcurrentDictionary<string, Func<CacheItemNotification, bool>>(StringComparer.InvariantCultureIgnoreCase);
 
             if (policy == null)
             {

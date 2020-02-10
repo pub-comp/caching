@@ -10,7 +10,7 @@ namespace PubComp.Caching.DemoSynchronizedClient
 {
     public class DemoProgram
     {
-        const string NotifierName = "redisNotifier";
+        const string NotifierName = "reDisNotifier";
         const string LocalCacheWithNotifier = "MyApp.LocalCacheWithNotifier";
 
         const string LayeredCache = "MyApp.LayeredCache";

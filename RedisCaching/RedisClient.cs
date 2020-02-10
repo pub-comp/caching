@@ -76,13 +76,13 @@ namespace PubComp.Caching.RedisCaching
             InvokeConnectionStateChangedCallback(IsConnected);
         }
 
-        public void RegisterConnectionEvents(IConnectionMultiplexer connectionMultiplexer)
+        public void SubscribeToConnectionEvents(IConnectionMultiplexer connectionMultiplexer)
         {
             connectionMultiplexer.ConnectionFailed += OnConnectionMultiplexerConnectivityEvent;
             connectionMultiplexer.ConnectionRestored += OnConnectionMultiplexerConnectivityEvent;
         }
 
-        public void DeregisterConnectionEvents(IConnectionMultiplexer connectionMultiplexer)
+        public void UnsubscribeFromConnectionEvents(IConnectionMultiplexer connectionMultiplexer)
         {
             connectionMultiplexer.ConnectionFailed -= OnConnectionMultiplexerConnectivityEvent;
             connectionMultiplexer.ConnectionRestored -= OnConnectionMultiplexerConnectivityEvent;
@@ -94,7 +94,7 @@ namespace PubComp.Caching.RedisCaching
             {
                 if (this.innerContext != null)
                 {
-                    DeregisterConnectionEvents(this.innerContext);
+                    UnsubscribeFromConnectionEvents(this.innerContext);
                     this.innerContext.Close();
                     this.innerContext.Dispose();
                     this.innerContext = null;
@@ -105,7 +105,7 @@ namespace PubComp.Caching.RedisCaching
                 log.Debug("Redis Reconnect: {0}", config.ToString(false));
                 config.AbortOnConnectFail = false;
                 this.innerContext = ConnectionMultiplexer.Connect(config);
-                RegisterConnectionEvents(this.innerContext);
+                SubscribeToConnectionEvents(this.innerContext);
             }
         }
 

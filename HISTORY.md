@@ -147,7 +147,7 @@
 	* Configuration
 	  - New cache configuration option: LoadPriority
 	    default 1 to all cache types except Layered[Scoped]Cache which has default of 2
-	  - Configuration names are no longer cace sensitive (will throw exception on initialization if duplicate are detected)
+	  - cache/notifier/connectionstrings names are no longer cace sensitive (will throw exception on initialization if duplicate are detected)
 
 	* RedisClient
 	  - Optimization: Reuse ConnectionMultiplexer when using RedisCache/SyncProvider

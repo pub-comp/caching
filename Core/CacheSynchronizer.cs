@@ -32,7 +32,7 @@ namespace PubComp.Caching.Core
 
         private bool OnCacheUpdated(CacheItemNotification notification)
         {
-            if (notification.CacheName != this.cache.Name)
+            if (!this.cache.Name.Equals(notification.CacheName, StringComparison.InvariantCultureIgnoreCase))
                 return false;
 
             System.Diagnostics.Debug.WriteLine("Incoming Notification::From:{0}, Cache:{1}, Key:{2}, Action:{3}",

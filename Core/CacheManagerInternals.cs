@@ -26,15 +26,15 @@ namespace PubComp.Caching.Core
 
         // ReSharper disable once InconsistentNaming
         private readonly ConcurrentDictionary<string, ICacheNotifier> notifiers
-            = new ConcurrentDictionary<string, ICacheNotifier>();
+            = new ConcurrentDictionary<string, ICacheNotifier>(StringComparer.InvariantCultureIgnoreCase);
 
         // ReSharper disable once InconsistentNaming
         private readonly ConcurrentDictionary<string, ICacheConnectionString> connectionStrings
-            = new ConcurrentDictionary<string, ICacheConnectionString>();
+            = new ConcurrentDictionary<string, ICacheConnectionString>(StringComparer.InvariantCultureIgnoreCase);
 
         // ReSharper disable once InconsistentNaming
         private readonly ConcurrentDictionary<string, string> cacheNotifierAssociations
-            = new ConcurrentDictionary<string, string>();
+            = new ConcurrentDictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
         /// <summary>
         /// The source to load the cache configuration from
@@ -433,13 +433,13 @@ namespace PubComp.Caching.Core
                         // Save which pending nodes to remove
                         connectionRemoveIndexes.AddRange(
                             connectionConfigs.Select((cfg, index) => Tuple.Create(index, cfg))
-                                .Where(c => c.Item2.Name == item.Name).Select(c => c.Item1).Reverse());
+                                .Where(c => c.Item2.Name.Equals(item.Name, StringComparison.InvariantCultureIgnoreCase)).Select(c => c.Item1).Reverse());
                         notifierRemoveIndexes.AddRange(
                             notifierConfigs.Select((cfg, index) => Tuple.Create(index, cfg))
-                                .Where(c => c.Item2.Name == item.Name).Select(c => c.Item1).Reverse());
+                                .Where(c => c.Item2.Name.Equals(item.Name, StringComparison.InvariantCultureIgnoreCase)).Select(c => c.Item1).Reverse());
                         cacheRemoveIndexes.AddRange(
                             cacheConfigs.Select((cfg, index) => Tuple.Create(index, cfg))
-                                .Where(c => c.Item2.Name == item.Name).Select(c => c.Item1).Reverse());
+                                .Where(c => c.Item2.Name.Equals(item.Name, StringComparison.InvariantCultureIgnoreCase)).Select(c => c.Item1).Reverse());
                         break;
 
                     case ConfigAction.Add:

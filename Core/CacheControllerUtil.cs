@@ -1,10 +1,10 @@
-﻿using System;
+﻿using PubComp.Caching.Core.Exceptions;
+using PubComp.Caching.Core.Notifications;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using PubComp.Caching.Core.Exceptions;
-using PubComp.Caching.Core.Notifications;
 
 namespace PubComp.Caching.Core
 {
@@ -15,7 +15,7 @@ namespace PubComp.Caching.Core
 
         static CacheControllerUtil()
         {
-            RegisteredCacheNames = new ConcurrentDictionary<string, bool>();
+            RegisteredCacheNames = new ConcurrentDictionary<string, bool>(StringComparer.InvariantCultureIgnoreCase);
             RegisteredCacheItems = new ConcurrentDictionary<Tuple<string, string>, Func<object>>();
         }
 
@@ -37,7 +37,7 @@ namespace PubComp.Caching.Core
                 throw new CacheClearException("Cache not cleared - cache not found: " + cacheName);
             }
 
-            if (cache.Name != cacheName)
+            if (!cache.Name.Equals(cacheName, StringComparison.InvariantCultureIgnoreCase))
             {
                 throw new CacheClearException("Cache not cleared - due to fallback to a general cache: " + cacheName);
             }
@@ -55,7 +55,7 @@ namespace PubComp.Caching.Core
 
             var notifier = CacheManager.GetAssociatedNotifier(cache);
             if (notifier != null)
-                notifier.Publish(cacheName, null, CacheItemActionTypes.RemoveAll);
+                notifier.Publish(cache.Name, null, CacheItemActionTypes.RemoveAll);
         }
 
         /// <summary>
@@ -80,6 +80,11 @@ namespace PubComp.Caching.Core
             if (cache == null)
             {
                 throw new CacheClearException("Cache item not cleared - cache not found: " + cacheName);
+            }
+
+            if (!cache.Name.Equals(cacheName, StringComparison.InvariantCultureIgnoreCase))
+            {
+                throw new CacheClearException("Cache not cleared - due to fallback to a general cache: " + cacheName);
             }
 
             cache.Clear(itemKey);

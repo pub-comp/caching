@@ -61,7 +61,7 @@ namespace PubComp.Caching.Core
             this.level1 = level1;
             this.level2 = level2;
 
-            this.policy = new LayeredCachePolicy { Level1CacheName = level1CacheName, Level2CacheName = level1CacheName };
+            this.policy = new LayeredCachePolicy { Level1CacheName = level1CacheName, Level2CacheName = level2CacheName };
             this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.SyncProvider);
         }
 
@@ -140,7 +140,7 @@ namespace PubComp.Caching.Core
             this.level1.Set(key, value);
 
             if (this.policy.InvalidateLevel1OnLevel2Upsert)
-                level1Notifier.TryPublish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
+                level1Notifier.TryPublish(this.level1.Name, key, CacheItemActionTypes.Updated);
         }
 
         public async Task SetAsync<TValue>(string key, TValue value)
@@ -150,7 +150,7 @@ namespace PubComp.Caching.Core
 
             if (this.policy.InvalidateLevel1OnLevel2Upsert)
                 await level1Notifier
-                    .TryPublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated)
+                    .TryPublishAsync(this.level1.Name, key, CacheItemActionTypes.Updated)
                     .ConfigureAwait(false);
         }
 
@@ -166,7 +166,7 @@ namespace PubComp.Caching.Core
                     }));
 
             if (getterHasBeenInvoked && this.policy.InvalidateLevel1OnLevel2Upsert)
-                this.level1Notifier.TryPublish(policy.Level1CacheName, key, CacheItemActionTypes.Updated);
+                this.level1Notifier.TryPublish(this.level1.Name, key, CacheItemActionTypes.Updated);
 
             return value;
         }
@@ -185,7 +185,7 @@ namespace PubComp.Caching.Core
 
             if (getterHasBeenInvoked && this.policy.InvalidateLevel1OnLevel2Upsert)
                 await this.level1Notifier
-                    .TryPublishAsync(policy.Level1CacheName, key, CacheItemActionTypes.Updated)
+                    .TryPublishAsync(this.level1.Name, key, CacheItemActionTypes.Updated)
                     .ConfigureAwait(false);
 
             return value;
