@@ -3,11 +3,11 @@ using System.Threading.Tasks;
 
 namespace PubComp.Caching.Core
 {
-    public class NoCache : ICache, IScopedCache
+    public class NoCache : IScopedCache
     {
         private readonly string name;
 
-        public bool IsActive { get; } = true;
+        public bool IsActive { get; } = false;
 
         public NoCache(string name)
         {

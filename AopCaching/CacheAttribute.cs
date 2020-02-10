@@ -71,17 +71,16 @@ namespace PubComp.Caching.AopCaching
             }
 
             var cacheToUse = this.cache;
-            if (cacheToUse.IsUseable())
-            {
-                var key = GetCacheKey(args);
-                var result = cacheToUse.Get<object>(key, () => { base.OnInvoke(args); return args.ReturnValue; });
-                var returnType = GetReturnType(args.Method);
-                args.ReturnValue = SafeCasting.CastTo(returnType, result);
-            }
-            else
+            if (!cacheToUse.IsUseable())
             {
                 base.OnInvoke(args);
+                return;
             }
+
+            var key = GetCacheKey(args);
+            var result = cacheToUse.Get<object>(key, () => { base.OnInvoke(args); return args.ReturnValue; });
+            var returnType = GetReturnType(args.Method);
+            args.ReturnValue = SafeCasting.CastTo(returnType, result);
         }
 
         /// <inheritdoc />
@@ -94,19 +93,22 @@ namespace PubComp.Caching.AopCaching
             }
 
             var cacheToUse = this.cache;
-            if (cacheToUse.IsUseable())
-            {
-                var key = GetCacheKey(args);
-                var result = await cacheToUse
-                    .GetAsync(key, async () => { await base.OnInvokeAsync(args).ConfigureAwait(false); return args.ReturnValue; })
-                    .ConfigureAwait(false);
-                var returnType = GetReturnType(args.Method);
-                args.ReturnValue = SafeCasting.CastTo(returnType, result);
-            }
-            else
+            if (!cacheToUse.IsUseable())
             {
                 await base.OnInvokeAsync(args).ConfigureAwait(false);
+                return;
             }
+
+            var key = GetCacheKey(args);
+            var result = await cacheToUse
+                .GetAsync(key, async () =>
+                {
+                    await base.OnInvokeAsync(args).ConfigureAwait(false);
+                    return args.ReturnValue;
+                })
+                .ConfigureAwait(false);
+            var returnType = GetReturnType(args.Method);
+            args.ReturnValue = SafeCasting.CastTo(returnType, result);
         }
 
         private string GetCacheKey(MethodInterceptionArgs args)
