@@ -23,6 +23,9 @@ namespace PubComp.Caching.Core
         {
             this.policy = policy;
 
+            if (this.level1 is NoCache && policy != null)
+                policy.InvalidateLevel1OnLevel2Upsert = false;
+
             if (policy?.InvalidateLevel1OnLevel2Upsert ?? false)
             {
                 level1Notifier = CacheManager.GetAssociatedNotifier(this.level1);

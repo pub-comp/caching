@@ -15,7 +15,8 @@ namespace PubComp.Caching.RedisCaching
         private IRedisMonitor redisMonitor;
         public event EventHandler<Core.Events.ProviderStateChangedEventArgs> OnRedisConnectionStateChanged;
 
-        public static ConcurrentDictionary<string, Lazy<RedisClient>> ActiveRedisClients = new ConcurrentDictionary<string, Lazy<RedisClient>>();
+        public static ConcurrentDictionary<string, Lazy<RedisClient>> ActiveRedisClients 
+            = new ConcurrentDictionary<string, Lazy<RedisClient>>(StringComparer.InvariantCultureIgnoreCase);
 
         public static RedisClient GetNamedRedisClient(string connectionName) => GetNamedRedisClient(connectionName, null);
         public static RedisClient GetNamedRedisClient(string connectionName, EventHandler<Core.Events.ProviderStateChangedEventArgs> providerStateChangedCallback)
