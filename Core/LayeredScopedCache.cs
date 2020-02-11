@@ -16,6 +16,7 @@ namespace PubComp.Caching.Core
 
         public string Name { get; }
         public bool IsActive => this.level1.IsActive || this.level2.IsActive;
+
         protected ICache Level1 => this.level1;
         protected ICache Level2 => this.level2;
 
@@ -200,16 +201,16 @@ namespace PubComp.Caching.Core
 
         public CacheMethodTaken SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
-            var level2Result = this.level2.SetScoped(key, value, valueTimestamp);
             var level1Result = this.level1.SetScoped(key, value, valueTimestamp);
+            var level2Result = this.level2.SetScoped(key, value, valueTimestamp);
 
             return level1Result | level2Result;
         }
 
         public async Task<CacheMethodTaken> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
-            var level2Result = await this.level2.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
             var level1Result = await this.level1.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
+            var level2Result = await this.level2.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
 
             return level1Result | level2Result;
         }
@@ -244,26 +245,50 @@ namespace PubComp.Caching.Core
 
         public void Clear(String key)
         {
-            this.level2.Clear(key);
-            this.level1.Clear(key);
+            try
+            {
+                this.level2.Clear(key);
+            }
+            finally
+            {
+                this.level1.Clear(key);
+            }
         }
 
-        public async Task ClearAsync(String key)
+        public async Task ClearAsync(string key)
         {
-            await this.level2.ClearAsync(key).ConfigureAwait(false);
-            await this.level1.ClearAsync(key).ConfigureAwait(false);
+            try
+            {
+                await this.level2.ClearAsync(key).ConfigureAwait(false);
+            }
+            finally
+            {
+                await this.level1.ClearAsync(key).ConfigureAwait(false);
+            }
         }
 
         public void ClearAll()
         {
-            this.level2.ClearAll();
-            this.level1.ClearAll();
+            try
+            {
+                this.level2.ClearAll();
+            }
+            finally
+            {
+                this.level1.ClearAll();
+            }
         }
 
         public async Task ClearAllAsync()
         {
-            await this.level2.ClearAllAsync().ConfigureAwait(false);
-            await this.level1.ClearAllAsync().ConfigureAwait(false);
+            try
+            {
+                await this.level2.ClearAllAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                await this.level1.ClearAllAsync().ConfigureAwait(false);
+            }
         }
 
         public object GetPolicy()

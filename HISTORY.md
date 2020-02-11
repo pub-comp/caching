@@ -149,6 +149,9 @@
 	    default 1 to all cache types except Layered[Scoped]Cache which has default of 2
 	  - cache/notifier/connectionstrings names are no longer cace sensitive (will throw exception on initialization if duplicate are detected)
 
+	* AOP
+	  - If dependent cache is in inactive state (redis connection is lost...), invokes getter instead of throwing exception
+
 	* RedisClient
 	  - Optimization: Reuse ConnectionMultiplexer when using RedisCache/SyncProvider
 

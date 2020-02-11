@@ -9,7 +9,7 @@ namespace PubComp.Caching.Core
     /// <summary>
     /// A layered cache e.g. level1 = in-memory cache that falls back to level2 = distributed cache
     /// </summary>
-    public class LayeredCache : ICache, ICacheGetPolicy
+    public class LayeredCache : ICache, ICacheState, ICacheGetPolicy
     {
         private readonly String name;
         private ICache level1;
@@ -18,19 +18,27 @@ namespace PubComp.Caching.Core
         private readonly CacheSynchronizer synchronizer;
         private readonly ICacheNotifier level1Notifier;
 
+        public bool IsActive => this.level1.IsUseable() && this.level2.IsUseable();
+
         public LayeredCache(String name, LayeredCachePolicy policy)
             : this(name, policy?.Level1CacheName, policy?.Level2CacheName)
         {
             this.policy = policy;
 
-            if (this.level1 is NoCache && policy != null)
-                policy.InvalidateLevel1OnLevel2Upsert = false;
-
             if (policy?.InvalidateLevel1OnLevel2Upsert ?? false)
             {
-                level1Notifier = CacheManager.GetAssociatedNotifier(this.level1);
-                if (level1Notifier == null)
-                    throw new ApplicationException("InvalidateLevel1OnLevel2Upsert requires level1 cache to have SyncProvider defined in policy: level1CacheName=" + policy.Level1CacheName);
+                if (this.level1 is NoCache)
+                {
+                    policy.InvalidateLevel1OnLevel2Upsert = false;
+                }
+                else
+                {
+                    level1Notifier = CacheManager.GetAssociatedNotifier(this.level1);
+                    if (level1Notifier == null)
+                        throw new ApplicationException(
+                            "InvalidateLevel1OnLevel2Upsert requires level1 cache to have SyncProvider defined in policy: level1CacheName=" +
+                            policy.Level1CacheName);
+                }
             }
         }
 
@@ -196,32 +204,58 @@ namespace PubComp.Caching.Core
 
         public void Clear(String key)
         {
-            this.level2.Clear(key);
-            this.level1.Clear(key);
+            try
+            {
+                this.level2.Clear(key);
+            }
+            finally
+            {
+                this.level1.Clear(key);
+            }
         }
 
         public async Task ClearAsync(string key)
         {
-            await this.level2.ClearAsync(key).ConfigureAwait(false);
-            await this.level1.ClearAsync(key).ConfigureAwait(false);
+            try
+            {
+                await this.level2.ClearAsync(key).ConfigureAwait(false);
+            }
+            finally
+            {
+                await this.level1.ClearAsync(key).ConfigureAwait(false);
+            }
         }
 
         public void ClearAll()
         {
-            this.level2.ClearAll();
-            this.level1.ClearAll();
+            try
+            {
+                this.level2.ClearAll();
+            }
+            finally
+            {
+                this.level1.ClearAll();
+            }
         }
 
         public async Task ClearAllAsync()
         {
-            await this.level2.ClearAllAsync().ConfigureAwait(false);
-            await this.level1.ClearAllAsync().ConfigureAwait(false);
+            try
+            {
+                await this.level2.ClearAllAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                await this.level1.ClearAllAsync().ConfigureAwait(false);
+            }
         }
 
         public object GetPolicy()
         {
             return new
             {
+                IsActive,
+
                 Level1CacheName = this.level1.Name,
                 Level2CacheName = this.level2.Name,
                 this.policy.SyncProvider,

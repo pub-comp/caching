@@ -301,6 +301,8 @@ namespace PubComp.Caching.RedisCaching
         {
             return new
             {
+                IsActive,
+
                 this.Policy.ConnectionName,
                 this.Policy.AbsoluteExpiration,
                 this.Policy.SlidingExpiration,

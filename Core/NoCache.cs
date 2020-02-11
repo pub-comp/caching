@@ -7,7 +7,7 @@ namespace PubComp.Caching.Core
     {
         private readonly string name;
 
-        public bool IsActive { get; } = false;
+        public bool IsActive { get; } = true;
 
         public NoCache(string name)
         {
