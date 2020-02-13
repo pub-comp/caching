@@ -66,26 +66,7 @@ namespace PubComp.Caching.WebApiExtended
         /// </summary>
         [HttpGet]
         [Route("")]
-        public IEnumerable<string> GetRegisteredCacheNames()
-
-        {
-            try
-            {
-                return this.Util.GetRegisteredCacheNames();
-            }
-            catch (CacheException ex)
-            {
-                Log.Warn(ex.Message);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Gets names and configuration of all registered cache instances
-        /// </summary>
-        [HttpGet]
-        [Route("")]
-        public object GetRegisteredCacheNamesWithPolicies(bool includeConfig = false)
+        public object GetRegisteredCacheNames(bool includeConfig = false)
         {
             try
             {

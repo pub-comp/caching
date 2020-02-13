@@ -66,7 +66,7 @@ namespace PubComp.Caching.WebApiExtended.Net.Core
         /// </summary>
         [HttpGet]
         [Route("")]
-        public object GetRegisteredCacheNamesWithPolicies(bool includeConfig = false)
+        public object GetRegisteredCacheNames(bool includeConfig = false)
         {
             try
             {
