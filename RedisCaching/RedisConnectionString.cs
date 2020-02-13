@@ -9,10 +9,15 @@ namespace PubComp.Caching.RedisCaching
 
         public RedisClientPolicy Policy { get; set; }
 
-        public RedisConnectionString(string name, string connectionString, RedisClientPolicy policy)
+        public RedisConnectionString(string name, string connectionString)
         {
             this.Name = name;
             this.ConnectionString = connectionString;
+        }
+
+        public RedisConnectionString(string name, string connectionString, RedisClientPolicy policy)
+        : this(name, connectionString)
+        {
             this.Policy = policy;
         }
     }

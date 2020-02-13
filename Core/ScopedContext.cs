@@ -17,6 +17,7 @@ namespace PubComp.Caching.Core
                     return new TContext();
                 }
 
+                //we clone the context to make it immutable
                 return ContextsStack.Value.Peek().Context.Clone();
             }
         }

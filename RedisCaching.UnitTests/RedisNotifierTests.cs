@@ -235,12 +235,12 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             Assert.IsTrue(cache.TryGet("key1", out string value1));
 
-            FakeRedisClientsNewState(newState: false);
+            FakeRedisClientsNewState(isConnected: false);
 
             // OnRedisConnectionStateChanged should invalidate cache items
             Assert.IsFalse(cache.TryGet("key1", out value1));
 
-            FakeRedisClientsNewState(newState: true);
+            FakeRedisClientsNewState(isConnected: true);
         }
 
         [TestMethod]
@@ -253,12 +253,12 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             Assert.IsTrue(cache.TryGet("key1", out string value1));
 
-            FakeRedisClientsNewState(newState: false);
+            FakeRedisClientsNewState(isConnected: false);
 
             // OnRedisConnectionStateChanged should invalidate cache items
             Assert.IsTrue(cache.TryGet("key1", out value1));
 
-            FakeRedisClientsNewState(newState: true);
+            FakeRedisClientsNewState(isConnected: true);
         }
 
         [TestMethod]
@@ -268,8 +268,8 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
 
-            FakeRedisClientsNewState(newState: false);
-            FakeRedisClientsNewState(newState: true);
+            FakeRedisClientsNewState(isConnected: false);
+            FakeRedisClientsNewState(isConnected: true);
 
             cache.Get("key1", () => "value1");
             Assert.IsTrue(cache.TryGet<string>("key1", out _));
@@ -285,7 +285,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
 
-            FakeRedisClientsNewState(newState: false);
+            FakeRedisClientsNewState(isConnected: false);
 
             cache.Get("key1", () => "value1");
             Assert.IsTrue(cache.TryGet("key1", out string value1));
@@ -295,7 +295,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             // Fallback expiry policy should be 3s
             Assert.IsFalse(cache.TryGet("key1", out value1));
 
-            FakeRedisClientsNewState(newState: true);
+            FakeRedisClientsNewState(isConnected: true);
         }
 
         [TestMethod]
@@ -305,8 +305,8 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             var cache = CacheManager.GetCache(localCacheWithNotifierAndFallback);
 
-            FakeRedisClientsNewState(newState: false);
-            FakeRedisClientsNewState(newState: true);
+            FakeRedisClientsNewState(isConnected: false);
+            FakeRedisClientsNewState(isConnected: true);
 
             cache.Get("key1", () => "value1");
             Assert.IsTrue(cache.TryGet("key1", out string value1));
@@ -317,11 +317,11 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             Assert.IsTrue(cache.TryGet("key1", out value1));
         }
 
-        private void FakeRedisClientsNewState(bool newState)
+        private void FakeRedisClientsNewState(bool isConnected)
         {
             foreach (var client in RedisClient.ActiveRedisClients.Values.Where(x => x.IsValueCreated && x.Value.IsConnected))
             {
-                var providerStateChangedEventArgs = new Core.Events.ProviderStateChangedEventArgs(newState: newState);
+                var providerStateChangedEventArgs = new Core.Events.ProviderStateChangedEventArgs(isConnected);
                 Raise(client.Value, nameof(client.Value.OnRedisConnectionStateChanged), providerStateChangedEventArgs);
             }
         }

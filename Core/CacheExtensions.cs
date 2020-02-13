@@ -12,17 +12,9 @@ namespace PubComp.Caching.Core
         /// <returns></returns>
         public static bool IsUseable(this ICache cacheToCheck)
         {
-            return IsUseable(cacheToCheck as ICacheState);
-        }
-
-        /// <summary>
-        /// Check if cache is in useable state (not null, is active, ...)
-        /// </summary>
-        /// <param name="cacheToCheck"></param>
-        /// <returns></returns>
-        public static bool IsUseable(this ICacheState cacheToCheck)
-        {
-            return cacheToCheck?.IsActive ?? true;
+            if (cacheToCheck is ICacheV2 cacheV2)
+                return cacheV2.IsActive;
+            return cacheToCheck != null;
         }
 
         public static void NotifySyncProvider(this ICache cache, string key, CacheItemActionTypes action)

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace PubComp.Caching.RedisCaching
 {
-    public class RedisScopedCache : IScopedCache, ICacheGetPolicy
+    public class RedisScopedCache : IScopedCache
     {
         private readonly bool useSlidingExpiration;
         private readonly TimeSpan? expireWithin;
@@ -321,22 +321,17 @@ namespace PubComp.Caching.RedisCaching
             return InnerCache.ClearItemsAsync(Name);
         }
 
-        public object GetPolicy()
+        public object GetDetails() => new
         {
-            return new
-            {
-                this.IsActive,
+            this.Policy.SyncProvider,
+            this.Policy.ConnectionName,
+            this.Policy.AbsoluteExpiration,
+            this.Policy.SlidingExpiration,
+            this.Policy.ExpirationFromAdd,
 
-                this.Policy.ConnectionName,
-                this.Policy.AbsoluteExpiration,
-                this.Policy.SlidingExpiration,
-                this.Policy.ExpirationFromAdd,
-                this.Policy.SyncProvider,
-
-                UseSlidingExpiration = this.useSlidingExpiration,
-                ExpireWithin = this.expireWithin,
-                ExpireAt = expireAt
-            };
-        }
+            UseSlidingExpiration = this.useSlidingExpiration,
+            ExpireWithin = this.expireWithin,
+            ExpireAt = expireAt
+        };
     }
 }

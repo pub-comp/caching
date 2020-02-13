@@ -54,17 +54,17 @@ namespace PubComp.Caching.RedisCaching
         public bool IsConnected => this.innerContext?.IsConnected ?? false;
 
         private bool? lastConnectionStateChangedValue = null;
-        private void InvokeConnectionStateChangedCallback(bool newState)
+        private void InvokeConnectionStateChangedCallback(bool isConnected)
         {
-            if ((lastConnectionStateChangedValue ?? !newState) == newState)
+            if (lastConnectionStateChangedValue.HasValue && lastConnectionStateChangedValue.Value == isConnected)
                 return;
 
-            lastConnectionStateChangedValue = newState;
+            lastConnectionStateChangedValue = isConnected;
 
             try
             {
-                log.Log(newState ? LogLevel.Info : LogLevel.Warn, $"RedisClient.ConnectionState Changed to: {newState}");
-                OnRedisConnectionStateChanged?.Invoke(this, new Core.Events.ProviderStateChangedEventArgs(newState));
+                log.Log(isConnected ? LogLevel.Info : LogLevel.Warn, $"RedisClient.ConnectionState Changed to: {isConnected}");
+                OnRedisConnectionStateChanged?.Invoke(this, new Core.Events.ProviderStateChangedEventArgs(isConnected));
             }
             catch (Exception e)
             {

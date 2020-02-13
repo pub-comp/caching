@@ -14,7 +14,7 @@ namespace PubComp.Caching.Core.UnitTests
 
         protected override ICache GetLayeredCache(string name, ICache level1, ICache level2)
         {
-            return new LayeredScopedCache(name, level1, level2);
+            return new LayeredScopedCache(name, level1 as IScopedCache, level2 as IScopedCache);
         }
 
         protected override ICache GetLayeredCache(string name, string level1CacheName, string level2CacheName)

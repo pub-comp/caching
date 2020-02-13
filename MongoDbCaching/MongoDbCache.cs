@@ -5,7 +5,7 @@ using PubComp.NoSql.MongoDbDriver;
 
 namespace PubComp.Caching.MongoDbCaching
 {
-    public class MongoDbCache : ICache, ICacheGetPolicy
+    public class MongoDbCache : ICache
     {
         private readonly String connectionString;
         private readonly String cacheDbName;
@@ -250,23 +250,6 @@ namespace PubComp.Caching.MongoDbCaching
             // TODO: This should be made async -- requires updating MongoDbDriver
             ClearAll();
             return Task.FromResult<object>(null);
-        }
-
-        public object GetPolicy()
-        {
-            return new
-            {
-                this.policy.DatabaseName,
-                this.policy.ConnectionName,
-                this.policy.AbsoluteExpiration,
-                this.policy.SlidingExpiration,
-                this.policy.ExpirationFromAdd,
-                this.policy.SyncProvider,
-
-                UseSlidingExpiration = this.useSlidingExpiration,
-                ExpireWithin = this.expireWithin,
-                ExpireAt = expireAt
-            };
         }
     }
 }

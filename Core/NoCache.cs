@@ -8,6 +8,7 @@ namespace PubComp.Caching.Core
         private readonly string name;
 
         public bool IsActive { get; } = true;
+        public object GetDetails() => null;
 
         public NoCache(string name)
         {
@@ -115,5 +116,5 @@ namespace PubComp.Caching.Core
         {
             return Task.FromResult<object>(null);
         }
-     }
+   }
 }

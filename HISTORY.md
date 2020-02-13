@@ -143,7 +143,7 @@
 ### 4.4.0:
 	* CacheManager enhanced to enable support for .NET standard configuration (Microsoft.Extensions.Configuration)
 
-### 4.5.0:
+### 5.0.0:
 	* Configuration
 	  - New cache configuration option: LoadPriority
 	    default 1 to all cache types except Layered[Scoped]Cache which has default of 2
@@ -165,7 +165,7 @@
 		- Fallback expiry policy
 
 	* Redis*Cache
-	  - New property: ICacheState.IsActive => RedisClient.IsConnected
+	  - New property: ICacheV2.IsActive => RedisClient.IsConnected
 	  - Bug fix: Invalid AbsoluteExpiration handling
 
 	* LayeredCache
@@ -175,15 +175,15 @@
 	  - TryGetScoped
 	  - GetScoped
 	  - SetScoped
-	  - New property: ICacheState.IsActive => RedisClient.IsConnected
+	  - New property: ICacheV2.IsActive => RedisClient.IsConnected
 	* New cache types (implements ICache and IScopedCache)
 	  - InMemoryScopedCache
 	  - RedisScopedCache
 	  - LayeredScopedCache
 
-	* ICacheState for cache types
+	* ICacheV2 for cache types
 	  - New behavior: Won't throw an exception is cache is inactive when used by AOP or by by cache implementing IScopedCache (RedisScopedCache)
-	* ICacheGetPolicy for cache types
+	* ICacheV2 for cache types
 	  - New behevior: Expose state and censored configurations of cache
 
 	* WebApiExtended/.NETCore
@@ -192,4 +192,3 @@
 	
 	* New packages: WebApiExtended.Swashbuckle and  WebApiExtended.NETCore.Swashbuckle
 	  - Expose CacheDirectives for endpoints with CacheableActionFilterAttribute
-

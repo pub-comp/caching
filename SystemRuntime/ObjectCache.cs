@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace PubComp.Caching.SystemRuntime
 {
-    public abstract class ObjectCache : ICache, ICacheGetPolicy
+    public abstract class ObjectCache : ICacheV2
     {
         private readonly String name;
         private System.Runtime.Caching.ObjectCache innerCache;
@@ -18,6 +18,8 @@ namespace PubComp.Caching.SystemRuntime
 
         // ReSharper disable once NotAccessedField.Local - reference isn't necessary, but it makes debugging easier
         private readonly CacheSynchronizer synchronizer;
+
+        public bool IsActive => true;
 
         protected ObjectCache(
             String name, System.Runtime.Caching.ObjectCache innerCache, InMemoryPolicy policy)
@@ -227,22 +229,20 @@ namespace PubComp.Caching.SystemRuntime
             return Task.FromResult<object>(null);
         }
 
-        public object GetPolicy()
+        public object GetDetails() => new
         {
-            return new
-            {
-                this.Policy.DoThrowExceptionOnTimeout,
-                this.Policy.DoNotLock,
-                this.Policy.LockTimeoutMilliseconds,
-                this.Policy.NumberOfLocks,
-                this.Policy.AbsoluteExpiration,
-                this.Policy.SlidingExpiration,
-                this.Policy.ExpirationFromAdd,
-                this.Policy.SyncProvider,
-                this.Policy.OnSyncProviderFailure,
+            this.Policy.SyncProvider,
+            SyncProviderIsActive = synchronizer?.IsActive,
 
-                SyncProviderIsActive = synchronizer?.IsActive
-            };
-        }
+            this.Policy.DoThrowExceptionOnTimeout,
+            this.Policy.DoNotLock,
+            this.Policy.LockTimeoutMilliseconds,
+            this.Policy.NumberOfLocks,
+            this.Policy.AbsoluteExpiration,
+            this.Policy.SlidingExpiration,
+            this.Policy.ExpirationFromAdd,
+
+            this.Policy.OnSyncProviderFailure
+        };
     }
 }

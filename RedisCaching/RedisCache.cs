@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace PubComp.Caching.RedisCaching
 {
-    public class RedisCache : ICache, ICacheGetPolicy, ICacheState
+    public class RedisCache : ICacheV2
     {
         private readonly string name;
         private readonly string connectionString;
@@ -297,22 +297,17 @@ namespace PubComp.Caching.RedisCaching
             return InnerCache.ClearItemsAsync(Name);
         }
 
-        public object GetPolicy()
+        public object GetDetails() => new
         {
-            return new
-            {
-                IsActive,
+            this.Policy.SyncProvider,
+            this.Policy.ConnectionName,
+            this.Policy.AbsoluteExpiration,
+            this.Policy.SlidingExpiration,
+            this.Policy.ExpirationFromAdd,
 
-                this.Policy.ConnectionName,
-                this.Policy.AbsoluteExpiration,
-                this.Policy.SlidingExpiration,
-                this.Policy.ExpirationFromAdd,
-                this.Policy.SyncProvider,
-
-                UseSlidingExpiration = this.useSlidingExpiration,
-                ExpireWithin = this.expireWithin,
-                ExpireAt = expireAt
-            };
-        }
+            UseSlidingExpiration = this.useSlidingExpiration,
+            ExpireWithin = this.expireWithin,
+            ExpireAt = expireAt
+        };
     }
 }

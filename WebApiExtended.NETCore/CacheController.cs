@@ -76,17 +76,8 @@ namespace PubComp.Caching.WebApiExtended.Net.Core
                 var cacheList = new List<object>();
                 foreach (var cacheName in this.Util.GetRegisteredCacheNames())
                 {
-                    object cachePolicy = null;
                     var cache = CacheManager.GetCache(cacheName);
-                    if (CacheManager.GetCache(cacheName) is ICacheGetPolicy cacheWithGetPolicy)
-                        cachePolicy = cacheWithGetPolicy.GetPolicy();
-
-                    cacheList.Add(new
-                    {
-                        Name = cacheName,
-                        Type = cache.GetType().Name,
-                        Policy = cachePolicy
-                    });
+                    cacheList.Add(new CacheDetails(cache));
                 }
 
                 return JArray.FromObject(cacheList, JsonSerializer.CreateDefault(new JsonSerializerSettings

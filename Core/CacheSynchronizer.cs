@@ -20,12 +20,17 @@ namespace PubComp.Caching.Core
             notifier.Subscribe(cache.Name, OnCacheUpdated, OnNotifierStateChanged);
         }
 
+        public CacheSynchronizer(ICache cache, ICacheNotifier notifier) 
+            : this(cache, notifier, invalidateOnStateChange: false)
+        {
+        }
+
         private void OnNotifierStateChanged(object sender, Events.ProviderStateChangedEventArgs args)
         {
             var oldState = IsActive;
-            IsActive = args.NewState;
+            IsActive = args.IsAvailable;
 
-            if (this.invalidateOnStateChange && oldState != args.NewState)
+            if (this.invalidateOnStateChange && oldState != args.IsAvailable)
                 OnCacheUpdated(new CacheItemNotification("self", this.cache.Name, null, CacheItemActionTypes.RemoveAll));
         }
 

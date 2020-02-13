@@ -9,13 +9,12 @@ namespace PubComp.Caching.Core
     /// <summary>
     /// A layered cache e.g. level1 = in-memory cache that falls back to level2 = distributed cache
     /// </summary>
-    public class LayeredCache : ICache, ICacheState, ICacheGetPolicy
+    public class LayeredCache : ICacheV2
     {
         private readonly String name;
         private ICache level1;
         private ICache level2;
         private readonly LayeredCachePolicy policy;
-        private readonly CacheSynchronizer synchronizer;
         private readonly ICacheNotifier level1Notifier;
 
         public bool IsActive => this.level1.IsUseable() && this.level2.IsUseable();
@@ -73,7 +72,6 @@ namespace PubComp.Caching.Core
             this.level2 = level2;
 
             this.policy = new LayeredCachePolicy { Level1CacheName = level1CacheName, Level2CacheName = level2CacheName };
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.SyncProvider);
         }
 
         /// <summary>
@@ -103,7 +101,6 @@ namespace PubComp.Caching.Core
             this.level2 = level2;
 
             this.policy = new LayeredCachePolicy { Level1CacheName = level1.Name, Level2CacheName = level2.Name };
-            this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.policy.SyncProvider);
         }
 
         public string Name { get { return this.name; } }
@@ -113,7 +110,7 @@ namespace PubComp.Caching.Core
         protected ICache Level2 { get { return this.level2; } }
 
         protected LayeredCachePolicy Policy { get { return this.policy; } }
-        
+
         public bool TryGet<TValue>(string key, out TValue value)
         {
             if (this.level1.TryGet(key, out value))
@@ -142,7 +139,7 @@ namespace PubComp.Caching.Core
                 return level2Result;
             }
 
-            return new TryGetResult<TValue> {WasFound = false};
+            return new TryGetResult<TValue> { WasFound = false };
         }
 
         public void Set<TValue>(String key, TValue value)
@@ -250,18 +247,13 @@ namespace PubComp.Caching.Core
             }
         }
 
-        public object GetPolicy()
+        public object GetDetails() => new
         {
-            return new
-            {
-                IsActive,
+            this.policy.SyncProvider,
+            this.policy.InvalidateLevel1OnLevel2Upsert,
 
-                Level1CacheName = this.level1.Name,
-                Level2CacheName = this.level2.Name,
-                this.policy.SyncProvider,
-
-                this.policy.InvalidateLevel1OnLevel2Upsert
-            };
-        }
+            Level1CacheName = this.level1.Name,
+            Level2CacheName = this.level2.Name
+        };
     }
 }

@@ -66,6 +66,25 @@ namespace PubComp.Caching.WebApiExtended
         /// </summary>
         [HttpGet]
         [Route("")]
+        public IEnumerable<string> GetRegisteredCacheNames()
+
+        {
+            try
+            {
+                return this.Util.GetRegisteredCacheNames();
+            }
+            catch (CacheException ex)
+            {
+                Log.Warn(ex.Message);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets names and configuration of all registered cache instances
+        /// </summary>
+        [HttpGet]
+        [Route("")]
         public object GetRegisteredCacheNamesWithPolicies(bool includeConfig = false)
         {
             try
@@ -76,17 +95,8 @@ namespace PubComp.Caching.WebApiExtended
                 var cacheList = new List<object>();
                 foreach (var cacheName in this.Util.GetRegisteredCacheNames())
                 {
-                    object cachePolicy = null;
                     var cache = CacheManager.GetCache(cacheName);
-                    if (CacheManager.GetCache(cacheName) is ICacheGetPolicy cacheWithGetPolicy)
-                        cachePolicy = cacheWithGetPolicy.GetPolicy();
-
-                    cacheList.Add(new
-                    {
-                        Name = cacheName,
-                        Type = cache.GetType().Name,
-                        Policy = cachePolicy
-                    });
+                    cacheList.Add(new CacheDetails(cache));
                 }
 
                 return JArray.FromObject(cacheList, JsonSerializer.CreateDefault(new JsonSerializerSettings

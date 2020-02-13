@@ -9,6 +9,7 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
         private readonly MockScopedCacheInner innerCache;
 
         public bool IsActive { get; set; } = true;
+        public object GetDetails() => new { InnerCachePolicy = innerCache?.GetDetails() };
 
         public MockMemScopedCache(string name)
         {
@@ -86,9 +87,10 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
             this.innerCache.Clear(key);
         }
 
-        public async Task ClearAsync(string key)
+        public Task ClearAsync(string key)
         {
             Clear(key);
+            return Task.CompletedTask;
         }
 
         public void ClearAll()
@@ -97,9 +99,10 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
             this.innerCache.ResetCounters();
         }
 
-        public async Task ClearAllAsync()
+        public Task ClearAllAsync()
         {
             ClearAll();
+            return Task.CompletedTask;
         }
 
         public void ClearAll(bool doResetCounters)

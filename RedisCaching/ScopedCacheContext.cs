@@ -29,7 +29,7 @@ namespace PubComp.Caching.RedisCaching
 
         private void RegisterToRedisConnectionStateChangeEvent()
         {
-            this.client.OnRedisConnectionStateChanged += (sender, args) => this.IsActive = args.NewState;
+            this.client.OnRedisConnectionStateChanged += (sender, args) => this.IsActive = args.IsAvailable;
             this.IsActive = this.client.IsConnected;
         }
 

@@ -1,7 +1,8 @@
 ﻿namespace PubComp.Caching.Core
 {
-    public interface ICacheState
+    public interface ICacheV2 : ICache
     {
         bool IsActive { get; }
+        object GetDetails();
     }
 }

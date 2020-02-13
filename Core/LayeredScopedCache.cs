@@ -9,7 +9,7 @@ namespace PubComp.Caching.Core
     /// <summary>
     /// A layered cache e.g. level1 = in-memory cache that falls back to level2 = distributed cache
     /// </summary>
-    public class LayeredScopedCache : IScopedCache, ICacheGetPolicy
+    public class LayeredScopedCache : IScopedCache
     {
         private readonly IScopedCache level1;
         private readonly IScopedCache level2;
@@ -26,60 +26,63 @@ namespace PubComp.Caching.Core
         }
 
         /// <summary>
-        /// Creates a layered cache
+        /// Creates a scoped layered cache
         /// </summary>
         /// <param name="name"></param>
-        /// <param name="level1CacheName">Name of first cache to check (e.g. in-memory cache), should be registered in CacheManager</param>
-        /// <param name="level2CacheName">Name of fallback cache (e.g. distributed cache), should be registered in CacheManager</param>
+        /// <param name="level1CacheName">Name of first cache to check (e.g. in-memory scoped cache), should be registered in CacheManager</param>
+        /// <param name="level2CacheName">Name of fallback cache (e.g. distributed scoped cache), should be registered in CacheManager</param>
         public LayeredScopedCache(String name, String level1CacheName, String level2CacheName)
         {
             this.Name = name;
 
             var level1 = CacheManager.GetCache(level1CacheName);
-            if (level1 == null)
-                throw new ApplicationException("Cache is not registered: level1CacheName=" + level1CacheName);
             if (!(level1 is IScopedCache))
-                throw new ApplicationException($"Cache type does not implement {nameof(IScopedCache)}: level1CacheName={level1CacheName}");
+            {
+                var message = (level1 == null)
+                    ? $"Cache is not registered: level1CacheName={level1CacheName}"
+                    : $"Cache type does not implement {nameof(IScopedCache)}: level1CacheName={level1CacheName}";
+                throw new ApplicationException(message);
+            }
 
             var level2 = CacheManager.GetCache(level2CacheName);
-            if (level2 == null)
-                throw new ApplicationException("Cache is not registered: level2CacheName=" + level2CacheName);
             if (!(level2 is IScopedCache))
-                throw new ApplicationException($"Cache type does not implement {nameof(IScopedCache)}: level2CacheName={level2CacheName}");
+            {
+                var message = (level2 == null)
+                    ? $"Cache is not registered: level2CacheName={level2CacheName}"
+                    : $"Cache type does not implement {nameof(IScopedCache)}: level2CacheName={level2CacheName}";
+                throw new ApplicationException(message);
+            }
 
             if (level2 == level1)
             {
                 throw new ApplicationException(
-                    string.Format("level2 must not be the same as level1, received {0}={1}, {2}={3}, which map to {4} and {5}",
+                    string.Format(
+                        "level2 must not be the same as level1, received {0}={1}, {2}={3}, which map to {4} and {5}",
                         "level1CacheName", level1CacheName,
                         "level2CacheName", level2CacheName,
                         level1.Name,
                         level2.Name));
             }
 
-            this.level1 = (IScopedCache)level1;
-            this.level2 = (IScopedCache)level2;
+            this.level1 = (IScopedCache) level1;
+            this.level2 = (IScopedCache) level2;
         }
 
         /// <summary>
-        /// Creates a layered cache
+        /// Creates a scoped layered cache
         /// </summary>
         /// <param name="name"></param>
-        /// <param name="level1">First cache to check (e.g. in-memory cache)</param>
-        /// <param name="level2">Fallback cache (e.g. distributed cache)</param>
-        public LayeredScopedCache(String name, ICache level1, ICache level2)
+        /// <param name="level1">First cache to check (e.g. in-memory scoped cache)</param>
+        /// <param name="level2">Fallback cache (e.g. distributed scoped cache)</param>
+        public LayeredScopedCache(String name, IScopedCache level1, IScopedCache level2)
         {
             this.Name = name;
 
             if (level1 == null)
                 throw new ApplicationException("innerCache1 must not be null");
-            if (!(level1 is IScopedCache))
-                throw new ApplicationException($"innerCache1 type does not implement {nameof(IScopedCache)}");
 
             if (level2 == null)
                 throw new ApplicationException("innerCache2 must not be null");
-            if (!(level2 is IScopedCache))
-                throw new ApplicationException($"innerCache2 type does not implement {nameof(IScopedCache)}");
 
             if (level2 == level1)
             {
@@ -88,8 +91,8 @@ namespace PubComp.Caching.Core
                         "level1", level1.Name, "level2", level2.Name));
             }
 
-            this.level1 = (IScopedCache)level1;
-            this.level2 = (IScopedCache)level2;
+            this.level1 = level1;
+            this.level2 = level2;
         }
 
         public bool TryGet<TValue>(String key, out TValue value)
@@ -120,7 +123,7 @@ namespace PubComp.Caching.Core
         {
             var directives = CacheDirectives.CurrentScope;
             if (!directives.Method.HasFlag(CacheMethod.Get))
-                return new TryGetResult<TValue> { WasFound = false };
+                return new TryGetResult<TValue> {WasFound = false};
 
             var level1Result = await this.level1.TryGetAsync<TValue>(key).ConfigureAwait(false);
             if (level1Result.WasFound)
@@ -139,7 +142,7 @@ namespace PubComp.Caching.Core
                 };
             }
 
-            return new TryGetResult<TValue> { WasFound = false };
+            return new TryGetResult<TValue> {WasFound = false};
         }
 
         public void Set<TValue>(String key, TValue value)
@@ -192,7 +195,8 @@ namespace PubComp.Caching.Core
             return getScopedResult.ScopedValue.Value;
         }
 
-        public async Task<GetScopedResult<TValue>> GetScopedAsync<TValue>(String key, Func<Task<ScopedValue<TValue>>> getter)
+        public async Task<GetScopedResult<TValue>> GetScopedAsync<TValue>(String key,
+            Func<Task<ScopedValue<TValue>>> getter)
         {
             return await this.level1.GetScopedAsync(key, async () =>
                     (await this.level2.GetScopedAsync(key, getter).ConfigureAwait(false)).ScopedValue)
@@ -207,7 +211,8 @@ namespace PubComp.Caching.Core
             return level1Result | level2Result;
         }
 
-        public async Task<CacheMethodTaken> SetScopedAsync<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
+        public async Task<CacheMethodTaken> SetScopedAsync<TValue>(String key, TValue value,
+            DateTimeOffset valueTimestamp)
         {
             var level1Result = await this.level1.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
             var level2Result = await this.level2.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
@@ -291,15 +296,10 @@ namespace PubComp.Caching.Core
             }
         }
 
-        public object GetPolicy()
+        public object GetDetails() => new
         {
-            return new
-            {
-                this.IsActive,
-
-                Level1CacheName = this.level1.Name,
-                Level2CacheName = this.level2.Name
-            };
-        }
+            Level1CacheName = this.level1.Name,
+            Level2CacheName = this.level2.Name
+        };
     }
 }

@@ -4,11 +4,11 @@ namespace PubComp.Caching.Core.Events
 {
     public class ProviderStateChangedEventArgs : EventArgs
     {
-        public bool NewState { get; }
+        public bool IsAvailable { get; }
 
-        public ProviderStateChangedEventArgs(bool newState)
+        public ProviderStateChangedEventArgs(bool isAvailable)
         {
-            NewState = newState;
+            IsAvailable = isAvailable;
         }
     }
 }

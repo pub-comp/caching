@@ -4,9 +4,10 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>PubComp.Caching.RedisCaching</AssemblyName>
     <RootNamespace>PubComp.Caching.RedisCaching</RootNamespace>
-    <Version>4.2.0-b200211-1208</Version><GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <!--Only change AssemblyVersion for major versions!--><AssemblyVersion>4.2.0.0</AssemblyVersion>
-    <FileVersion>4.2.0.0</FileVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>5.0.0</Version>
+    <AssemblyVersion>5.0.0.0</AssemblyVersion>
+    <FileVersion>5.0.0.0</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <NoWarn>1701;1702;1591</NoWarn>
