@@ -10,13 +10,39 @@ namespace PubComp.Caching.WebApiExtended.Net.Core
 {
     public class CacheableActionFilterAttribute : TypeFilterAttribute, ICacheable
     {
+        public CacheMethod DefaultMethod { get; private set; }
+        public double DefaultMinimumAgeInMilliseconds { get; private set; }
+
         public CacheableActionFilterAttribute() : base(typeof(CacheableActionFilterImpl))
         {
+            SetDefaultArguments(CacheMethod.None, default);
+        }
+
+        public CacheableActionFilterAttribute(CacheMethod defaultMethod, double defaultMinimumAgeInMilliseconds) : base(typeof(CacheableActionFilterImpl))
+        {
+            SetDefaultArguments(defaultMethod, defaultMinimumAgeInMilliseconds);
+        }
+
+        private void SetDefaultArguments(CacheMethod defaultMethod, double defaultMinimumAgeInMilliseconds)
+        {
+            DefaultMethod = defaultMethod;
+            DefaultMinimumAgeInMilliseconds = defaultMinimumAgeInMilliseconds;
+
+            Arguments = new Object[] { defaultMethod, defaultMinimumAgeInMilliseconds };
         }
 
         private class CacheableActionFilterImpl : IAsyncActionFilter
         {
             private NLog.ILogger Logger => NLog.LogManager.GetLogger(typeof(CacheableActionFilterAttribute).FullName);
+
+            private readonly CacheMethod _defaultMethod;
+            private readonly double _defaultMinimumAgeInMilliseconds;
+
+            public CacheableActionFilterImpl(CacheMethod defaultMethod, double defaultMinimumAgeInMilliseconds)
+            {
+                _defaultMethod = defaultMethod;
+                _defaultMinimumAgeInMilliseconds = defaultMinimumAgeInMilliseconds;
+            }
 
             public async Task OnActionExecutionAsync(
                 ActionExecutingContext context,
@@ -37,7 +63,11 @@ namespace PubComp.Caching.WebApiExtended.Net.Core
                         .FirstOrDefault();
 
                     if (string.IsNullOrEmpty(cacheDirectivesJson))
-                        return new CacheDirectives {Method = CacheMethod.None};
+                        return new CacheDirectives
+                        {
+                            Method = _defaultMethod,
+                            MinimumValueTimestamp = DateTimeOffset.UtcNow.AddMilliseconds(-Math.Abs(_defaultMinimumAgeInMilliseconds))
+                        };
 
                     var cacheDirectives = JsonConvert.DeserializeObject<CacheDirectives>(cacheDirectivesJson);
                     if (cacheDirectives.IsValid())

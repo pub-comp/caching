@@ -29,8 +29,8 @@ namespace PubComp.Caching.WebApiExtended
             var example = JsonConvert.SerializeObject(
                 new Dictionary<string, object>
                 {
-                    { nameof(CacheDirectives.Method) , CacheMethod.None.ToString() },
-                    { nameof(CacheDirectives.MinimumValueTimestamp), DateTimeOffset.UtcNow }
+                    { nameof(CacheDirectives.Method) , cacheableAttribute.DefaultMethod.ToString() },
+                    { nameof(CacheDirectives.MinimumValueTimestamp), DateTimeOffset.UtcNow.AddMilliseconds(-Math.Abs(cacheableAttribute.DefaultMinimumAgeInMilliseconds)) }
                 });
 
             var cacheDirectivesParameter = new Parameter()

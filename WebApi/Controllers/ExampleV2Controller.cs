@@ -1,3 +1,4 @@
+using System;
 using PubComp.Caching.Core;
 using PubComp.Caching.WebApiExtended;
 using Swashbuckle.Swagger.Annotations;
@@ -51,6 +52,7 @@ namespace TestHost.WebApi.Controllers
         /// <response code= "404">Not Found</response>
         [HttpGet]
         [Route("async/{id}")]
+        [CacheableActionFilter(DefaultMethod = CacheMethod.GetOrSet, DefaultMinimumAgeInMilliseconds = 1800000)]
         public async Task<IHttpActionResult> GetAsync(int id)
         {
             var result = await exampleService.GetAsync(id).ConfigureAwait(false);

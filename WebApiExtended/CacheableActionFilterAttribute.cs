@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PubComp.Caching.Core;
 using System;
 using System.Linq;
 using System.Net.Http;
@@ -6,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
-using PubComp.Caching.Core;
 
 namespace PubComp.Caching.WebApiExtended
 {
@@ -14,6 +14,9 @@ namespace PubComp.Caching.WebApiExtended
     public class CacheableActionFilterAttribute : FilterAttribute, IActionFilter, ICacheable
     {
         private readonly NLog.ILogger logger;
+
+        public CacheMethod DefaultMethod { get; set; } = CacheMethod.None;
+        public double DefaultMinimumAgeInMilliseconds { get; set; } = 0;
 
         public CacheableActionFilterAttribute()
         {
@@ -42,7 +45,11 @@ namespace PubComp.Caching.WebApiExtended
                     .Value?.First();
 
                 if (string.IsNullOrEmpty(cacheDirectivesJson))
-                    return new CacheDirectives { Method = CacheMethod.None };
+                    return new CacheDirectives
+                    {
+                        Method = DefaultMethod,
+                        MinimumValueTimestamp = DateTimeOffset.UtcNow.AddMilliseconds(-Math.Abs(DefaultMinimumAgeInMilliseconds))
+                    };
 
                 var cacheDirectives = JsonConvert.DeserializeObject<CacheDirectives>(cacheDirectivesJson);
                 if (cacheDirectives.IsValid())
