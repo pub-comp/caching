@@ -1,10 +1,10 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using NLog;
+﻿using NLog;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.Notifications;
 using StackExchange.Redis;
+using System;
+using System.Linq;
+using System.Threading;
 
 namespace PubComp.Caching.DemoSynchronizedClient
 {
@@ -12,11 +12,7 @@ namespace PubComp.Caching.DemoSynchronizedClient
     {
         const string NotifierName = "reDisNotifier";
         const string LocalCacheWithNotifier = "MyApp.LocalCacheWithNotifier";
-
         const string LayeredCache = "MyApp.LayeredCache";
-        const string LayeredCacheWithAutomaticInvalidation = "MyApp.LayeredCacheWithAutomaticInvalidation";
-        const string LayeredScopedCache = "MyApp.LayeredScopedCache";
-        const string LayeredScopedCacheWithAutomaticInvalidation = "MyApp.LayeredScopedCacheWithAutomaticInvalidation";
 
         private static object config;
 
@@ -40,7 +36,7 @@ namespace PubComp.Caching.DemoSynchronizedClient
             //general-invalidation
             if (args.Any(a => a.ToLowerInvariant() == "general-invalidation"))
             {
-                var pattern = string.Join(" ", args.SkipWhile(a => a.ToLowerInvariant() != "general-invalidation").Skip(1));
+                var pattern = string.Join(" ", args.Skip(1));
                 Console.WriteLine($"general-invalidation: {pattern}");
 
                 var connectionString = CacheManager.GetConnectionString("localRedis").ConnectionString;
@@ -50,38 +46,28 @@ namespace PubComp.Caching.DemoSynchronizedClient
             //invalidate-on-upsert layered
             else if (args.Any(a => a.ToLowerInvariant() == "layered-invalidate-on-upsert"))
             {
-                Console.WriteLine("testing LayeredCache.InvalidateLevel1OnLevel2Upsert");
-
-                var layeredCache = CacheManager.GetCache(LayeredCache);
-                var layeredCacheWithAutomaticInvalidation = CacheManager.GetCache(LayeredCacheWithAutomaticInvalidation);
-
-                if (layeredCache.TryGet("keyA2", out string a2) && a2 == "valueA2" &&
-                    layeredCacheWithAutomaticInvalidation.TryGet("keyB2", out string b2) && b2 == "valueB2")
+                using (CacheDirectives.SetScope(CacheMethod.GetOrSet, DateTimeOffset.UtcNow.AddMinutes(-1)))
                 {
-                    layeredCache.Set("keyA2", "demoProgram.valueA2");
-                    layeredCacheWithAutomaticInvalidation.Set("keyB2", "demoProgram.valueB2");
-                }
-                else
-                    Console.WriteLine("invalid!");
-            }
-            //invalidate-on-upsert layered-scoped
-            else if (args.Any(a => a.ToLowerInvariant() == "layered-scoped-invalidate-on-upsert"))
-                using (CacheDirectives.SetScope(CacheMethod.GetOrSet | CacheMethod.IgnoreMinimumValueTimestamp, DateTimeOffset.UtcNow.AddHours(-1)))
-                {
-                    Console.WriteLine("testing LayeredScopedCache.InvalidateLevel1OnLevel2Upsert");
+                    var layeredCacheNameToTest = string.Join(" ", args.Skip(1));
+                    Console.WriteLine($"testing: layered-invalidate-on-upsert");
+                    Console.WriteLine($"layeredCacheNameToTest={layeredCacheNameToTest}");
 
-                    var layeredCache = CacheManager.GetCache(LayeredScopedCache);
-                    var layeredCacheWithAutomaticInvalidation = CacheManager.GetCache(LayeredScopedCacheWithAutomaticInvalidation);
+                    var layeredCache = CacheManager.GetCache(LayeredCache);
+                    var layeredCacheWithAutomaticInvalidation = CacheManager.GetCache(layeredCacheNameToTest);
 
                     if (layeredCache.TryGet("keyA2", out string a2) && a2 == "valueA2" &&
                         layeredCacheWithAutomaticInvalidation.TryGet("keyB2", out string b2) && b2 == "valueB2")
                     {
                         layeredCache.Set("keyA2", "demoProgram.valueA2");
                         layeredCacheWithAutomaticInvalidation.Set("keyB2", "demoProgram.valueB2");
+                        Console.WriteLine("Completed!");
                     }
                     else
                         Console.WriteLine("invalid!");
                 }
+
+                return;
+            }
             // general tests
             else
             {

@@ -22,9 +22,9 @@ namespace PubComp.Caching.Core
         public LayeredCache(String name, LayeredCachePolicy policy)
             : this(name, policy?.Level1CacheName, policy?.Level2CacheName)
         {
-            this.policy = policy;
+            this.policy = policy ?? throw new ArgumentNullException(nameof(policy));
 
-            if (policy?.InvalidateLevel1OnLevel2Upsert ?? false)
+            if (policy.InvalidateLevel1OnLevel2Upsert)
             {
                 if (this.level1 is NoCache)
                 {

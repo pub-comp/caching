@@ -1,5 +1,7 @@
-﻿using System;
+﻿using PubComp.Caching.Core.Notifications;
+using System;
 using System.Threading.Tasks;
+
 // ReSharper disable NotAccessedField.Local
 // ReSharper disable LocalVariableHidesMember
 // ReSharper disable UseStringInterpolation
@@ -13,6 +15,8 @@ namespace PubComp.Caching.Core
     {
         private readonly IScopedCache level1;
         private readonly IScopedCache level2;
+        private readonly LayeredScopedCachePolicy policy;
+        private readonly ICacheNotifier level1Notifier;
 
         public string Name { get; }
         public bool IsActive => this.level1.IsActive || this.level2.IsActive;
@@ -23,6 +27,23 @@ namespace PubComp.Caching.Core
         public LayeredScopedCache(String name, LayeredScopedCachePolicy policy)
             : this(name, policy?.Level1CacheName, policy?.Level2CacheName)
         {
+            this.policy = policy ?? throw new ArgumentNullException(nameof(policy));
+
+            if (policy.InvalidateLevel1OnLevel2Upsert)
+            {
+                if (this.level1 is NoCache)
+                {
+                    policy.InvalidateLevel1OnLevel2Upsert = false;
+                }
+                else
+                {
+                    level1Notifier = CacheManager.GetAssociatedNotifier(this.level1);
+                    if (level1Notifier == null)
+                        throw new ApplicationException(
+                            "InvalidateLevel1OnLevel2Upsert requires level1 cache to have SyncProvider defined in policy: level1CacheName=" +
+                            policy.Level1CacheName);
+                }
+            }
         }
 
         /// <summary>
@@ -66,6 +87,8 @@ namespace PubComp.Caching.Core
 
             this.level1 = (IScopedCache) level1;
             this.level2 = (IScopedCache) level2;
+
+            this.policy = new LayeredScopedCachePolicy {Level1CacheName = level1.Name, Level2CacheName = level2.Name};
         }
 
         /// <summary>
@@ -93,6 +116,8 @@ namespace PubComp.Caching.Core
 
             this.level1 = level1;
             this.level2 = level2;
+
+            this.policy = new LayeredScopedCachePolicy { Level1CacheName = level1.Name, Level2CacheName = level2.Name };
         }
 
         public bool TryGet<TValue>(String key, out TValue value)
@@ -174,8 +199,19 @@ namespace PubComp.Caching.Core
 
         public GetScopedResult<TValue> GetScoped<TValue>(String key, Func<ScopedValue<TValue>> getter)
         {
-            return this.level1.GetScoped(key, () =>
-                this.level2.GetScoped(key, getter).ScopedValue);
+            CacheMethodTaken level2MethodTaken = CacheMethodTaken.None;
+            var level1Result = this.level1.GetScoped(key, () =>
+            {
+                var level2Result = this.level2.GetScoped(key, getter);
+                level2MethodTaken = level2Result.MethodTaken;
+
+                return level2Result.ScopedValue;
+            });
+
+            if (level2MethodTaken.HasFlag(CacheMethodTaken.Set) && this.policy.InvalidateLevel1OnLevel2Upsert)
+                level1Notifier.TryPublish(this.level1.Name, key, CacheItemActionTypes.Updated);
+
+            return level1Result;
         }
 
         public async Task<TValue> GetAsync<TValue>(String key, Func<Task<TValue>> getter)
@@ -198,26 +234,42 @@ namespace PubComp.Caching.Core
         public async Task<GetScopedResult<TValue>> GetScopedAsync<TValue>(String key,
             Func<Task<ScopedValue<TValue>>> getter)
         {
-            return await this.level1.GetScopedAsync(key, async () =>
-                    (await this.level2.GetScopedAsync(key, getter).ConfigureAwait(false)).ScopedValue)
-                .ConfigureAwait(false);
+            CacheMethodTaken level2MethodTaken = CacheMethodTaken.None;
+
+            var level1Result = await this.level1.GetScopedAsync(key, async () =>
+            {
+                var level2Result = await this.level2.GetScopedAsync(key, getter).ConfigureAwait(false);
+                level2MethodTaken = level2Result.MethodTaken;
+                return level2Result.ScopedValue;
+            }).ConfigureAwait(false);
+
+            if (level2MethodTaken.HasFlag(CacheMethodTaken.Set) && this.policy.InvalidateLevel1OnLevel2Upsert)
+                level1Notifier.TryPublish(this.level1.Name, key, CacheItemActionTypes.Updated);
+
+            return level1Result;
         }
 
         public CacheMethodTaken SetScoped<TValue>(String key, TValue value, DateTimeOffset valueTimestamp)
         {
-            var level1Result = this.level1.SetScoped(key, value, valueTimestamp);
-            var level2Result = this.level2.SetScoped(key, value, valueTimestamp);
+            var level1MethodTaken = this.level1.SetScoped(key, value, valueTimestamp);
+            var level2MethodTaken = this.level2.SetScoped(key, value, valueTimestamp);
 
-            return level1Result | level2Result;
+            if (level2MethodTaken.HasFlag(CacheMethodTaken.Set) && this.policy.InvalidateLevel1OnLevel2Upsert)
+                level1Notifier.TryPublish(this.level1.Name, key, CacheItemActionTypes.Updated);
+
+            return level1MethodTaken | level2MethodTaken;
         }
 
         public async Task<CacheMethodTaken> SetScopedAsync<TValue>(String key, TValue value,
             DateTimeOffset valueTimestamp)
         {
-            var level1Result = await this.level1.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
-            var level2Result = await this.level2.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
+            var level1MethodTaken = await this.level1.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
+            var level2MethodTaken = await this.level2.SetScopedAsync(key, value, valueTimestamp).ConfigureAwait(false);
 
-            return level1Result | level2Result;
+            if (level2MethodTaken.HasFlag(CacheMethodTaken.Set) && this.policy.InvalidateLevel1OnLevel2Upsert)
+                level1Notifier.TryPublish(this.level1.Name, key, CacheItemActionTypes.Updated);
+
+            return level1MethodTaken | level2MethodTaken;
         }
 
         public CacheMethodTaken TryGetScoped<TValue>(String key, out ScopedValue<TValue> scopedValue)
@@ -298,6 +350,8 @@ namespace PubComp.Caching.Core
 
         public object GetDetails() => new
         {
+            this.policy.InvalidateLevel1OnLevel2Upsert,
+
             Level1CacheName = this.level1.Name,
             Level2CacheName = this.level2.Name
         };
