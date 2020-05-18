@@ -1,4 +1,6 @@
-﻿namespace PubComp.Caching.Core
+﻿using System;
+
+namespace PubComp.Caching.Core
 {
     internal struct CacheName
     {
@@ -33,15 +35,15 @@
 
         public override int GetHashCode()
         {
-            return (Prefix ?? string.Empty).GetHashCode() ^ DoEnableAnySuffix.GetHashCode();
+            return (Prefix.ToLowerInvariant() ?? string.Empty).GetHashCode() ^ DoEnableAnySuffix.GetHashCode();
         }
-
+        
         public int GetMatchLevel(string cacheName)
         {
-            if (Prefix == cacheName)
+            if (Prefix.Equals(cacheName, StringComparison.InvariantCultureIgnoreCase))
                 return Prefix.Length;
 
-            if (DoEnableAnySuffix && cacheName.StartsWith(Prefix))
+            if (DoEnableAnySuffix && cacheName.StartsWith(Prefix, StringComparison.InvariantCultureIgnoreCase))
                 return Prefix.Length;
 
             return 0;

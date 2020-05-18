@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Web.Http;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NLog;
 using PubComp.Caching.Core;
+using System.Collections.Generic;
+using System.Web.Http;
 
 namespace PubComp.Caching.WebApiExtended
 {
@@ -58,16 +60,30 @@ namespace PubComp.Caching.WebApiExtended
                 throw;
             }
         }
+
         /// <summary>
-        /// Gets names of all registered cache instances
+        /// Gets names and configuration of all registered cache instances
         /// </summary>
         [HttpGet]
         [Route("")]
-        public IEnumerable<string> GetRegisteredCacheNames()
+        public object GetRegisteredCacheNames(bool includeConfig = false)
         {
             try
             {
-                return this.Util.GetRegisteredCacheNames();
+                if (!includeConfig)
+                    return this.Util.GetRegisteredCacheNames();
+
+                var cacheList = new List<object>();
+                foreach (var cacheName in this.Util.GetRegisteredCacheNames())
+                {
+                    var cache = CacheManager.GetCache(cacheName);
+                    cacheList.Add(new CacheDetails(cache));
+                }
+
+                return JArray.FromObject(cacheList, JsonSerializer.CreateDefault(new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                }));
             }
             catch (CacheException ex)
             {

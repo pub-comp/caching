@@ -97,12 +97,12 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
                 {
                     hits++;
                     // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
-                    value = item.Value is TValue ? (TValue)item.Value : default(TValue);
+                    value = item.Value is TValue ? (TValue)item.Value : default;
                     return true;
                 }
 
                 misses++;
-                value = default(TValue);
+                value = default;
                 return false;
             }
 

@@ -1,8 +1,8 @@
-﻿using System;
+﻿using PubComp.Caching.RedisCaching.Converters;
+using StackExchange.Redis;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using PubComp.Caching.RedisCaching.Converters;
-using StackExchange.Redis;
 
 namespace PubComp.Caching.RedisCaching
 {
@@ -10,11 +10,27 @@ namespace PubComp.Caching.RedisCaching
     {
         private readonly RedisClient client;
         private readonly IRedisConverter convert;
-        
+
+        public bool IsActive { get; private set; }
+
         public CacheContext(String connectionString, String converterType, String clusterType, int monitorPort, int monitorIntervalMilliseconds)
         {
             this.convert = RedisConverterFactory.CreateConverter(converterType);
-            this.client = new RedisClient(connectionString, clusterType, monitorPort,monitorIntervalMilliseconds);
+            this.client = new RedisClient(connectionString, clusterType, monitorPort, monitorIntervalMilliseconds);
+            RegisterToRedisConnectionStateChangeEvent();
+        }
+
+        public CacheContext(String connectionName, String converterType)
+        {
+            this.convert = RedisConverterFactory.CreateConverter(converterType);
+            this.client = RedisClient.GetNamedRedisClient(connectionName);
+            RegisterToRedisConnectionStateChangeEvent();
+        }
+
+        private void RegisterToRedisConnectionStateChangeEvent()
+        {
+            this.client.OnRedisConnectionStateChanged += (sender, args) => this.IsActive = args.IsAvailable;
+            this.IsActive = this.client.IsConnected;
         }
 
         internal CacheItem<TValue> GetItem<TValue>(String cacheName, String key)
@@ -35,7 +51,15 @@ namespace PubComp.Caching.RedisCaching
         {
             TimeSpan? expiry = null;
             if (cacheItem.ExpireIn.HasValue)
+            {
                 expiry = cacheItem.ExpireIn;
+
+                if (expiry.Value.TotalSeconds <= 0)
+                {
+                    client.Database.KeyDelete(cacheItem.Id, CommandFlags.None);
+                    return;
+                }
+            }
 
             client.Database.StringSet(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always, CommandFlags.None);
         }
@@ -44,7 +68,12 @@ namespace PubComp.Caching.RedisCaching
         {
             TimeSpan? expiry = null;
             if (cacheItem.ExpireIn.HasValue)
+            {
                 expiry = cacheItem.ExpireIn;
+
+                if (expiry.Value.TotalSeconds <= 0)
+                    return client.Database.KeyDeleteAsync(cacheItem.Id, CommandFlags.None);
+            }
 
             return client.Database
                 .StringSetAsync(cacheItem.Id, convert.ToRedis(cacheItem), expiry, When.Always, CommandFlags.None);

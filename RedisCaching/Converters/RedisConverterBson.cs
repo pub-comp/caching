@@ -27,6 +27,19 @@ namespace PubComp.Caching.RedisCaching.Converters
             return From<CacheItem<TValue>>(cacheItemString);
         }
 
+        public RedisValue ToScopedRedis<TValue>(ScopedCacheItem<TValue> scopedCacheItem)
+        {
+            return To(scopedCacheItem);
+        }
+
+        public ScopedCacheItem<TValue> FromScopedRedis<TValue>(RedisValue scopedCacheItemString)
+        {
+            if (string.IsNullOrEmpty(scopedCacheItemString))
+                return null;
+
+            return From<ScopedCacheItem<TValue>>(scopedCacheItemString);
+        }
+
         internal static byte[] ToBson<TValue>(TValue value)
         {
             byte[] buffer;
@@ -84,7 +97,7 @@ namespace PubComp.Caching.RedisCaching.Converters
         private TValue From<TValue>(RedisValue stringValue)
         {
             if (!stringValue.HasValue)
-                return default(TValue);
+                return default;
 
             byte[] buffer = stringValue;
             return FromBson<TValue>(buffer);

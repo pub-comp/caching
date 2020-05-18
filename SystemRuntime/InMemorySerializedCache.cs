@@ -37,7 +37,7 @@ namespace PubComp.Caching.SystemRuntime
                 return true;
             }
 
-            value = default(TValue);
+            value = default;
             return false;
         }
 
@@ -52,7 +52,7 @@ namespace PubComp.Caching.SystemRuntime
                     Culture = System.Globalization.CultureInfo.InvariantCulture,
                 });
 
-            InnerCache.Add(key, val, ToRuntimePolicy(Policy), null);
+            InnerCache.Set(key, val, GetRuntimePolicy(), null);
         }
     }
 }

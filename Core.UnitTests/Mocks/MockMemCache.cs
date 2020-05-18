@@ -4,7 +4,7 @@ using PubComp.Caching.SystemRuntime;
 
 namespace PubComp.Caching.Core.UnitTests.Mocks
 {
-    public class MockMemCache : ICache
+    public class MockMemCache : IMockCache
     {
         private readonly MockCacheInner innerCache;
 
@@ -54,9 +54,9 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
             this.innerCache.Clear(key);
         }
 
-        public async Task ClearAsync(string key)
+        public Task ClearAsync(string key)
         {
-            throw new NotImplementedException();
+            return this.innerCache.ClearAsync(key);
         }
 
         public void ClearAll()
@@ -67,7 +67,8 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
 
         public async Task ClearAllAsync()
         {
-            throw new NotImplementedException();
+            await this.innerCache.ClearAllAsync();
+            this.innerCache.ResetCounters();
         }
 
         public void ClearAll(bool doResetCounters)
@@ -100,12 +101,12 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
                 {
                     hits++;
                     // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
-                    value = item.Value is TValue ? (TValue)item.Value : default(TValue);
+                    value = item.Value is TValue ? (TValue)item.Value : default;
                     return true;
                 }
 
                 misses++;
-                value = default(TValue);
+                value = default;
                 return false;
             }
 

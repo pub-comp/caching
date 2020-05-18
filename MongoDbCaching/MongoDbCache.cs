@@ -14,11 +14,11 @@ namespace PubComp.Caching.MongoDbCaching
         private readonly TimeSpan? expireWithin;
         private readonly DateTime? expireAt;
         private readonly CacheSynchronizer synchronizer;
+        private readonly MongoDbCachePolicy policy;
 
         public MongoDbCache(String cacheCollectionName, MongoDbCachePolicy policy)
         {
-            if (policy == null)
-                throw new ArgumentNullException(nameof(policy));
+            this.policy = policy ?? throw new ArgumentNullException(nameof(policy));
 
             if (!string.IsNullOrEmpty(policy.ConnectionName))
             {
@@ -183,12 +183,12 @@ namespace PubComp.Caching.MongoDbCaching
                 if (cacheItem != null)
                 {
                     // ReSharper disable once CanBeReplacedWithTryCastAndCheckForNull
-                    value = cacheItem.Value is TValue ? (TValue)cacheItem.Value : default(TValue);
+                    value = cacheItem.Value is TValue ? (TValue)cacheItem.Value : default;
                     UpdateExpirationTime(set, cacheItem);
                     return true;
                 }
 
-                value = default(TValue);
+                value = default;
                 return false;
             }
         }

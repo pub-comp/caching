@@ -1,12 +1,12 @@
-﻿using System;
+﻿using PubComp.Caching.Core.Config;
+using PubComp.Caching.Core.Notifications;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
-using PubComp.Caching.Core.Config;
-using PubComp.Caching.Core.Notifications;
 
 namespace PubComp.Caching.Core
 {
@@ -19,22 +19,22 @@ namespace PubComp.Caching.Core
     internal class CacheManagerInternals
     {
         private Func<MethodBase> callingMethodGetter;
-        
+
         // ReSharper disable once InconsistentNaming
         private readonly ConcurrentDictionary<CacheName, ICache> caches
             = new ConcurrentDictionary<CacheName, ICache>();
 
         // ReSharper disable once InconsistentNaming
         private readonly ConcurrentDictionary<string, ICacheNotifier> notifiers
-            = new ConcurrentDictionary<string, ICacheNotifier>();
+            = new ConcurrentDictionary<string, ICacheNotifier>(StringComparer.InvariantCultureIgnoreCase);
 
         // ReSharper disable once InconsistentNaming
         private readonly ConcurrentDictionary<string, ICacheConnectionString> connectionStrings
-            = new ConcurrentDictionary<string, ICacheConnectionString>();
+            = new ConcurrentDictionary<string, ICacheConnectionString>(StringComparer.InvariantCultureIgnoreCase);
 
         // ReSharper disable once InconsistentNaming
         private readonly ConcurrentDictionary<string, string> cacheNotifierAssociations
-            = new ConcurrentDictionary<string, string>();
+            = new ConcurrentDictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
         /// <summary>
         /// The source to load the cache configuration from
@@ -70,11 +70,25 @@ namespace PubComp.Caching.Core
             return GetCache(typeof(TClass));
         }
 
+        /// <summary>Gets a scoped cache instance using full name of given class</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public IScopedCache GetScopedCache<TClass>()
+        {
+            return GetScopedCache(typeof(TClass));
+        }
+
         /// <summary>Gets a cache instance using full name of given class</summary>
         /// <remarks>For better performance, store the result in client class</remarks>
         public ICache GetCache(Type type)
         {
             return GetCache(type.FullName);
+        }
+
+        /// <summary>Gets a scoped cache instance using full name of given class</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public IScopedCache GetScopedCache(Type type)
+        {
+            return GetScopedCache(type.FullName);
         }
 
         /// <summary>Gets a list of all cache names</summary>
@@ -93,11 +107,22 @@ namespace PubComp.Caching.Core
                 throw new ArgumentNullException(nameof(name));
 
             var cachesArray = GetCaches();
-            
+
             var cachesSorted = cachesArray.OrderByDescending(c => c.Key.GetMatchLevel(name));
             var cache = cachesSorted.FirstOrDefault();
 
             return (cache.Key.Prefix != null && cache.Key.GetMatchLevel(name) >= cache.Key.Prefix.Length) ? cache.Value : null;
+        }
+
+        /// <summary>Gets a scoped cache by name</summary>
+        /// <remarks>For better performance, store the result in client class</remarks>
+        public IScopedCache GetScopedCache(string name)
+        {
+            var cache = GetCache(name);
+            if (cache is IScopedCache scopedCache)
+                return scopedCache;
+
+            throw new ApplicationException($"Cache {name} does not implement IScopedCache");
         }
 
         /// <summary>Gets a cache by name</summary>
@@ -369,7 +394,7 @@ namespace PubComp.Caching.Core
 
             if (constructor == null)
                 throw new PlatformNotSupportedException("StackFrame(int skipFrames) constructor not present");
-            
+
             if (getMethodMethod == null)
                 throw new PlatformNotSupportedException("StackFrame.GetMethod() not present");
 
@@ -408,13 +433,13 @@ namespace PubComp.Caching.Core
                         // Save which pending nodes to remove
                         connectionRemoveIndexes.AddRange(
                             connectionConfigs.Select((cfg, index) => Tuple.Create(index, cfg))
-                                .Where(c => c.Item2.Name == item.Name).Select(c => c.Item1).Reverse());
+                                .Where(c => c.Item2.Name.Equals(item.Name, StringComparison.InvariantCultureIgnoreCase)).Select(c => c.Item1).Reverse());
                         notifierRemoveIndexes.AddRange(
                             notifierConfigs.Select((cfg, index) => Tuple.Create(index, cfg))
-                                .Where(c => c.Item2.Name == item.Name).Select(c => c.Item1).Reverse());
+                                .Where(c => c.Item2.Name.Equals(item.Name, StringComparison.InvariantCultureIgnoreCase)).Select(c => c.Item1).Reverse());
                         cacheRemoveIndexes.AddRange(
                             cacheConfigs.Select((cfg, index) => Tuple.Create(index, cfg))
-                                .Where(c => c.Item2.Name == item.Name).Select(c => c.Item1).Reverse());
+                                .Where(c => c.Item2.Name.Equals(item.Name, StringComparison.InvariantCultureIgnoreCase)).Select(c => c.Item1).Reverse());
                         break;
 
                     case ConfigAction.Add:
@@ -446,6 +471,10 @@ namespace PubComp.Caching.Core
             foreach (var i in connectionRemoveIndexes)
                 connectionConfigs.RemoveAt(i);
 
+            ValidateNoDuplicationOfName(nameof(ConnectionStringConfig), connectionConfigs);
+            ValidateNoDuplicationOfName(nameof(NotifierConfig), notifierConfigs);
+            ValidateNoDuplicationOfName(nameof(CacheConfig), cacheConfigs);
+
             // Add still pending nodes,
             // order by types (to enable forward declaration)
             // and then by appearance in config
@@ -454,9 +483,34 @@ namespace PubComp.Caching.Core
                 SetConnectionString(item.Name, item.CreateConnectionString());
             foreach (var item in notifierConfigs)
                 SetNotifier(item.Name, item.CreateCacheNotifier());
-            foreach (var item in cacheConfigs)
+            foreach (var item in cacheConfigs.OrderBy(c => c.LoadPriority))
                 SetCache(item.Name, item.CreateCache());
         }
+
+        private void ValidateNoDuplicationOfName(string configNodeType, IEnumerable<ConfigNode> configNodes)
+        {
+            var duplicateNames = GetDuplicates(configNodes.Select(n=>n.Name)).ToList();
+            if (duplicateNames.Any())
+                throw new ApplicationException($"Duplicate name detected in configuration of type {configNodeType} (name is case insensitive): {string.Join(", ", duplicateNames)}");
+        }
+
+        private IEnumerable<string> GetDuplicates(IEnumerable<string> keys)
+        {
+            HashSet<string> itemsSeen = new HashSet<string>();
+            HashSet<string> itemsYielded = new HashSet<string>();
+            
+            foreach (var key in keys)
+            {
+                if (!itemsSeen.Add(key.ToLowerInvariant()))
+                {
+                    if (itemsYielded.Add(key))
+                    {
+                        yield return key;
+                    }
+                }
+            }
+        }
+
 
         #endregion
     }

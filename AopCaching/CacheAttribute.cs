@@ -1,12 +1,12 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using PostSharp.Aspects;
+﻿using PostSharp.Aspects;
 using PubComp.Caching.Core;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Threading.Tasks;
 using PubComp.Caching.Core.Attributes;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace PubComp.Caching.AopCaching
 {
@@ -71,8 +71,7 @@ namespace PubComp.Caching.AopCaching
             }
 
             var cacheToUse = this.cache;
-
-            if (cacheToUse == null)
+            if (!cacheToUse.IsUseable())
             {
                 base.OnInvoke(args);
                 return;
@@ -94,18 +93,22 @@ namespace PubComp.Caching.AopCaching
             }
 
             var cacheToUse = this.cache;
+            if (!cacheToUse.IsUseable())
+            {
+                await base.OnInvokeAsync(args).ConfigureAwait(false);
+                return;
+            }
 
-            if (cacheToUse == null)
-            {
-                await base.OnInvokeAsync(args);
-            }
-            else
-            {
-                var key = GetCacheKey(args);
-                var result = await cacheToUse.GetAsync(key, async () => { await base.OnInvokeAsync(args); return args.ReturnValue; });
-                var returnType = GetReturnType(args.Method);
-                args.ReturnValue = SafeCasting.CastTo(returnType, result);
-            }
+            var key = GetCacheKey(args);
+            var result = await cacheToUse
+                .GetAsync(key, async () =>
+                {
+                    await base.OnInvokeAsync(args).ConfigureAwait(false);
+                    return args.ReturnValue;
+                })
+                .ConfigureAwait(false);
+            var returnType = GetReturnType(args.Method);
+            args.ReturnValue = SafeCasting.CastTo(returnType, result);
         }
 
         private string GetCacheKey(MethodInterceptionArgs args)
@@ -125,7 +128,7 @@ namespace PubComp.Caching.AopCaching
             var key = new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues, genericArgumentTypeNames).ToString();
             return key;
         }
-        
+
         private static Type GetReturnType(MethodBase method)
         {
             var returnType = (method as MethodInfo)?.ReturnType;
