@@ -52,6 +52,26 @@ namespace PubComp.Caching.AopCaching.UnitTests
         }
 
         [TestMethod]
+        public void TestMissingNameCache()
+        {
+            var service = new Service2();
+            var result = service.MethodToCache0();
+            Assert.AreEqual(1, result);
+            result = service.MethodToCache0();
+            Assert.AreEqual(2, result);
+        }
+
+        [TestMethod]
+        public async Task TestMissingNameCacheAsync()
+        {
+            var service = new Service2();
+            var result = await service.MethodToCache0Async();
+            Assert.AreEqual(1, result);
+            result = await service.MethodToCache0Async();
+            Assert.AreEqual(2, result);
+        }
+
+        [TestMethod]
         public void TestNamedCache1()
         {
             Assert.AreEqual(0, cache2.Hits);
