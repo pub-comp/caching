@@ -1,4 +1,5 @@
-﻿using PostSharp.Aspects;
+﻿using NLog;
+using PostSharp.Aspects;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.Attributes;
 using System;
@@ -15,7 +16,6 @@ namespace PubComp.Caching.AopCaching
     {
         private string cacheName;
         private ICache cache;
-        private long initialized = 0L;
         private string className;
         private string methodName;
         private string[] parameterTypeNames;
@@ -32,7 +32,7 @@ namespace PubComp.Caching.AopCaching
             this.cacheName = cacheName;
         }
 
-        public sealed override void CompileTimeInitialize(System.Reflection.MethodBase method, AspectInfo aspectInfo)
+        public sealed override void CompileTimeInitialize(MethodBase method, AspectInfo aspectInfo)
         {
             var type = method.DeclaringType;
 
@@ -64,10 +64,13 @@ namespace PubComp.Caching.AopCaching
 
         public sealed override void OnInvoke(MethodInterceptionArgs args)
         {
-            if (Interlocked.Read(ref initialized) == 0L)
+            if (this.cache == null)
             {
                 this.cache = CacheManager.GetCache(this.cacheName);
-                Interlocked.Exchange(ref initialized, 1L);
+                if (this.cache == null)
+                {
+                    LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
+                }
             }
 
             var cacheToUse = this.cache;
@@ -86,10 +89,13 @@ namespace PubComp.Caching.AopCaching
         /// <inheritdoc />
         public sealed override async Task OnInvokeAsync(MethodInterceptionArgs args)
         {
-            if (Interlocked.Read(ref initialized) == 0L)
+            if (this.cache == null)
             {
                 this.cache = CacheManager.GetCache(this.cacheName);
-                Interlocked.Exchange(ref initialized, 1L);
+                if (this.cache == null)
+                {
+                    LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
+                }
             }
 
             var cacheToUse = this.cache;
