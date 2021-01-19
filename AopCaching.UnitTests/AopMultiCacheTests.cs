@@ -29,6 +29,26 @@ namespace PubComp.Caching.AopCaching.UnitTests
         }
 
         [TestMethod]
+        public void TestMultiMissingCache()
+        {
+            var service = new MultiService();
+            var results = service.GetItemsNoCache(new[] { "k1" });
+            Assert.AreEqual("1", results.First().Value);
+            results = service.GetItemsNoCache(new[] { "k1" });
+            Assert.AreEqual("2", results.First().Value);
+        }
+
+        [TestMethod]
+        public async Task TestMultiMissingCacheAsync()
+        {
+            var service = new MultiService();
+            var results = await service.GetItemsNoCacheAsync(new[] { "k1" });
+            Assert.AreEqual("1", results.First().Value);
+            results = await service.GetItemsNoCacheAsync(new[] { "k1" });
+            Assert.AreEqual("2", results.First().Value);
+        }
+
+        [TestMethod]
         public void TestMultiCacheWith1Items()
         {
             Assert.AreEqual(0, cache1.Hits);

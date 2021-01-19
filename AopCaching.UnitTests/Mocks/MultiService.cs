@@ -7,6 +7,23 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
 {
     public class MultiService
     {
+        private int getItemsNoCacheCounter;
+
+        [CacheList("CacheMissing", typeof(MockDataKeyConverter))]
+        public IList<MockData> GetItemsNoCache(IList<string> keys)
+        {
+            ++getItemsNoCacheCounter;
+            return new List<MockData> { new MockData { Id = keys.FirstOrDefault(), Value = getItemsNoCacheCounter.ToString() } };
+        }
+
+        [CacheList("CacheMissing", typeof(MockDataKeyConverter))]
+        public async Task<IList<MockData>> GetItemsNoCacheAsync(IList<string> keys)
+        {
+            ++getItemsNoCacheCounter;
+            await Task.Delay(10);
+            return new List<MockData> { new MockData { Id = keys.FirstOrDefault(), Value = getItemsNoCacheCounter.ToString() } };
+        }
+
         [CacheList(typeof(MockDataKeyConverter))]
         public IList<MockData> GetItems(IList<string> keys)
         {

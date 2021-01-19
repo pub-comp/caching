@@ -8,6 +8,7 @@ using PubComp.Caching.Core;
 using System.Collections;
 using System.Threading.Tasks;
 using PubComp.Caching.Core.Attributes;
+using NLog;
 
 namespace PubComp.Caching.AopCaching
 {
@@ -16,7 +17,6 @@ namespace PubComp.Caching.AopCaching
     {
         private string cacheName;
         private ICache cache;
-        private long initialized = 0L;
         private string className;
         private string methodName;
         private string[] parameterTypeNames;
@@ -206,10 +206,13 @@ namespace PubComp.Caching.AopCaching
 
         public sealed override void OnInvoke(MethodInterceptionArgs args)
         {
-            if (Interlocked.Read(ref initialized) == 0L)
+            if (this.cache == null)
             {
                 this.cache = CacheManager.GetCache(this.cacheName);
-                Interlocked.Exchange(ref initialized, 1L);
+                if (this.cache == null)
+                {
+                    LogManager.GetCurrentClassLogger().Warn($"AOP cache list [{this.cacheName}] is not initialized, define NoCache if needed!");
+                }
             }
 
             var cacheToUse = this.cache;
@@ -280,10 +283,13 @@ namespace PubComp.Caching.AopCaching
 
         public sealed override async Task OnInvokeAsync(MethodInterceptionArgs args)
         {
-            if (Interlocked.Read(ref initialized) == 0L)
+            if (this.cache == null)
             {
                 this.cache = CacheManager.GetCache(this.cacheName);
-                Interlocked.Exchange(ref initialized, 1L);
+                if (this.cache == null)
+                {
+                    LogManager.GetCurrentClassLogger().Warn($"AOP cache list [{this.cacheName}] is not initialized, define NoCache if needed!");
+                }
             }
 
             var cacheToUse = this.cache;
