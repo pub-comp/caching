@@ -1,3 +1,5 @@
+This project is dual licensed under MIT (https://github.com/pub-comp/caching/blob/master/License.txt) and LGPL below:
+
 GNU Lesser General Public License (LGPL)
 Version 2.1, February 1999
 
