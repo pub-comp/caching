@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PubComp.Caching.Core.UnitTests
@@ -212,6 +213,42 @@ namespace PubComp.Caching.Core.UnitTests
             result = cache.Get("key", getter);
             Assert.AreNotEqual(1, misses);
             Assert.AreNotEqual("1", result);
+        }
+
+        [TestMethod]
+        [Ignore("Diagnose manually the memory consumption")]
+        public void LotsOfClearAll()
+        {
+            var cache = GetCache("cache1");
+            for (var i = 0; i < 5000; i++)
+            {
+                cache.ClearAll();
+            }
+            Thread.Sleep(1000);
+            GC.Collect();
+            Thread.Sleep(1000);
+            for (var i = 0; i < 5000; i++)
+            {
+                cache.ClearAll();
+            }
+        }
+
+        [TestMethod]
+        [Ignore("Diagnose manually the memory consumption")]
+        public async Task LotsOfClearAsyncAll()
+        {
+            var cache = GetCache("cache1");
+            for (var i = 0; i < 5000; i++)
+            {
+                await cache.ClearAllAsync().ConfigureAwait(false);
+            }
+            await Task.Delay(1000);
+            GC.Collect();
+            await Task.Delay(1000);
+            for (var i = 0; i < 5000; i++)
+            {
+                await cache.ClearAllAsync().ConfigureAwait(false);
+            }
         }
 
         [TestMethod]
