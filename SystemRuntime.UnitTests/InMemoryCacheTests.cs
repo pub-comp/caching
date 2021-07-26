@@ -110,6 +110,7 @@ namespace PubComp.Caching.SystemRuntime.UnitTests
         }
 
         [TestMethod]
+        [Ignore("only a one time test needed")]
         public void LoadTest_LockingStrategiesComparison()
         {
             const int numberOfThreads = 16;

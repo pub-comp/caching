@@ -220,13 +220,24 @@ namespace PubComp.Caching.SystemRuntime
 
         public void ClearAll()
         {
-            innerCache = new System.Runtime.Caching.MemoryCache(this.name);
+            var previousInnerCache = System.Threading.Interlocked.Exchange(ref innerCache,
+                new System.Runtime.Caching.MemoryCache(this.name));
+
+            if (previousInnerCache is IDisposable disposeMe)
+            {
+                // I had a concern that some classes will hold the reference of the previous cache
+                // and that the disposing will cause in certain edge race cases a serious exception (AlreadyDisposedException).
+                // But using the dispose cache object is ok, but does nothing and no exception as well.
+                // Set: will not set, as if the ClearAll was called a nanosecond after setting
+                // Get: will get nothing, as if the ClearAll was called a nanosecond before getting
+                disposeMe.Dispose();
+            }
         }
 
         public Task ClearAllAsync()
         {
-            innerCache = new System.Runtime.Caching.MemoryCache(this.name);
-            return Task.FromResult<object>(null);
+            ClearAll();
+            return Task.CompletedTask;
         }
 
         public object GetDetails() => new
