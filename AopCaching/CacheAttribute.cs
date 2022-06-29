@@ -16,7 +16,6 @@ namespace PubComp.Caching.AopCaching
     public class CacheAttribute : MethodInterceptionAspect
     {
         private string cacheName;
-        private bool mustBeConfigured;
         private ICache cache;
         private string className;
         private string methodName;
@@ -25,7 +24,9 @@ namespace PubComp.Caching.AopCaching
         private bool isClassGeneric;
         private bool isMethodGeneric;
 
-        public CacheAttribute()
+        private readonly bool mustBeConfigured;
+
+        public CacheAttribute() : this(null, false)
         {
         }
 
