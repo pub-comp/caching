@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace PubComp.Caching.AopCaching.UnitTests.Mocks
 {
@@ -19,6 +20,21 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
         {
             await Task.Delay(10);
             return ++methodToCache0Counter;
+        }
+
+        [Cache("CacheMissing", true)]
+        public int MethodToCache0Throws()
+        {
+            Assert.Fail($"This code should not be reached");
+            return 0;
+        }
+
+        [Cache("CacheMissing", true)]
+        public async Task<int> MethodToCache0ThrowsAsync()
+        {
+            await Task.Delay(10);
+            Assert.Fail($"This code should not be reached");
+            return 0;
         }
 
         [Cache("localCache")]

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using PubComp.Caching.Core.Config.Loaders;
 
 namespace PubComp.Caching.AopCaching
 {
@@ -15,6 +16,7 @@ namespace PubComp.Caching.AopCaching
     public class CacheAttribute : MethodInterceptionAspect
     {
         private string cacheName;
+        private bool mustBeConfigured;
         private ICache cache;
         private string className;
         private string methodName;
@@ -27,9 +29,14 @@ namespace PubComp.Caching.AopCaching
         {
         }
 
-        public CacheAttribute(string cacheName)
+        public CacheAttribute(string cacheName) : this(cacheName, false)
+        {
+        }
+
+        public CacheAttribute(string cacheName, bool mustBeConfigured)
         {
             this.cacheName = cacheName;
+            this.mustBeConfigured = mustBeConfigured;
         }
 
         public sealed override void CompileTimeInitialize(MethodBase method, AspectInfo aspectInfo)
@@ -69,6 +76,9 @@ namespace PubComp.Caching.AopCaching
                 this.cache = CacheManager.GetCache(this.cacheName);
                 if (this.cache == null)
                 {
+                    if (this.mustBeConfigured)
+                        throw new CacheException($"This cache has mustBeConfigured = true, so it must be configured.");
+
                     LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
                 }
             }
@@ -94,6 +104,9 @@ namespace PubComp.Caching.AopCaching
                 this.cache = CacheManager.GetCache(this.cacheName);
                 if (this.cache == null)
                 {
+                    if (this.mustBeConfigured)
+                        throw new CacheException($"This cache has mustBeConfigured = true, so it must be configured.");
+
                     LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
                 }
             }

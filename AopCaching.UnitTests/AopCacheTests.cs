@@ -72,6 +72,22 @@ namespace PubComp.Caching.AopCaching.UnitTests
         }
 
         [TestMethod]
+        [ExpectedException(typeof(CacheException))]
+        public void TestMissingNameCache_MustBeConfigured()
+        {
+            var service = new Service2();
+            service.MethodToCache0Throws();
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(CacheException))]
+        public async Task TestMissingNameCacheAsync_MustBeConfigured()
+        {
+            var service = new Service2();
+            await service.MethodToCache0ThrowsAsync();
+        }
+
+        [TestMethod]
         public void TestNamedCache1()
         {
             Assert.AreEqual(0, cache2.Hits);
