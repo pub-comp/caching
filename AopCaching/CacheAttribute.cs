@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using PubComp.Caching.SystemRuntime;
 
 namespace PubComp.Caching.AopCaching
 {
@@ -22,7 +23,8 @@ namespace PubComp.Caching.AopCaching
         private int[] indexesNotToCache;
         private bool isClassGeneric;
         private bool isMethodGeneric;
-        private bool mustBeConfigured;
+        private bool initializeIfMissing;
+        private ILogger logger;
 
         public CacheAttribute() : this(null, false)
         {
@@ -32,10 +34,11 @@ namespace PubComp.Caching.AopCaching
         {
         }
 
-        public CacheAttribute(string cacheName, bool mustBeConfigured)
+        public CacheAttribute(string cacheName, bool initializeIfMissing)
         {
             this.cacheName = cacheName;
-            this.mustBeConfigured = mustBeConfigured;
+            this.initializeIfMissing = initializeIfMissing;
+            this.logger = LogManager.GetCurrentClassLogger();
         }
 
         public sealed override void CompileTimeInitialize(MethodBase method, AspectInfo aspectInfo)
@@ -75,10 +78,14 @@ namespace PubComp.Caching.AopCaching
                 this.cache = CacheManager.GetCache(this.cacheName);
                 if (this.cache == null)
                 {
-                    if (this.mustBeConfigured)
-                        throw new CacheException($"This cache has mustBeConfigured = true, so it must be configured.");
-
-                    LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
+                    if (this.initializeIfMissing)
+                    {
+                        this.cache = new InMemoryCache(this.cacheName, TimeSpan.FromDays(1));
+                        CacheManager.SetCache(this.cacheName, this.cache);
+                        this.logger.Warn($"AOP cache [{this.cacheName}] is not initialized, initializing cache!");
+                    }
+                    else
+                        this.logger.Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
                 }
             }
 
@@ -103,10 +110,14 @@ namespace PubComp.Caching.AopCaching
                 this.cache = CacheManager.GetCache(this.cacheName);
                 if (this.cache == null)
                 {
-                    if (this.mustBeConfigured)
-                        throw new CacheException($"This cache has mustBeConfigured = true, so it must be configured.");
-
-                    LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
+                    if (this.initializeIfMissing)
+                    {
+                        this.cache = new InMemoryCache(this.cacheName, TimeSpan.FromDays(1));
+                        CacheManager.SetCache(this.cacheName, this.cache);
+                        this.logger.Warn($"AOP cache [{this.cacheName}] is not initialized, initializing cache!");
+                    }
+                    else
+                        this.logger.Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
                 }
             }
 

@@ -8,6 +8,7 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
     public class Service2
     {
         private int methodToCache0Counter;
+        private int methodToCache0NameMissing;
 
         [Cache("CacheMissing")]
         public int MethodToCache0()
@@ -23,18 +24,16 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
         }
 
         [Cache("CacheMissing", true)]
-        public int MethodToCache0Throws()
+        public int MethodToCacheMissing()
         {
-            Assert.Fail($"This code should not be reached");
-            return 0;
+            return ++methodToCache0NameMissing;
         }
 
-        [Cache("CacheMissing", true)]
-        public async Task<int> MethodToCache0ThrowsAsync()
+        [Cache("CacheMissingAsync", true)]
+        public async Task<int> MethodToCacheMissingAsync()
         {
             await Task.Delay(10);
-            Assert.Fail($"This code should not be reached");
-            return 0;
+            return ++methodToCache0NameMissing;
         }
 
         [Cache("localCache")]
