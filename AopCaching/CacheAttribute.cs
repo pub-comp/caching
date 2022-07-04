@@ -24,7 +24,6 @@ namespace PubComp.Caching.AopCaching
         private bool isClassGeneric;
         private bool isMethodGeneric;
         private bool initializeIfMissing;
-        private ILogger logger;
 
         public CacheAttribute() : this(null, false)
         {
@@ -38,7 +37,6 @@ namespace PubComp.Caching.AopCaching
         {
             this.cacheName = cacheName;
             this.initializeIfMissing = initializeIfMissing;
-            this.logger = LogManager.GetCurrentClassLogger();
         }
 
         public sealed override void CompileTimeInitialize(MethodBase method, AspectInfo aspectInfo)
@@ -82,10 +80,10 @@ namespace PubComp.Caching.AopCaching
                     {
                         this.cache = new InMemoryCache(this.cacheName, TimeSpan.FromDays(1));
                         CacheManager.SetCache(this.cacheName, this.cache);
-                        this.logger.Warn($"AOP cache [{this.cacheName}] is not initialized, initializing cache!");
+                        LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, initializing cache!");
                     }
                     else
-                        this.logger.Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
+                        LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
                 }
             }
 
@@ -114,10 +112,10 @@ namespace PubComp.Caching.AopCaching
                     {
                         this.cache = new InMemoryCache(this.cacheName, TimeSpan.FromDays(1));
                         CacheManager.SetCache(this.cacheName, this.cache);
-                        this.logger.Warn($"AOP cache [{this.cacheName}] is not initialized, initializing cache!");
+                        LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, initializing cache!");
                     }
                     else
-                        this.logger.Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
+                        LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
                 }
             }
 

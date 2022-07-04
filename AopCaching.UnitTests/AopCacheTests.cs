@@ -78,7 +78,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             var miss = service.MethodToCacheMissing();
             var hit = service.MethodToCacheMissing();
             Assert.AreEqual(miss, hit);
-            Assert.IsNotNull(CacheManager.GetCache("CacheMissing"));
+            Assert.IsNotNull(CacheManager.GetCache("CacheInitMissing"));
         }
 
         [TestMethod]
@@ -88,7 +88,7 @@ namespace PubComp.Caching.AopCaching.UnitTests
             var miss = await service.MethodToCacheMissingAsync();
             var hit = await service.MethodToCacheMissingAsync();
             Assert.AreEqual(miss, hit);
-            Assert.IsNotNull(CacheManager.GetCache("CacheMissingAsync"));
+            Assert.IsNotNull(CacheManager.GetCache("CacheInitMissingAsync"));
         }
 
         [TestMethod]

@@ -23,13 +23,13 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
             return ++methodToCache0Counter;
         }
 
-        [Cache("CacheMissing", true)]
+        [Cache("CacheInitMissing", true)]
         public int MethodToCacheMissing()
         {
             return ++methodToCache0NameMissing;
         }
 
-        [Cache("CacheMissingAsync", true)]
+        [Cache("CacheInitMissingAsync", true)]
         public async Task<int> MethodToCacheMissingAsync()
         {
             await Task.Delay(10);
