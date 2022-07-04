@@ -7,7 +7,7 @@
   <ItemGroup>
     <PackageReference Include="MSTest.TestAdapter" Version="1.2.0" />
     <PackageReference Include="MSTest.TestFramework" Version="1.2.0" />
-    <PackageReference Include="PostSharp" Version="6.8.7" />
+    <PackageReference Include="PostSharp" Version="6.10.13" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AopCaching\AopCaching.csproj" />
