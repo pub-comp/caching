@@ -6,13 +6,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
-using PubComp.Caching.Core.Config.Loaders;
 
 namespace PubComp.Caching.AopCaching
 {
-    [Serializable]
+    //[Serializable]
     public class CacheAttribute : MethodInterceptionAspect
     {
         private string cacheName;
