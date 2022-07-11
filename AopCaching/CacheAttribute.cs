@@ -1,17 +1,18 @@
 ﻿using NLog;
 using PostSharp.Aspects;
+using PostSharp.Serialization;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
+using PubComp.Caching.SystemRuntime;
 
 namespace PubComp.Caching.AopCaching
 {
-    [Serializable]
+    [PSerializable]
     public class CacheAttribute : MethodInterceptionAspect
     {
         private string cacheName;
@@ -22,14 +23,20 @@ namespace PubComp.Caching.AopCaching
         private int[] indexesNotToCache;
         private bool isClassGeneric;
         private bool isMethodGeneric;
+        private bool initializeIfMissing;
 
-        public CacheAttribute()
+        public CacheAttribute() : this(null, false)
         {
         }
 
-        public CacheAttribute(string cacheName)
+        public CacheAttribute(string cacheName) : this(cacheName, false)
+        {
+        }
+
+        public CacheAttribute(string cacheName, bool initializeIfMissing)
         {
             this.cacheName = cacheName;
+            this.initializeIfMissing = initializeIfMissing;
         }
 
         public sealed override void CompileTimeInitialize(MethodBase method, AspectInfo aspectInfo)
@@ -69,7 +76,14 @@ namespace PubComp.Caching.AopCaching
                 this.cache = CacheManager.GetCache(this.cacheName);
                 if (this.cache == null)
                 {
-                    LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
+                    if (this.initializeIfMissing)
+                    {
+                        this.cache = new InMemoryCache(this.cacheName, TimeSpan.FromDays(1));
+                        CacheManager.SetCache(this.cacheName, this.cache);
+                        LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, initializing cache!");
+                    }
+                    else
+                        LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
                 }
             }
 
@@ -94,7 +108,14 @@ namespace PubComp.Caching.AopCaching
                 this.cache = CacheManager.GetCache(this.cacheName);
                 if (this.cache == null)
                 {
-                    LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
+                    if (this.initializeIfMissing)
+                    {
+                        this.cache = new InMemoryCache(this.cacheName, TimeSpan.FromDays(1));
+                        CacheManager.SetCache(this.cacheName, this.cache);
+                        LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, initializing cache!");
+                    }
+                    else
+                        LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
                 }
             }
 

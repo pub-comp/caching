@@ -17,7 +17,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.1" />
-    <PackageReference Include="NLog" Version="4.5.10" />
+    <PackageReference Include="NLog" Version="5.0.1" />
     <PackageReference Include="StackExchange.Redis" Version="2.0.505" />
   </ItemGroup>
   <ItemGroup>

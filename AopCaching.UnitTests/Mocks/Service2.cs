@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace PubComp.Caching.AopCaching.UnitTests.Mocks
 {
     public class Service2
     {
         private int methodToCache0Counter;
+        private int methodToCache0NameMissing;
 
         [Cache("CacheMissing")]
         public int MethodToCache0()
@@ -19,6 +21,19 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
         {
             await Task.Delay(10);
             return ++methodToCache0Counter;
+        }
+
+        [Cache("CacheInitMissing", true)]
+        public int MethodToCacheMissing()
+        {
+            return ++methodToCache0NameMissing;
+        }
+
+        [Cache("CacheInitMissingAsync", true)]
+        public async Task<int> MethodToCacheMissingAsync()
+        {
+            await Task.Delay(10);
+            return ++methodToCache0NameMissing;
         }
 
         [Cache("localCache")]
