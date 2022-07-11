@@ -5,9 +5,9 @@
     <AssemblyName>PubComp.Caching.AopCaching</AssemblyName>
     <RootNamespace>PubComp.Caching.AopCaching</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>5.0.2</Version>
+    <Version>5.0.3</Version>
     <AssemblyVersion>5.0.0.0</AssemblyVersion>
-    <FileVersion>5.0.2.0</FileVersion>
+    <FileVersion>5.0.3.0</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <NoWarn>1701;1702;1591</NoWarn>
@@ -17,7 +17,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NLog" Version="4.5.10" />
-    <PackageReference Include="PostSharp" Version="6.8.7" />
+    <PackageReference Include="PostSharp" Version="6.10.13" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
