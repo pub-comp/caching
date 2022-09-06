@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Reflection;
 using PostSharp.Aspects;
 using PubComp.Caching.Core;
@@ -9,10 +8,11 @@ using System.Collections;
 using System.Threading.Tasks;
 using PubComp.Caching.Core.Attributes;
 using NLog;
+using PostSharp.Serialization;
 
 namespace PubComp.Caching.AopCaching
 {
-    [Serializable]
+    [PSerializable]
     public class CacheListAttribute : MethodInterceptionAspect
     {
         private string cacheName;
