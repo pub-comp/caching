@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace PubComp.Caching.AopCaching
 {
-    [Serializable]
+    [PSerializable]
     public class CacheAttribute : MethodInterceptionAspect
     {
         private string cacheName;

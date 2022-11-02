@@ -12,7 +12,7 @@ using PostSharp.Serialization;
 
 namespace PubComp.Caching.AopCaching
 {
-    [Serializable]
+    [PSerializable]
     public class CacheListAttribute : MethodInterceptionAspect
     {
         private string cacheName;
