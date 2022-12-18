@@ -32,7 +32,6 @@ namespace PubComp.Caching.AopCaching
         public CacheAttribute(string cacheName)
         {
             this.cacheName = cacheName;
-            int i = 1;
         }
 
         public sealed override void CompileTimeInitialize(MethodBase method, AspectInfo aspectInfo)
