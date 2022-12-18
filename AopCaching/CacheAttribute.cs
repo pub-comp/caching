@@ -3,6 +3,7 @@ using PostSharp.Aspects;
 using PostSharp.Serialization;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.Attributes;
+using PubComp.Caching.RedisCaching;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,7 @@ namespace PubComp.Caching.AopCaching
         private int[] indexesNotToCache;
         private bool isClassGeneric;
         private bool isMethodGeneric;
+        private bool _isRedisActive = true;
 
         public CacheAttribute()
         {
@@ -66,10 +68,28 @@ namespace PubComp.Caching.AopCaching
         {
             if (this.cache == null)
             {
-                this.cache = CacheManager.GetCache(this.cacheName);
+                this.cache = CacheManager.GetCache(cacheName);
                 if (this.cache == null)
                 {
-                    LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
+                    LogManager.GetCurrentClassLogger().Warn("AOP cache [" + cacheName + "] is not initialized, define NoCache if needed!");
+                }
+            }
+            else if (_isRedisActive && cacheName.Contains("BackUp"))
+            {
+                cacheName = cacheName.Replace("BackUp", "");
+                this.cache = CacheManager.GetCache(cacheName);
+            }
+
+            if (this.cache is RedisCache)
+            {
+                _isRedisActive = (this.cache as RedisCache).IsActive;
+                if (!(this.cache as RedisCache).IsRedisConnectionStateHandlerRegistered)
+                    (this.cache as RedisCache).OnRedisConnectionStateChanged += CacheAttribute_OnRedisConnectionStateChanged;
+
+                if (!_isRedisActive)
+                {
+                    cacheName = string.Format("{0}{1}", cacheName, "BackUp");
+                    this.cache = CacheManager.GetCache(cacheName);
                 }
             }
 
@@ -91,10 +111,28 @@ namespace PubComp.Caching.AopCaching
         {
             if (this.cache == null)
             {
-                this.cache = CacheManager.GetCache(this.cacheName);
+                this.cache = CacheManager.GetCache(cacheName);
                 if (this.cache == null)
                 {
-                    LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
+                    LogManager.GetCurrentClassLogger().Warn("AOP cache [" + cacheName + "] is not initialized, define NoCache if needed!");
+                }
+            }
+            else if (_isRedisActive && cacheName.Contains("BackUp"))
+            {
+                cacheName = cacheName.Replace("BackUp", "");
+                this.cache = CacheManager.GetCache(cacheName);
+            }
+
+            if (this.cache is RedisCache)
+            {
+                _isRedisActive = (this.cache as RedisCache).IsActive;
+                if (!(this.cache as RedisCache).IsRedisConnectionStateHandlerRegistered)
+                    (this.cache as RedisCache).OnRedisConnectionStateChanged += CacheAttribute_OnRedisConnectionStateChanged;
+
+                if (!_isRedisActive)
+                {
+                    cacheName = string.Format("{0}{1}", cacheName, "BackUp");
+                    this.cache = CacheManager.GetCache(cacheName);
                 }
             }
 
@@ -115,6 +153,14 @@ namespace PubComp.Caching.AopCaching
                 .ConfigureAwait(false);
             var returnType = GetReturnType(args.Method);
             args.ReturnValue = SafeCasting.CastTo(returnType, result);
+        }
+
+        private void CacheAttribute_OnRedisConnectionStateChanged(object sender, bool connectionRestored)
+        {
+            if (connectionRestored)
+            {
+                _isRedisActive = true;
+            }
         }
 
         private string GetCacheKey(MethodInterceptionArgs args)
