@@ -18,9 +18,9 @@
   <ItemGroup>
     <PackageReference Include="NLog" Version="4.5.10" />
     <PackageReference Include="PostSharp" Version="6.10.13">
-      <IncludeAssets>build</IncludeAssets>
-      <ExcludeAssets>none</ExcludeAssets>
       <PrivateAssets>analyzers</PrivateAssets>
+      <ExcludeAssets>none</ExcludeAssets>
+      <IncludeAssets>all</IncludeAssets>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
