@@ -12,6 +12,7 @@ namespace PubComp.Caching.Core
         private readonly string className;
         private readonly string methodName;
         private readonly string[] parameterTypeNames;
+        private readonly string[] genericArgumentTypeNames;
         private readonly object[] parmaterValues;
 
         private static readonly JsonSerializerSettings JsonSerializerSettings =
@@ -22,12 +23,13 @@ namespace PubComp.Caching.Core
                     typeof(DoNotIncludeInCacheKeyAttribute))
             };
 
-        public CacheKey(string className, string methodName, string[] parameterTypeNames, object[] parmaterValues)
+        public CacheKey(string className, string methodName, string[] parameterTypeNames, object[] parmaterValues, string[] genericArgumentTypeNames)
         {
             this.className = className ?? string.Empty;
             this.methodName = methodName ?? string.Empty;
             this.parameterTypeNames = parameterTypeNames ?? new string[0];
             this.parmaterValues = parmaterValues ?? new object[0];
+            this.genericArgumentTypeNames = genericArgumentTypeNames ?? new string[0];
         }
 
         public string ClassName
@@ -62,6 +64,14 @@ namespace PubComp.Caching.Core
             }
         }
 
+        public string[] GenericArgumentTypeNames
+        {
+            get
+            {
+                return this.genericArgumentTypeNames;
+            }
+        }
+
         public override bool Equals(object obj)
         {
             if (obj is CacheKey == false)
@@ -84,12 +94,19 @@ namespace PubComp.Caching.Core
             if (other.parmaterValues.Length != this.parmaterValues.Length)
                 return false;
 
+            if (other.genericArgumentTypeNames.Length != this.genericArgumentTypeNames.Length)
+                return false;
+
             for (int cnt = 0; cnt < this.parameterTypeNames.Length; cnt++)
                 if (other.parameterTypeNames[cnt] != this.parameterTypeNames[cnt])
                     return false;
 
             for (int cnt = 0; cnt < this.parmaterValues.Length; cnt++)
                 if (other.parmaterValues[cnt] != this.parmaterValues[cnt])
+                    return false;
+
+            for (int cnt = 0; cnt < this.genericArgumentTypeNames.Length; cnt++)
+                if (other.genericArgumentTypeNames[cnt] != this.genericArgumentTypeNames[cnt])
                     return false;
 
             return true;
@@ -100,7 +117,8 @@ namespace PubComp.Caching.Core
             var result = this.className.GetHashCode()
                 ^ this.methodName.GetHashCode()
                 ^ this.parameterTypeNames.Length
-                ^ (Int32.MaxValue - this.parmaterValues.Length);
+                ^ (Int32.MaxValue - this.parmaterValues.Length)
+                ^ this.genericArgumentTypeNames.Length;
 
             for (int cnt = 0; cnt < this.parameterTypeNames.Length; cnt++)
             {
@@ -112,6 +130,12 @@ namespace PubComp.Caching.Core
             {
                 object current = this.parmaterValues[cnt];
                 result ^= (current != null ? this.parmaterValues[cnt].GetHashCode() : 0);
+            }
+
+            for (int cnt = 0; cnt < this.genericArgumentTypeNames.Length; cnt++)
+            {
+                string current = this.genericArgumentTypeNames[cnt];
+                result ^= (current != null ? this.genericArgumentTypeNames[cnt].GetHashCode() : 0);
             }
 
             return result;
@@ -137,8 +161,9 @@ namespace PubComp.Caching.Core
 
             var parameters = method.GetParameters();
             var parameterTypeNames = parameters.Select(p => p.ParameterType.FullName).ToArray();
+            var genericArgumentTypeNames = method.GetGenericArguments().Select(a => a.FullName).ToArray();
 
-            var key = new CacheKey(className, method.Name, parameterTypeNames, parameterValues);
+            var key = new CacheKey(className, method.Name, parameterTypeNames, parameterValues, genericArgumentTypeNames);
             return key.ToString();
         }
 

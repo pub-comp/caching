@@ -14,6 +14,7 @@ namespace PubComp.Caching.Core.UnitTests
         private Mocks.MockMemCache cache1;
         private Mocks.MockMemCache cache2;
         private Mocks.MockMemCache cache3;
+        private Mocks.MockMemCache cache4;
 
         [TestInitialize]
         public void TestInitialize()
@@ -31,6 +32,9 @@ namespace PubComp.Caching.Core.UnitTests
 
             cache3 = new Mocks.MockMemCache(typeof(TestProvider).FullName);
             CacheManager.SetCache(cache3.Name, cache3);
+
+            cache4 = new Mocks.MockMemCache("mockCache*");
+            CacheManager.SetCache(cache4.Name, cache4);
 
             this.cacheControllerUtil = new CacheControllerUtilExposed();
             this.cacheControllerUtil.ClearRegistrations();
@@ -340,6 +344,34 @@ namespace PubComp.Caching.Core.UnitTests
         }
 
         [TestMethod]
+        public void TestCacheRefreshItemAopImpliedNamed()
+        {
+            this.cacheControllerUtil.RegisterCacheItem(
+                () => new TestProvider().GetData4("v1", 2, true), true);
+
+            Assert.AreEqual(0, cache4.Hits);
+            Assert.AreEqual(1, TestProvider.Hits4);
+
+            var result = new TestProvider().GetData4("v1", 2, true);
+            Assert.AreEqual("GetData-v1/2/True-1", result);
+            Assert.AreEqual(1, TestProvider.Hits4);
+            Assert.AreEqual(1, cache4.Hits);
+        }
+
+        [TestMethod]
+        public void TestCacheRefreshItemAopImpliedNamedNoCache()
+        {
+            this.cacheControllerUtil.RegisterCacheItem(
+                () => new TestProvider().GetData0("v1", 2, true), true);
+
+            Assert.AreEqual(1, TestProvider.Hits0);
+
+            var result = new TestProvider().GetData0("v1", 2, true);
+            Assert.AreEqual("GetData-v1/2/True-2", result);
+            Assert.AreEqual(2, TestProvider.Hits0);
+        }
+
+        [TestMethod]
         public void TestCacheRefreshItemAopNamed()
         {
             this.cacheControllerUtil.RegisterCacheItem(
@@ -409,8 +441,10 @@ namespace PubComp.Caching.Core.UnitTests
         public class TestProvider
         {
             // ReSharper disable RedundantDefaultMemberInitializer
+            internal static int Hits0 = 0;
             internal static int Hits1 = 0;
             internal static int Hits2 = 0;
+            internal static int Hits4 = 0;
 
             [Cache("cache1")]
             public string GetData(string v1, int v2, bool v3)
@@ -424,6 +458,20 @@ namespace PubComp.Caching.Core.UnitTests
             {
                 var hits = Interlocked.Increment(ref Hits2);
                 return string.Concat("GetData2-", v1, '/', v2, '/', v3, '-', hits);
+            }
+
+            [Cache("cache0")]
+            public string GetData0(string v1, int v2, bool v3)
+            {
+                var hits = Interlocked.Increment(ref Hits0);
+                return string.Concat("GetData-", v1, '/', v2, '/', v3, '-', hits);
+            }
+
+            [Cache("mockCache0")]
+            public string GetData4(string v1, int v2, bool v3)
+            {
+                var hits = Interlocked.Increment(ref Hits4);
+                return string.Concat("GetData-", v1, '/', v2, '/', v3, '-', hits);
             }
         }
 

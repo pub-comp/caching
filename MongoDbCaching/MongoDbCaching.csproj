@@ -15,7 +15,7 @@
     <NoWarn>1701;1702;1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="PubComp.NoSql.MongoDbDriver" Version="4.1.0" />
+    <PackageReference Include="PubComp.NoSql.MongoDbDriver" Version="4.2.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />

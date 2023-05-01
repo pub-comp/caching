@@ -1,6 +1,6 @@
-﻿using System.Threading.Tasks;
-using System.Web.Http;
 using PubComp.Caching.Core;
+using System.Threading.Tasks;
+using System.Web.Http;
 using TestHost.WebApi.Service;
 
 namespace TestHost.WebApi.Controllers

@@ -6,6 +6,21 @@ namespace PubComp.Caching.AopCaching.UnitTests.Mocks
 {
     public class Service2
     {
+        private int methodToCache0Counter;
+
+        [Cache("CacheMissing")]
+        public int MethodToCache0()
+        {
+            return ++methodToCache0Counter;
+        }
+
+        [Cache("CacheMissing")]
+        public async Task<int> MethodToCache0Async()
+        {
+            await Task.Delay(10);
+            return ++methodToCache0Counter;
+        }
+
         [Cache("localCache")]
         public IEnumerable<string> MethodToCache1()
         {

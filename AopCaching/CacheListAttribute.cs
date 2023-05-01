@@ -1,25 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Reflection;
 using PostSharp.Aspects;
 using PubComp.Caching.Core;
 using System.Collections;
 using System.Threading.Tasks;
 using PubComp.Caching.Core.Attributes;
+using NLog;
+using PostSharp.Serialization;
 
 namespace PubComp.Caching.AopCaching
 {
-    [Serializable]
+    [PSerializable]
     public class CacheListAttribute : MethodInterceptionAspect
     {
         private string cacheName;
         private ICache cache;
-        private long initialized = 0L;
         private string className;
         private string methodName;
         private string[] parameterTypeNames;
+        private string[] genericArgumentTypeNames;
         private int[] indexesNotToCache;
         private Type dataKeyConverterType;
         private int keyParameterNumber;
@@ -169,6 +170,7 @@ namespace PubComp.Caching.AopCaching
             this.methodName = method.Name;
             var parameters = method.GetParameters();
             this.parameterTypeNames = parameters.Select(p => p.ParameterType.FullName).ToArray();
+            this.genericArgumentTypeNames = method.GetGenericArguments().Select(a => a.FullName).ToArray();
 
             var indexes = new List<int>();
 
@@ -204,15 +206,17 @@ namespace PubComp.Caching.AopCaching
 
         public sealed override void OnInvoke(MethodInterceptionArgs args)
         {
-            if (Interlocked.Read(ref initialized) == 0L)
+            if (this.cache == null)
             {
                 this.cache = CacheManager.GetCache(this.cacheName);
-                Interlocked.Exchange(ref initialized, 1L);
+                if (this.cache == null)
+                {
+                    LogManager.GetCurrentClassLogger().Warn($"AOP cache list [{this.cacheName}] is not initialized, define NoCache if needed!");
+                }
             }
 
             var cacheToUse = this.cache;
-
-            if (cacheToUse == null)
+            if (!cacheToUse.IsUseable())
             {
                 base.OnInvoke(args);
                 return;
@@ -232,7 +236,7 @@ namespace PubComp.Caching.AopCaching
                 this.addKey.Invoke(keyList, new [] { k });
                 parameterValues[this.keyParameterNumber] = keyList;
 
-                var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues).ToString();
+                var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues, this.genericArgumentTypeNames).ToString();
                 object value;
                 if (cacheToUse.TryGet(key, out value))
                 {
@@ -250,16 +254,28 @@ namespace PubComp.Caching.AopCaching
                 return;
             }
 
+            var newValuesTimestamp = DateTimeOffset.UtcNow;
+
             args.Arguments[this.keyParameterNumber] = missingKeys;
             base.OnInvoke(args);
-            var resultsFromerInner = args.ReturnValue;
-            addDataRange.Invoke(resultList, new [] { resultsFromerInner });
+            var resultsFromInner = args.ReturnValue;
+            addDataRange.Invoke(resultList, new [] { resultsFromInner });
 
-            var values = GetKeyValues(args, resultsFromerInner, parameterValues);
+            var values = GetKeyValues(args, resultsFromInner, parameterValues);
 
-            foreach (var value in values)
+            if (cacheToUse is IScopedCache scopedCacheToUse)
             {
-                cacheToUse.Set(value.Key, value.Value);
+                foreach (var value in values)
+                {
+                    scopedCacheToUse.SetScoped(value.Key, value.Value, newValuesTimestamp);
+                }
+            }
+            else
+            {
+                foreach (var value in values)
+                {
+                    cacheToUse.Set(value.Key, value.Value);
+                }
             }
 
             args.ReturnValue = resultList;
@@ -267,15 +283,17 @@ namespace PubComp.Caching.AopCaching
 
         public sealed override async Task OnInvokeAsync(MethodInterceptionArgs args)
         {
-            if (Interlocked.Read(ref initialized) == 0L)
+            if (this.cache == null)
             {
                 this.cache = CacheManager.GetCache(this.cacheName);
-                Interlocked.Exchange(ref initialized, 1L);
+                if (this.cache == null)
+                {
+                    LogManager.GetCurrentClassLogger().Warn($"AOP cache list [{this.cacheName}] is not initialized, define NoCache if needed!");
+                }
             }
 
             var cacheToUse = this.cache;
-
-            if (cacheToUse == null)
+            if (!cacheToUse.IsUseable())
             {
                 await base.OnInvokeAsync(args).ConfigureAwait(false);
                 return;
@@ -295,7 +313,7 @@ namespace PubComp.Caching.AopCaching
                 this.addKey.Invoke(keyList, new [] { k });
                 parameterValues[this.keyParameterNumber] = keyList;
 
-                var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues).ToString();
+                var key = new CacheKey(this.className, this.methodName, this.parameterTypeNames, parameterValues, genericArgumentTypeNames).ToString();
                 var result = await cacheToUse.TryGetAsync<object>(key).ConfigureAwait(false);
                 if (result.WasFound)
                 {
@@ -313,6 +331,8 @@ namespace PubComp.Caching.AopCaching
                 return;
             }
 
+            var newValuesTimestamp = DateTimeOffset.UtcNow;
+
             args.Arguments[this.keyParameterNumber] = missingKeys;
             await base.OnInvokeAsync(args).ConfigureAwait(false);
             var resultsFromerInner = args.ReturnValue;
@@ -320,13 +340,23 @@ namespace PubComp.Caching.AopCaching
 
             var values = GetKeyValues(args, resultsFromerInner, parameterValues);
 
-            var tasks = values.Select(async x => await cacheToUse.SetAsync(x.Key, x.Value).ConfigureAwait(false));
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+            if (cacheToUse is IScopedCache scopedCacheToUse)
+            {
+                var tasks = values.Select(async x => await scopedCacheToUse
+                    .SetScopedAsync(x.Key, x.Value, newValuesTimestamp).ConfigureAwait(false));
+                await Task.WhenAll(tasks).ConfigureAwait(false);
+            }
+            else
+            {
+                var tasks = values.Select(async x => await cacheToUse
+                    .SetAsync(x.Key, x.Value).ConfigureAwait(false));
+                await Task.WhenAll(tasks).ConfigureAwait(false);
+            }
 
             args.ReturnValue = resultList;
         }
 
-        private Dictionary<string, object> GetKeyValues(MethodInterceptionArgs args, object resultsFromerInner, object[] parameterValues)
+        private Dictionary<string, object> GetKeyValues(MethodInterceptionArgs args, object resultsFromInner, object[] parameterValues)
         {
             var converter = createDataKeyConverter.Invoke(new object[0]);
 
@@ -339,7 +369,7 @@ namespace PubComp.Caching.AopCaching
                 : args.Method.GetParameters().Select(p => p.ParameterType.FullName).ToArray();
 
             Dictionary<string, object> values = new Dictionary<string, object>();
-            foreach (object result in resultsFromerInner as IEnumerable)
+            foreach (object result in resultsFromInner as IEnumerable)
             {
                 var k = convertDataToKey.Invoke(converter, new[] {result});
 
@@ -347,7 +377,7 @@ namespace PubComp.Caching.AopCaching
                 this.addKey.Invoke(keyList, new[] {k});
                 parameterValues[this.keyParameterNumber] = keyList;
 
-                var key = new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues)
+                var key = new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues, genericArgumentTypeNames)
                     .ToString();
                 values[key] = result;
             }

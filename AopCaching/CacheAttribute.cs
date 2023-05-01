@@ -1,21 +1,21 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
+﻿using NLog;
 using PostSharp.Aspects;
+using PostSharp.Serialization;
 using PubComp.Caching.Core;
+using PubComp.Caching.Core.Attributes;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using PubComp.Caching.Core.Attributes;
 
 namespace PubComp.Caching.AopCaching
 {
-    [Serializable]
+    [PSerializable]
     public class CacheAttribute : MethodInterceptionAspect
     {
         private string cacheName;
         private ICache cache;
-        private long initialized = 0L;
         private string className;
         private string methodName;
         private string[] parameterTypeNames;
@@ -32,7 +32,7 @@ namespace PubComp.Caching.AopCaching
             this.cacheName = cacheName;
         }
 
-        public sealed override void CompileTimeInitialize(System.Reflection.MethodBase method, AspectInfo aspectInfo)
+        public sealed override void CompileTimeInitialize(MethodBase method, AspectInfo aspectInfo)
         {
             var type = method.DeclaringType;
 
@@ -64,15 +64,17 @@ namespace PubComp.Caching.AopCaching
 
         public sealed override void OnInvoke(MethodInterceptionArgs args)
         {
-            if (Interlocked.Read(ref initialized) == 0L)
+            if (this.cache == null)
             {
                 this.cache = CacheManager.GetCache(this.cacheName);
-                Interlocked.Exchange(ref initialized, 1L);
+                if (this.cache == null)
+                {
+                    LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
+                }
             }
 
             var cacheToUse = this.cache;
-
-            if (cacheToUse == null)
+            if (!cacheToUse.IsUseable())
             {
                 base.OnInvoke(args);
                 return;
@@ -87,25 +89,32 @@ namespace PubComp.Caching.AopCaching
         /// <inheritdoc />
         public sealed override async Task OnInvokeAsync(MethodInterceptionArgs args)
         {
-            if (Interlocked.Read(ref initialized) == 0L)
+            if (this.cache == null)
             {
                 this.cache = CacheManager.GetCache(this.cacheName);
-                Interlocked.Exchange(ref initialized, 1L);
+                if (this.cache == null)
+                {
+                    LogManager.GetCurrentClassLogger().Warn($"AOP cache [{this.cacheName}] is not initialized, define NoCache if needed!");
+                }
             }
 
             var cacheToUse = this.cache;
+            if (!cacheToUse.IsUseable())
+            {
+                await base.OnInvokeAsync(args).ConfigureAwait(false);
+                return;
+            }
 
-            if (cacheToUse == null)
-            {
-                await base.OnInvokeAsync(args);
-            }
-            else
-            {
-                var key = GetCacheKey(args);
-                var result = await cacheToUse.GetAsync(key, async () => { await base.OnInvokeAsync(args); return args.ReturnValue; });
-                var returnType = GetReturnType(args.Method);
-                args.ReturnValue = SafeCasting.CastTo(returnType, result);
-            }
+            var key = GetCacheKey(args);
+            var result = await cacheToUse
+                .GetAsync(key, async () =>
+                {
+                    await base.OnInvokeAsync(args).ConfigureAwait(false);
+                    return args.ReturnValue;
+                })
+                .ConfigureAwait(false);
+            var returnType = GetReturnType(args.Method);
+            args.ReturnValue = SafeCasting.CastTo(returnType, result);
         }
 
         private string GetCacheKey(MethodInterceptionArgs args)
@@ -118,10 +127,11 @@ namespace PubComp.Caching.AopCaching
                 ? this.parameterTypeNames
                 : args.Method.GetParameters().Select(p => p.ParameterType.FullName).ToArray();
 
+            var genericArgumentTypeNames = args.Method.GetGenericArguments().Select(a => a.FullName).ToArray();
+
             var parameterValues = args.Arguments.Where((arg, index) => !this.indexesNotToCache.Contains(index)).ToArray();
 
-            var key =
-                new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues).ToString();
+            var key = new CacheKey(classNameNonGeneric, this.methodName, parameterTypeNamesNonGeneric, parameterValues, genericArgumentTypeNames).ToString();
             return key;
         }
 

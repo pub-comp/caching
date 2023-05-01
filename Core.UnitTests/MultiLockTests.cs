@@ -432,7 +432,8 @@ namespace PubComp.Caching.Core.UnitTests
 
             var locks = new MultiLock(1, 10, true);
 
-            await locks.LockAndLoadAsync(key, async () => await ExternalIncPosZero(locks, key, counter));
+            await locks
+                .LockAndLoadAsync(key, async () => await ExternalIncPosZero(locks, key, counter));
             Assert.AreEqual(2L, Interlocked.Read(ref counter[0]));
         }
 

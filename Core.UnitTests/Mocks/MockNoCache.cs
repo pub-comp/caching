@@ -26,13 +26,13 @@ namespace PubComp.Caching.Core.UnitTests.Mocks
 
         public bool TryGet<TValue>(string key, out TValue value)
         {
-            value = default(TValue);
+            value = default;
             return false;
         }
 
         public async Task<TryGetResult<TValue>> TryGetAsync<TValue>(string key)
         {
-            return new TryGetResult<TValue> {WasFound = false, Value = default(TValue)};
+            return new TryGetResult<TValue> {WasFound = false, Value = default};
         }
 
         public void Set<TValue>(string key, TValue value)

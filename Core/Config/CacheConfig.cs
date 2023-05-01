@@ -3,5 +3,7 @@
     public abstract class CacheConfig : ConfigNode
     {
         public abstract ICache CreateCache();
+
+        public virtual int LoadPriority { get; set; } = 1;
     }
 }

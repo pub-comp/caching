@@ -52,6 +52,26 @@ namespace PubComp.Caching.AopCaching.UnitTests
         }
 
         [TestMethod]
+        public void TestMissingNameCache()
+        {
+            var service = new Service2();
+            var result = service.MethodToCache0();
+            Assert.AreEqual(1, result);
+            result = service.MethodToCache0();
+            Assert.AreEqual(2, result);
+        }
+
+        [TestMethod]
+        public async Task TestMissingNameCacheAsync()
+        {
+            var service = new Service2();
+            var result = await service.MethodToCache0Async();
+            Assert.AreEqual(1, result);
+            result = await service.MethodToCache0Async();
+            Assert.AreEqual(2, result);
+        }
+
+        [TestMethod]
         public void TestNamedCache1()
         {
             Assert.AreEqual(0, cache2.Hits);
@@ -278,6 +298,51 @@ namespace PubComp.Caching.AopCaching.UnitTests
             var result3 = new GenericService<byte>().MethodToCache1("5");
             Assert.AreEqual(1, cache3.Hits);
             Assert.AreEqual(4, cache3.Misses);
+        }
+
+        [TestMethod]
+        public void TestCacheWithGenericMethodAndWithoutGenericParameter()
+        {
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(0, cache3.Misses);
+
+            var result1 = new GenericService<int>().GenericMethodToCache<Enum1>();
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+            Assert.AreEqual(result1, (int)Enum1.Value);
+
+            var result2 = new GenericService<int>().GenericMethodToCache<Enum1>();
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+            Assert.AreEqual(result2, (int)Enum1.Value);
+
+            var result3 = new GenericService<int>().GenericMethodToCache<Enum2>();
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(4, cache3.Misses);
+            Assert.AreEqual(result3, (int)Enum2.Value);
+        }
+
+        [TestMethod]
+        public void TestCacheWithGenericMethodAndWithoutGenericReturnValue()
+        {
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(0, cache3.Misses);
+
+            new GenericService1<Enum1>().GenericMethodToCacheWithGenericReturnType((int) Enum1.Value);
+            Assert.AreEqual(0, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            new GenericService1<Enum1>().GenericMethodToCacheWithGenericReturnType((int)Enum1.Value);
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(2, cache3.Misses);
+
+            new GenericService1<Enum2>().GenericMethodToCacheWithGenericReturnType((int)Enum1.Value);
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(4, cache3.Misses);
+
+            new GenericService1<Enum2>().GenericMethodToCacheWithGenericReturnType((int)Enum2.Value);
+            Assert.AreEqual(1, cache3.Hits);
+            Assert.AreEqual(6, cache3.Misses);
         }
 
         [TestMethod]

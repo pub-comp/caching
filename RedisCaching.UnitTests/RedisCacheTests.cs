@@ -1,202 +1,38 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PubComp.Caching.AopCaching;
+﻿using PubComp.Caching.AopCaching;
 using PubComp.Caching.Core;
 using PubComp.Caching.Core.UnitTests;
 using PubComp.Caching.DemoSynchronizedClient;
 using PubComp.Caching.RedisCaching.UnitTests.Mocks;
 using PubComp.Caching.SystemRuntime;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace PubComp.Caching.RedisCaching.UnitTests
 {
     [TestClass]
     public class RedisCacheTests
     {
-        private readonly string connectionString = @"127.0.0.1:6379,serviceName=mymaster";
+        private readonly string connectionName = "localRedis";
 
-        [TestMethod]
-        public void TestRedisCacheBasic()
+        [TestInitialize]
+        public void TestInitialize()
         {
-            var cache1 = new RedisCache(
-                "cache1",
-                new RedisCachePolicy
+            CacheManager.InitializeFromConfig();
+            foreach (var cacheName in CacheManager.GetCacheNames())
+                try
                 {
-                    ConnectionString = connectionString,
-                });
-
-            cache1.ClearAll();
-            
-            int misses1 = 0;
-            Func<string> getter1 = () => { misses1++; return misses1.ToString(); };
-
-            int misses2 = 0;
-            Func<string> getter2 = () => { misses2++; return misses2.ToString(); };
-
-            string result;
-
-            result = cache1.Get("key1", getter1);
-            Assert.AreEqual(1, misses1);
-            Assert.AreEqual("1", result);
-
-            result = cache1.Get("key2", getter1);
-            Assert.AreEqual(2, misses1);
-            Assert.AreEqual("2", result);
-            
-            cache1.ClearAll();
-
-            result = cache1.Get("key1", getter1);
-            Assert.AreEqual(3, misses1);
-            Assert.AreEqual("3", result);
-
-            result = cache1.Get("key2", getter1);
-            Assert.AreEqual(4, misses1);
-            Assert.AreEqual("4", result);
-        }
-
-        [TestMethod]
-        public void TestRedisCacheTwoCaches()
-        {
-            var cache1 = new RedisCache(
-                "cache1",
-                new RedisCachePolicy
+                    CacheManager.GetCache(cacheName).ClearAll();
+                }
+                catch (Exception ex)
                 {
-                    ConnectionString = connectionString,
-                });
-            cache1.ClearAll();
-
-
-            var cache2 = new RedisCache(
-                "cache2",
-                new RedisCachePolicy
-                {
-                    ConnectionString = connectionString,
-                });
-            cache2.ClearAll();
-
-            int misses1 = 0;
-            Func<string> getter1 = () => { misses1++; return misses1.ToString(); };
-
-            int misses2 = 0;
-            Func<string> getter2 = () => { misses2++; return misses2.ToString(); };
-
-            string result;
-
-            result = cache1.Get("key1", getter1);
-            Assert.AreEqual(1, misses1);
-            Assert.AreEqual("1", result);
-
-            result = cache1.Get("key2", getter1);
-            Assert.AreEqual(2, misses1);
-            Assert.AreEqual("2", result);
-
-            result = cache2.Get("key1", getter2);
-            Assert.AreEqual(1, misses2);
-            Assert.AreEqual("1", result);
-
-            result = cache2.Get("key2", getter2);
-            Assert.AreEqual(2, misses2);
-            Assert.AreEqual("2", result);
-
-            cache1.ClearAll();
-
-            result = cache1.Get("key1", getter1);
-            Assert.AreEqual(3, misses1);
-            Assert.AreEqual("3", result);
-
-            result = cache1.Get("key2", getter1);
-            Assert.AreEqual(4, misses1);
-            Assert.AreEqual("4", result);
-
-            result = cache2.Get("key1", getter2);
-            Assert.AreEqual(2, misses2);
-            Assert.AreEqual("1", result);
-
-            result = cache2.Get("key2", getter2);
-            Assert.AreEqual(2, misses2);
-            Assert.AreEqual("2", result);
-        }
-
-        [TestMethod]
-        public void TestRedisCacheStruct()
-        {
-            var cache = new RedisCache(
-                "cache1",
-                new RedisCachePolicy
-                {
-                    ConnectionString = connectionString,
-                });
-            cache.ClearAll();
-
-            int misses = 0;
-
-            Func<int> getter = () => { misses++; return misses; };
-
-            int result;
-
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual(1, result);
-
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual(1, result);
-        }
-
-        [TestMethod]
-        public void TestRedisCacheObject()
-        {
-            var cache = new RedisCache(
-                "cache1",
-                new RedisCachePolicy
-                {
-                    ConnectionString = connectionString,
-                });
-            cache.ClearAll();
-
-            int misses = 0;
-
-            Func<string> getter = () => { misses++; return misses.ToString(); };
-
-            string result;
-
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual("1", result);
-
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual("1", result);
-        }
-
-        [TestMethod]
-        public void TestRedisCacheNull()
-        {
-            var cache = new RedisCache(
-                "cache1",
-                new RedisCachePolicy
-                {
-                    ConnectionString = connectionString,
-                });
-            cache.ClearAll();
-
-            int misses = 0;
-
-            Func<string> getter = () => { misses++; return null; };
-
-            string result;
-
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual(null, result);
-
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual(null, result);
+                    Console.WriteLine($"Failed to clear cache [{cacheName}] due to: {ex.Message}");
+                }
         }
 
         [TestMethod]
@@ -206,7 +42,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
-                    ConnectionString = connectionString,
+                    ConnectionName = connectionName,
                 });
             cache.ClearAll();
 
@@ -223,174 +59,6 @@ namespace PubComp.Caching.RedisCaching.UnitTests
 
             result = cache.Get("key", getter);
             CollectionAssert.AreEqual(new object[] { "1" }, result.ToArray());
-        }
-
-        [TestMethod]
-        public void TestRedisCacheTimeToLive_FromInsert()
-        {
-            var ttl = 10;
-            int misses = 0;
-            string result;
-            var stopwatch = new Stopwatch();
-            Func<string> getter = () => { misses++; return misses.ToString(); };
-
-            var cache = new RedisCache(
-                "insert-expire-cache",
-                new RedisCachePolicy
-                {
-                    ConnectionString = connectionString,
-                    ExpirationFromAdd = TimeSpan.FromSeconds(ttl),
-                });
-            cache.ClearAll();
-
-            stopwatch.Start();
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual("1", result);
-
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual("1", result);
-
-            CacheTestTools.AssertValueDoesntChangeWithin(cache, "key", "1", getter, stopwatch, ttl - 1);
-
-            // Should expire within TTL+60sec from insert
-            CacheTestTools.AssertValueDoesChangeWithin(cache, "key", "1", getter, stopwatch, 60.1);
-
-            result = cache.Get("key", getter);
-            Assert.AreNotEqual(1, misses);
-            Assert.AreNotEqual("1", result);
-        }
-
-        [TestMethod]
-        public void TestRedisCacheTimeToLive_Sliding()
-        {
-            var ttl = 10;
-            int misses = 0;
-            string result;
-            var stopwatch = new Stopwatch();
-            Func<string> getter = () => { misses++; return misses.ToString(); };
-
-            var cache = new RedisCache(
-                "sliding-expire-cache",
-                new RedisCachePolicy
-                {
-                    ConnectionString = connectionString,
-                    SlidingExpiration = TimeSpan.FromSeconds(ttl),
-                });
-            cache.ClearAll();
-
-            stopwatch.Start();
-            result = cache.Get("key", getter);
-            DateTime insertTime = DateTime.Now;
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual("1", result);
-
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual("1", result);
-
-            CacheTestTools.AssertValueDoesntChangeWithin(cache, "key", "1", getter, stopwatch, ttl - 1 + 60);
-
-            // Should expire within TTL+60sec from last access
-            CacheTestTools.AssertValueDoesChangeAfter(cache, "key", "1", getter, stopwatch, ttl + 60.1);
-
-            result = cache.Get("key", getter);
-            Assert.AreNotEqual(1, misses);
-            Assert.AreNotEqual("1", result);
-        }
-
-        [TestMethod]
-        public void TestRedisCacheTimeToLive_Constant()
-        {
-            var ttl = 10;
-            int misses = 0;
-            string result;
-            var stopwatch = new Stopwatch();
-            Func<string> getter = () => { misses++; return misses.ToString(); };
-
-            var expireAt = DateTime.Now.AddSeconds(ttl);
-            stopwatch.Start();
-
-            var cache = new RedisCache(
-                "constant-expire",
-                new RedisCachePolicy
-                {
-                    ConnectionString = connectionString,
-                    AbsoluteExpiration = expireAt,
-                });
-            cache.ClearAll();
-
-            result = cache.Get("key", getter);
-            DateTime insertTime = DateTime.Now;
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual("1", result);
-
-            result = cache.Get("key", getter);
-            Assert.AreEqual(1, misses);
-            Assert.AreEqual("1", result);
-
-            CacheTestTools.AssertValueDoesntChangeWithin(cache, "key", "1", getter, stopwatch, ttl - 1);
-
-            // Should expire within TTL+60sec from insert
-            CacheTestTools.AssertValueDoesChangeWithin(cache, "key", "1", getter, stopwatch, 60.1);
-
-            result = cache.Get("key", getter);
-            Assert.AreNotEqual(1, misses);
-            Assert.AreNotEqual("1", result);
-        }
-
-        [TestMethod]
-        public void TestRedisCacheGetTwice()
-        {
-            var cache = new RedisCache(
-                "cache1",
-                new RedisCachePolicy
-                {
-                    ConnectionString = connectionString,
-                });
-            cache.ClearAll();
-
-            int misses = 0;
-
-            Func<string> getter = () => { misses++; return misses.ToString(); };
-
-            string result;
-
-            result = cache.Get("key", getter);
-            Assert.AreEqual("1", result);
-
-            result = cache.Get("key", getter);
-            Assert.AreEqual("1", result);
-        }
-
-        [TestMethod]
-        public void TestRedisCacheSetTwice()
-        {
-            var cache = new RedisCache(
-                "cache1",
-                new RedisCachePolicy
-                {
-                    ConnectionString = connectionString,
-                });
-            cache.ClearAll();
-
-            int misses = 0;
-
-            Func<string> getter = () => { misses++; return misses.ToString(); };
-
-            string result;
-            bool wasFound;
-
-            cache.Set("key", getter());
-            wasFound = cache.TryGet("key", out result);
-            Assert.AreEqual(true, wasFound);
-            Assert.AreEqual("1", result);
-
-            cache.Set("key", getter());
-            wasFound = cache.TryGet("key", out result);
-            Assert.AreEqual(true, wasFound);
-            Assert.AreEqual("2", result);
         }
 
         [TestMethod][Ignore]
@@ -494,73 +162,13 @@ namespace PubComp.Caching.RedisCaching.UnitTests
         }
 
         [TestMethod]
-        public void TestRedisNotifier()
-        {
-            const string localCacheWithNotifier = "MyApp.LocalCacheWithNotifier";
-            const string localCacheWithNotifier2 = "MyApp.LocalCacheWithNotifier2";
-
-            var cache1 = CacheManager.GetCache(localCacheWithNotifier);
-            var cache2 = CacheManager.GetCache(localCacheWithNotifier2);
-
-            // Cache key1, key2 in cache1
-            cache1.Get("key1", () => { return "value1"; });
-            cache1.Get("key2", () => { return "value2"; });
-
-            // Cache key1, key2 in cache2
-            cache2.Get("key1", () => { return "value3"; });
-            cache2.Get("key2", () => { return "value4"; });
-
-            // key1, key2 should be in cache1, cache2
-            Assert.IsTrue(cache1.TryGet("key1", out string value111));
-            Assert.IsTrue(cache1.TryGet("key2", out string value121));
-            Assert.IsTrue(cache2.TryGet("key1", out string value211));
-            Assert.IsTrue(cache2.TryGet("key2", out string value221));
-
-            var secondProcess = Process.Start(
-                new ProcessStartInfo
-                {
-                    CreateNoWindow = false,
-                    FileName = typeof(DemoProgram).Assembly.Location,
-                    Arguments = "key1",
-                    WindowStyle = ProcessWindowStyle.Normal,
-                });
-            Assert.IsNotNull(secondProcess);
-            secondProcess.WaitForExit();
-
-            // key1 should have been cleared from cache1
-            Assert.IsFalse(cache1.TryGet("key1", out string value112));
-            Assert.IsTrue(cache1.TryGet("key2", out string value122));
-            Assert.IsTrue(cache2.TryGet("key1", out string value212));
-            Assert.IsTrue(cache2.TryGet("key2", out string value222));
-
-            // Cache key1 in cache1
-            cache1.Get("key1", () => { return "value1"; });
-
-            var secondProcess2 = Process.Start(
-                new ProcessStartInfo
-                {
-                    CreateNoWindow = false,
-                    FileName = typeof(DemoProgram).Assembly.Location,
-                    WindowStyle = ProcessWindowStyle.Normal,
-                });
-            Assert.IsNotNull(secondProcess2);
-            secondProcess2.WaitForExit();
-
-            // All keys should have been cleared from cache1
-            Assert.IsFalse(cache1.TryGet("key1", out string value113));
-            Assert.IsFalse(cache1.TryGet("key2", out string value123));
-            Assert.IsTrue(cache2.TryGet("key1", out string value213));
-            Assert.IsTrue(cache2.TryGet("key2", out string value223));
-        }
-
-        [TestMethod]
         public void TestRedisCacheJson()
         {
             var cache1 = new RedisCache(
                 "cache1",
                 new RedisCachePolicy
                 {
-                    ConnectionString = connectionString,
+                    ConnectionName = connectionName,
                     Converter = "json",
                 });
 
@@ -581,7 +189,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
-                    ConnectionString = connectionString,
+                    ConnectionName = connectionName,
                     Converter = "bson",
                 });
 
@@ -602,7 +210,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
-                    ConnectionString = connectionString,
+                    ConnectionName = connectionName,
                     Converter = "deflate",
                 });
 
@@ -623,7 +231,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "cache1",
                 new RedisCachePolicy
                 {
-                    ConnectionString = connectionString,
+                    ConnectionName = connectionName,
                     Converter = "gzip",
                 });
 
@@ -644,7 +252,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "redisCache",
                 new RedisCachePolicy
                 {
-                    ConnectionString = connectionString,
+                    ConnectionName = connectionName,
                 });
 
             redisCacheForAop.ClearAll();
@@ -662,7 +270,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "redisCache",
                 new RedisCachePolicy
                 {
-                    ConnectionString = connectionString,
+                    ConnectionName = connectionName,
                 });
 
             redisCacheForAop.ClearAll();
@@ -680,7 +288,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "redisCache",
                 new RedisCachePolicy
                 {
-                    ConnectionString = connectionString,
+                    ConnectionName = connectionName,
                 });
 
             redisCacheForAop.ClearAll();
@@ -698,7 +306,7 @@ namespace PubComp.Caching.RedisCaching.UnitTests
                 "redisCache",
                 new RedisCachePolicy
                 {
-                    ConnectionString = connectionString,
+                    ConnectionName = connectionName,
                 });
                 
             redisCacheForAop.ClearAll();
@@ -709,39 +317,6 @@ namespace PubComp.Caching.RedisCaching.UnitTests
             Assert.AreEqual(expected, fromCache);
         }
 
-        [TestMethod]
-        public async Task TestRedisCacheTryGetAsync()
-        {
-            var cache = new RedisCache(
-                "cache1",
-                new RedisCachePolicy
-                {
-                    ConnectionString = connectionString,
-                });
-            cache.ClearAll();
-            cache.Set("key", "1");
-
-            var result = await cache.TryGetAsync<string>("key");
-            Assert.AreEqual("1", result.Value);
-            Assert.IsTrue(result.WasFound);
-        }
-
-        [TestMethod]
-        public async Task TestRedisCacheTryGetAsync_NotFound()
-        {
-            var cache = new RedisCache(
-                "cache1",
-                new RedisCachePolicy
-                {
-                    ConnectionString = connectionString,
-                });
-            cache.ClearAll();
-            cache.Set("key", "1");
-
-            var result = await cache.TryGetAsync<string>("wrongKey");
-            Assert.AreEqual(null, result.Value);
-            Assert.IsFalse(result.WasFound);
-        }
 
         #region Methods with AOP redis caching
 

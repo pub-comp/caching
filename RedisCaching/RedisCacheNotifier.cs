@@ -1,10 +1,13 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Linq;
-using PubComp.Caching.Core;
+﻿using PubComp.Caching.Core;
+using PubComp.Caching.Core.Events;
 using PubComp.Caching.Core.Notifications;
 using PubComp.Caching.RedisCaching.Converters;
 using StackExchange.Redis;
+using System;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace PubComp.Caching.RedisCaching
 {
@@ -16,7 +19,8 @@ namespace PubComp.Caching.RedisCaching
         private readonly IRedisConverter convert;
         private readonly string sender;
         private readonly NLog.ILogger log;
-        
+
+        private RedisClient generalInvalidationRedisClient = null;
         private ConcurrentDictionary<string, RedisClient> cacheSubClients;
         private ConcurrentDictionary<string, Func<CacheItemNotification, bool>> cacheCallbacks;
 
@@ -27,8 +31,8 @@ namespace PubComp.Caching.RedisCaching
 
             this.log = NLog.LogManager.GetLogger(typeof(RedisCacheNotifier).FullName);
 
-            this.cacheSubClients = new ConcurrentDictionary<string, RedisClient>();
-            this.cacheCallbacks = new ConcurrentDictionary<string, Func<CacheItemNotification, bool>>();
+            this.cacheSubClients = new ConcurrentDictionary<string, RedisClient>(StringComparer.InvariantCultureIgnoreCase);
+            this.cacheCallbacks = new ConcurrentDictionary<string, Func<CacheItemNotification, bool>>(StringComparer.InvariantCultureIgnoreCase);
 
             if (policy == null)
             {
@@ -58,51 +62,142 @@ namespace PubComp.Caching.RedisCaching
 
             this.sender = Guid.NewGuid().ToString();
             this.convert = RedisConverterFactory.CreateConverter(policy.Converter);
+
+            SubscribeToGeneralInvalidationMessage(policy.GeneralInvalidationChannel);
         }
 
         public string Name { get { return this.name; } }
 
-        private RedisClient GetSubClient(string cacheName, Func<CacheItemNotification, bool> callback)
+        private RedisClient GetSubClient(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback,
+            EventHandler<Core.Events.ProviderStateChangedEventArgs> notifierProviderStateChangedCallback)
         {
-            if (callback != null)
-                this.cacheCallbacks.AddOrUpdate(cacheName, callback, (k, c) => callback);
+            if (cacheUpdatedCallback != null)
+                this.cacheCallbacks.AddOrUpdate(cacheName, cacheUpdatedCallback, (k, c) => cacheUpdatedCallback);
 
-            var client = this.cacheSubClients.GetOrAdd(cacheName, cn => CreateClient());
+            var client = this.cacheSubClients.GetOrAdd(cacheName, cn => CreateClient(notifierProviderStateChangedCallback));
             return client;
         }
 
-        private RedisClient CreateClient()
+        private RedisClient CreateClient(EventHandler<Core.Events.ProviderStateChangedEventArgs> providerStateChangedCallback)
         {
-            var client = new RedisClient(
-                this.connectionString, this.policy.ClusterType, this.policy.MonitorPort,
-                this.policy.MonitorIntervalMilliseconds);
-            return client;
+            return RedisClient.GetNamedRedisClient(this.policy.ConnectionName, providerStateChangedCallback);
+        }
+
+        public void Subscribe(string cacheName, Func<CacheItemNotification, bool> callback)
+        {
+            Subscribe(cacheName, callback, null);
+        }
+
+        public void SubscribeToGeneralInvalidationMessage(string generalInvalidationChannel)
+        {
+            if (string.IsNullOrWhiteSpace(generalInvalidationChannel))
+                return;
+
+            generalInvalidationRedisClient = CreateClient(null);
+            generalInvalidationRedisClient.Subscriber.Subscribe(generalInvalidationChannel, (channel, message) =>
+            {
+                if (string.IsNullOrEmpty(message))
+                {
+                    log.Warn("General-Invalidation invoked without a regex pattern (to clear all: .*)");
+                    return;
+                }
+                log.Info($"General-Invalidation has been invoked: '{message}'");
+
+                try
+                {
+                    var regex = new Regex(message, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                    var cacheNamesToClear = CacheManager.GetCacheNames().Where(cacheName => regex.IsMatch(cacheName));
+
+                    foreach (var cacheName in cacheNamesToClear)
+                        CacheManager.GetCache(cacheName).ClearAll();
+                }
+                catch (Exception ex)
+                {
+                    log.Error(ex, "General-Invalidation failed !");
+                }
+            });
         }
 
         // ReSharper disable once ParameterHidesMember
-        public void Subscribe(string cacheName, Func<CacheItemNotification, bool> callback)
+        public void Subscribe(string cacheName, Func<CacheItemNotification, bool> cacheUpdatedCallback, 
+            EventHandler<Core.Events.ProviderStateChangedEventArgs> notifierProviderStateChangedCallback)
         {
+            var client = GetSubClient(cacheName, cacheUpdatedCallback, notifierProviderStateChangedCallback);
             // Subscribe to Redis
-            GetSubClient(cacheName, callback).Subscriber.Subscribe(cacheName, (channel, message) =>
+            client.Subscriber.Subscribe(cacheName, (channel, message) =>
             {
                 var notificationInfo = convert.FromRedis(message);
                 OnCacheUpdated(notificationInfo);
             });
+            notifierProviderStateChangedCallback(this, new ProviderStateChangedEventArgs(client.IsConnected));
         }
 
         public void UnSubscribe(string cacheName)
         {
-            this.cacheCallbacks.TryRemove(cacheName, out Func<CacheItemNotification, bool> callback);
+            this.cacheCallbacks.TryRemove(cacheName, out _);
             
             // Unsubscribe from Redis
-            GetSubClient(cacheName, null).Subscriber.Unsubscribe(cacheName, null, CommandFlags.None);
+            GetSubClient(cacheName, null, null).Subscriber.Unsubscribe(cacheName, null, CommandFlags.None);
+        }
+
+        public bool TryPublish(string cacheName, string key, CacheItemActionTypes action)
+        {
+            try
+            {
+                var message = new CacheItemNotification(sender, cacheName, key, action);
+                var messageToSend = convert.ToRedis(message);
+                var redisClient = GetSubClient(cacheName, null, null);
+                if (redisClient.IsConnected)
+                {
+                    redisClient.Subscriber.Publish(cacheName, messageToSend, CommandFlags.None);
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                log.Warn(ex, $"Failed to publish {action} for {cacheName}.{key}");
+                return false;
+            }
+        }
+
+        public async Task<bool> TryPublishAsync(string cacheName, string key, CacheItemActionTypes action)
+        {
+            try
+            {
+                var message = new CacheItemNotification(sender, cacheName, key, action);
+                var messageToSend = convert.ToRedis(message);
+                var redisClient = GetSubClient(cacheName, null, null);
+                if (redisClient.IsConnected)
+                {
+                    await redisClient.Subscriber
+                        .PublishAsync(cacheName, messageToSend, CommandFlags.None)
+                        .ConfigureAwait(false);
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                log.Warn(ex, $"Failed to publish {action} for {cacheName}.{key}");
+                return false;
+            }
         }
 
         public void Publish(string cacheName, string key, CacheItemActionTypes action)
         {
             var message = new CacheItemNotification(sender, cacheName, key, action);
             var messageToSend = convert.ToRedis(message);
-            GetSubClient(cacheName, null).Subscriber.Publish(cacheName, messageToSend, CommandFlags.None);
+            GetSubClient(cacheName, null, null).Subscriber.Publish(cacheName, messageToSend, CommandFlags.None);
+        }
+
+        public async Task PublishAsync(string cacheName, string key, CacheItemActionTypes action)
+        {
+            var message = new CacheItemNotification(sender, cacheName, key, action);
+            var messageToSend = convert.ToRedis(message);
+            await GetSubClient(cacheName, null, null).Subscriber
+                .PublishAsync(cacheName, messageToSend, CommandFlags.None)
+                .ConfigureAwait(false);
         }
 
         private void OnCacheUpdated(CacheItemNotification notification)
@@ -135,6 +230,8 @@ namespace PubComp.Caching.RedisCaching
             {
                 redisClient.Dispose();
             }
+
+            generalInvalidationRedisClient?.Dispose();
 
             this.cacheCallbacks = new ConcurrentDictionary<string, Func<CacheItemNotification, bool>>();
         }
