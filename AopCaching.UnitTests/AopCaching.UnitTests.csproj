@@ -7,11 +7,8 @@
   <ItemGroup>
     <PackageReference Include="MSTest.TestAdapter" Version="1.2.0" />
     <PackageReference Include="MSTest.TestFramework" Version="1.2.0" />
-    <PackageReference Include="PostSharp" Version="6.10.13" />
-    <PackageReference Include="System.Runtime.Caching" Version="4.5.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Core\Core.csproj" />
     <ProjectReference Include="..\AopCaching\AopCaching.csproj" />
     <ProjectReference Include="..\SystemRuntime\SystemRuntime.csproj" />
   </ItemGroup>
