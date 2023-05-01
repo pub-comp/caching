@@ -17,7 +17,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NLog" Version="4.5.10" />
-    <PackageReference Include="PostSharp" Version="6.10.13" />
+    <PackageReference Include="PostSharp" Version="6.10.13">
+      <IncludeAssets>build</IncludeAssets>
+      <ExcludeAssets>none</ExcludeAssets>
+      <PrivateAssets>analyzers</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
