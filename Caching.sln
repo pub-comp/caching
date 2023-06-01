@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29613.14
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core", "Core\Core.csproj", "{57585B9A-7003-461A-B812-CA48603C839F}"
 EndProject
@@ -49,7 +49,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestHost.WebApi", "WebApi\T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiExtended.NETCore", "WebApiExtended.NETCore\WebApiExtended.NETCore.csproj", "{FAF640A8-7284-4587-8908-560E3BBFB56F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExtended.Swashbuckle", "WebApiExtended.Swashbuckle\WebApiExtended.Swashbuckle.csproj", "{C0F9B07A-F480-424F-AF19-DCA2FA288318}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiExtended.Swashbuckle", "WebApiExtended.Swashbuckle\WebApiExtended.Swashbuckle.csproj", "{C0F9B07A-F480-424F-AF19-DCA2FA288318}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiExtended.NETCore.Swashbuckle", "WebApiExtended.NETCore.Swashbuckle\WebApiExtended.NETCore.Swashbuckle.csproj", "{7F3FDEDB-48D7-4BB0-96BD-49107B6A6EC0}"
 EndProject

@@ -19,23 +19,30 @@ namespace PubComp.Caching.Core
             RegisteredCacheItems = new ConcurrentDictionary<Tuple<string, string>, Func<object>>();
         }
 
+        public bool TryClearCache(string cacheName, string clientId, string batchId)
+        {
+            var cache = GetCache(cacheName);
+
+            var currentActionTrigger = new ActionTrigger(cacheName: cacheName, clientId: clientId, batchId: batchId);
+            if (IsAlreadyCleared(cache, currentActionTrigger))
+            {
+                return false;
+            }
+
+            ClearCache(cacheName);
+
+            //Known, that possible race condition here, but implementation of distributed lock will be overhead for this case. 
+            SetAsCleared(cache, currentActionTrigger);
+            return true;
+        }
+        
         /// <summary>
         /// Clears all data from a named cache instance
         /// </summary>
         /// <param name="cacheName"></param>
         public void ClearCache(string cacheName)
         {
-            if (string.IsNullOrEmpty(cacheName))
-            {
-                throw new CacheClearException("Cache not cleared - received undefined cacheName");
-            }
-
-            var cache = CacheManager.GetCache(cacheName);
-            
-            if (cache == null)
-            {
-                throw new CacheClearException("Cache not cleared - cache not found: " + cacheName);
-            }
+            var cache = GetCache(cacheName);
 
             if (!cache.Name.Equals(cacheName, StringComparison.InvariantCultureIgnoreCase))
             {
@@ -339,6 +346,50 @@ namespace PubComp.Caching.Core
                 notifier.Publish(cacheName, itemKey, CacheItemActionTypes.Removed);
 
             return true;
+        }
+
+        private static ICache GetCache(string cacheName)
+        {
+            if (string.IsNullOrEmpty(cacheName))
+            {
+                throw new CacheClearException("Cache not cleared - received undefined cacheName");
+            }
+
+            var cache = CacheManager.GetCache(cacheName);
+            return cache ?? throw new CacheClearException("Cache not cleared - cache not found: " + cacheName);
+        }
+
+        private static void SetAsCleared(ICache cache, ActionTrigger currentActionTrigger)
+        {
+            cache.Set(currentActionTrigger.ToString(), currentActionTrigger);
+        }
+
+        private bool IsAlreadyCleared(ICache cache, ActionTrigger currentActionTrigger)
+        {
+            return cache.TryGet(currentActionTrigger.ToString(), out ActionTrigger _);
+        }
+    }
+
+    internal class ActionTrigger
+    {
+        public string CacheName { get; }
+        public string BatchId { get; }
+        public string ClientId { get; }
+
+        public ActionTrigger()
+        {
+        }
+
+        public ActionTrigger(string cacheName, string clientId, string batchId)
+        {
+            this.CacheName = cacheName;
+            this.ClientId = clientId;
+            this.BatchId = batchId;
+        }
+
+        public override string ToString()
+        {
+            return $"{CacheName}_{ClientId}_{BatchId}";
         }
     }
 }
