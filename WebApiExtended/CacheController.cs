@@ -132,5 +132,28 @@ namespace PubComp.Caching.WebApiExtended
                 throw;
             }
         }
+
+        /// <summary>
+        /// Clears all data from a named cache instance only once, by owner identifier {clientId + batchId}
+        /// </summary>
+        /// <param name="cacheName"></param>
+        /// <param name="clientId"></param>
+        /// <param name="batchId"></param>
+        [HttpPut]
+        [HttpGet]
+        [Route("clear/{cacheName}/client/{clientId}/batch/{batchId}")]
+        public void Clear(string cacheName, string clientId, string batchId)
+        {
+            try
+            {
+                var isCleared = this.Util.TryClearCache(cacheName, clientId, batchId);
+                Log.Info($"Cache cleared: {isCleared} cacheName: {cacheName}, clientId: {clientId}, batchId: {batchId}");
+            }
+            catch (CacheException ex)
+            {
+                Log.Warn(ex.Message);
+                throw;
+            }
+        }
     }
 }
