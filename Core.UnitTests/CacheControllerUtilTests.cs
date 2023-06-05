@@ -401,6 +401,78 @@ namespace PubComp.Caching.Core.UnitTests
             Assert.AreEqual(1, cache3.Hits);
         }
 
+
+        [TestMethod]
+        public void TestTryClearCache()
+        {
+            this.cacheControllerUtil.TryClearCache("cache1", "123", "456");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(CacheClearException))]
+        public void TestTryClearCache_FallbackToWildcard()
+        {
+            this.cacheControllerUtil.TryClearCache("cache4", "123", "456");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(CacheClearException))]
+        public void TestTryClearCache_NotFound()
+        {
+            this.cacheControllerUtil.TryClearCache("nosuchcache", "123", "456");
+        }
+
+        [TestMethod]
+        public void TestRegisterCacheWithTrue_TryClearCache()
+        {
+            this.cacheControllerUtil.RegisterCache("cache2", true);
+
+            this.cacheControllerUtil.TryClearCache("cache2", "123", "456");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(CacheClearException))]
+        public void TestRegisterCacheWithFalse_TryClearCache()
+        {
+            this.cacheControllerUtil.RegisterCache("cache2", false);
+
+            this.cacheControllerUtil.TryClearCache("cache2", "123", "456");
+        }
+
+        [TestMethod]
+        public void TestRegisterCacheWithTrue_RegisterCacheItems_TryClearCache()
+        {
+            this.cacheControllerUtil.RegisterCache("cache2", true);
+
+            this.cacheControllerUtil.RegisterCacheItem(
+                "cache2", "keyA", () => new SubClass1 { Key = "keyA", Data1 = "dataA" }, true);
+
+            this.cacheControllerUtil.TryClearCache("cache2", "123", "456");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(CacheClearException))]
+        public void TestRegisterCacheWithFalse_RegisterCacheItems_TryClearCache()
+        {
+            this.cacheControllerUtil.RegisterCache("cache2", false);
+
+            this.cacheControllerUtil.RegisterCacheItem(
+                "cache2", "keyA", () => new SubClass1 { Key = "keyA", Data1 = "dataA" }, true);
+
+            this.cacheControllerUtil.TryClearCache("cache2", "123", "456");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(CacheClearException))]
+        public void TestCacheRegisterCacheItems_TryClearCache()
+        {
+            this.cacheControllerUtil.RegisterCacheItem(
+                "cache2", "keyA", () => new SubClass1 { Key = "keyA", Data1 = "dataA" }, true);
+
+            this.cacheControllerUtil.TryClearCache("cache2", "123", "456");
+        }
+
+
         #endregion
 
         #region Nested Types
