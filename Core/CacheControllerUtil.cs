@@ -19,11 +19,17 @@ namespace PubComp.Caching.Core
             RegisteredCacheItems = new ConcurrentDictionary<Tuple<string, string>, Func<object>>();
         }
 
+        /// <summary>
+        /// Try clears all data from a named cache instance by owner identifier {clientId, batchId}
+        /// </summary>
+        /// <param name="cacheName"></param>
+        /// <param name="clientId"></param>
+        /// <param name="batchId"></param>
         public bool TryClearCache(string cacheName, string clientId, string batchId)
         {
             var cache = GetCache(cacheName);
 
-            var currentActionTrigger = new ActionTrigger(cacheName: cacheName, clientId: clientId, batchId: batchId);
+            var currentActionTrigger = new ActionTrigger(clientId: clientId, batchId: batchId);
             if (IsAlreadyCleared(cache, currentActionTrigger))
             {
                 return false;
@@ -372,7 +378,6 @@ namespace PubComp.Caching.Core
 
     internal class ActionTrigger
     {
-        public string CacheName { get; }
         public string BatchId { get; }
         public string ClientId { get; }
 
@@ -380,16 +385,15 @@ namespace PubComp.Caching.Core
         {
         }
 
-        public ActionTrigger(string cacheName, string clientId, string batchId)
+        public ActionTrigger(string clientId, string batchId)
         {
-            this.CacheName = cacheName;
             this.ClientId = clientId;
             this.BatchId = batchId;
         }
 
         public override string ToString()
         {
-            return $"{CacheName}_{ClientId}_{BatchId}";
+            return $"_{ClientId}_{BatchId}";
         }
     }
 }

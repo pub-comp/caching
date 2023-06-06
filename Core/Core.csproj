@@ -5,7 +5,7 @@
     <AssemblyName>PubComp.Caching.Core</AssemblyName>
     <RootNamespace>PubComp.Caching.Core</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>5.0.1</Version>
+    <Version>5.0.1-prerelease</Version>
     <AssemblyVersion>5.0.1.0</AssemblyVersion>
     <FileVersion>5.0.1.0</FileVersion>
   </PropertyGroup>
