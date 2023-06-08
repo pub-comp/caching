@@ -5,7 +5,7 @@
     <AssemblyName>PubComp.Caching.WebApiExtended</AssemblyName>
     <RootNamespace>PubComp.Caching.WebApiExtended</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>5.0.2-prerelease</Version>
+    <Version>5.0.2</Version>
     <AssemblyVersion>5.0.2.0</AssemblyVersion>
     <FileVersion>5.0.2.0</FileVersion>
   </PropertyGroup>
