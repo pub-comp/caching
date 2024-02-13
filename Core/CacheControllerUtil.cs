@@ -19,23 +19,34 @@ namespace PubComp.Caching.Core
             RegisteredCacheItems = new ConcurrentDictionary<Tuple<string, string>, Func<object>>();
         }
 
+        /// <summary>
+        /// Try clears all data from a named cache instance by owner identifier {clientId, batchId}
+        /// </summary>
+        /// <param name="cacheName"></param>
+        /// <param name="clientId"></param>
+        /// <param name="batchId"></param>
         public bool TryClearCache(string cacheName, string clientId, string batchId)
         {
             var cache = GetCache(cacheName);
 
-            var currentActionTrigger = new ActionTrigger(cacheName: cacheName, clientId: clientId, batchId: batchId);
-            if (IsAlreadyCleared(cache, currentActionTrigger))
+            var actionOwnerIdentifier = RegisterActionOwner(cacheName, clientId, batchId);
+
+            using (CacheDirectives.SetScope(CacheMethod.GetOrSet|CacheMethod.IgnoreMinimumValueTimestamp, CacheDirectives.CurrentScopeTimestamp))
             {
-                return false;
+                if (IsAlreadyCleared(cache, actionOwnerIdentifier))
+                {
+                    return false;
+                }
+
+                ClearCache(cacheName);
+
+                //Known, that possible race condition here, but implementation of distributed lock will be overhead for this case. 
+                SetAsCleared(cache, actionOwnerIdentifier);
             }
 
-            ClearCache(cacheName);
-
-            //Known, that possible race condition here, but implementation of distributed lock will be overhead for this case. 
-            SetAsCleared(cache, currentActionTrigger);
             return true;
         }
-        
+
         /// <summary>
         /// Clears all data from a named cache instance
         /// </summary>
@@ -358,38 +369,48 @@ namespace PubComp.Caching.Core
             var cache = CacheManager.GetCache(cacheName);
             return cache ?? throw new CacheClearException("Cache not cleared - cache not found: " + cacheName);
         }
-
-        private static void SetAsCleared(ICache cache, ActionTrigger currentActionTrigger)
+        
+        private ActionOwnerIdentifier RegisterActionOwner(string cacheName, string clientId, string batchId)
         {
-            cache.Set(currentActionTrigger.ToString(), currentActionTrigger);
+            var actionOwner = new ActionOwnerIdentifier(clientId: clientId, batchId: batchId);
+            var cacheItemKey = actionOwner.ToString();
+
+            RegisterCacheItem<ActionOwnerIdentifier>(cacheName, cacheItemKey);
+
+            return actionOwner;
         }
 
-        private bool IsAlreadyCleared(ICache cache, ActionTrigger currentActionTrigger)
+        private void SetAsCleared(ICache cache, ActionOwnerIdentifier actionOwnerIdentifier)
         {
-            return cache.TryGet(currentActionTrigger.ToString(), out ActionTrigger _);
-        }
-    }
-
-    internal class ActionTrigger
-    {
-        public string CacheName { get; }
-        public string BatchId { get; }
-        public string ClientId { get; }
-
-        public ActionTrigger()
-        {
+            var cacheItemKey = actionOwnerIdentifier.ToString();
+            cache.Set(cacheItemKey, actionOwnerIdentifier);
         }
 
-        public ActionTrigger(string cacheName, string clientId, string batchId)
+        private bool IsAlreadyCleared(ICache cache, ActionOwnerIdentifier actionOwnerIdentifier)
         {
-            this.CacheName = cacheName;
-            this.ClientId = clientId;
-            this.BatchId = batchId;
+            var cacheItemKey = actionOwnerIdentifier.ToString();
+            return cache.TryGet(cacheItemKey, out ActionOwnerIdentifier _);
         }
 
-        public override string ToString()
+        private class ActionOwnerIdentifier
         {
-            return $"{CacheName}_{ClientId}_{BatchId}";
+            private readonly string batchId;
+            private readonly string clientId;
+
+            public ActionOwnerIdentifier()
+            {
+            }
+
+            public ActionOwnerIdentifier(string clientId, string batchId)
+            {
+                this.clientId = clientId;
+                this.batchId = batchId;
+            }
+
+            public override string ToString()
+            {
+                return $"ActionOwnerIdentifier:[ClientId:{clientId}_BatchId:{batchId}]";
+            }
         }
     }
 }
