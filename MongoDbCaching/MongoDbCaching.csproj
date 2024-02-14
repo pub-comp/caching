@@ -5,8 +5,8 @@
     <AssemblyName>PubComp.Caching.MongoDbCaching</AssemblyName>
     <RootNamespace>PubComp.Caching.MongoDbCaching</RootNamespace>
     <Version>4.1.1</Version>
-    <AssemblyVersion>4.1.1.1</AssemblyVersion>
-    <FileVersion>4.1.1.1</FileVersion>
+    <AssemblyVersion>4.1.2.0</AssemblyVersion>
+    <FileVersion>4.1.2.0</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <NoWarn>1701;1702;1591</NoWarn>
