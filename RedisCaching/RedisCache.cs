@@ -21,9 +21,18 @@ namespace PubComp.Caching.RedisCaching
         private readonly NLog.ILogger log;
 
         private readonly RedisCachePolicy Policy;
+        public event EventHandler<bool> OnRedisConnectionStateChanged;
 
         public string Name { get { return this.name; } }
         public bool IsActive => InnerCache.IsActive;
+
+        public bool IsRedisConnectionStateHandlerRegistered
+        {
+            get
+            {
+                return OnRedisConnectionStateChanged != null;
+            }
+        }
 
         private CacheContext InnerCache
         {
@@ -106,9 +115,17 @@ namespace PubComp.Caching.RedisCaching
                 this.innerCache = new CacheContext(policy.ConnectionName, this.converterType);
             }
 
+            this.innerCache.OnRedisConnectionStateChanged += InnerCache_OnRedisConnectionStateChanged;
+
             this.notiferName = policy.SyncProvider;
 
             this.synchronizer = CacheSynchronizer.CreateCacheSynchronizer(this, this.notiferName);
+        }
+
+        private void InnerCache_OnRedisConnectionStateChanged(object sender, bool e)
+        {
+            if (IsRedisConnectionStateHandlerRegistered)
+                OnRedisConnectionStateChanged(sender, e);
         }
 
         private TValue GetOrAdd<TValue>(

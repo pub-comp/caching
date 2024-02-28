@@ -10,6 +10,7 @@ namespace PubComp.Caching.RedisCaching
     {
         private readonly RedisClient client;
         private readonly IRedisConverter convert;
+        public event EventHandler<bool> OnRedisConnectionStateChanged;
 
         public bool IsActive { get; private set; }
 
@@ -29,7 +30,12 @@ namespace PubComp.Caching.RedisCaching
 
         private void RegisterToRedisConnectionStateChangeEvent()
         {
-            this.client.OnRedisConnectionStateChanged += (sender, args) => this.IsActive = args.IsAvailable;
+            this.client.OnRedisConnectionStateChanged += (sender, args) =>
+            {
+                this.IsActive = args.IsAvailable;
+                this.OnRedisConnectionStateChanged(sender, IsActive);
+            };
+
             this.IsActive = this.client.IsConnected;
         }
 
